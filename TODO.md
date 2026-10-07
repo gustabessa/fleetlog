@@ -30,6 +30,16 @@ Atualizado em 2026-10-07. Plano de produto: [docs/FleetLog-plan.md](docs/FleetLo
 
 Checklist de implantação: [docs/deployment-checklist.md](docs/deployment-checklist.md).
 
+## Build gerenciado pelo Dokploy
+
+- [x] Compose específico com build local da imagem, porta interna e redes de proxy/banco.
+- [x] Documentar fonte Git, branch, Compose Path, variáveis, domínio e atualização da imagem.
+- [x] Validar contrato do Compose com CLI, sem deploy (Compose 2.40.3; imagem por projeto, redes, volume e ausência de portas publicadas).
+- [ ] Enviar alterações ao remoto e configurar serviço no painel Dokploy.
+- [ ] Executar primeiro build/deploy e validar domínio HTTPS/PWA.
+
+Configuração: [compose.dokploy.yaml](compose.dokploy.yaml). Guia: [docs/dokploy.md](docs/dokploy.md).
+
 ## Etapas seguintes
 
 - [ ] PostgreSQL: conexão, migrações versionadas e testes de integração.
@@ -68,8 +78,10 @@ Primeiro scaffold implementado; não há funcionalidades de domínio nem autenti
 Validados: build Angular (~57 kB transferidos), testes Go e go vet; 6 testes Chromium aprovados em desktop/mobile, cobrindo layout, tema persistente, rotas, manifest, service worker, respostas API e atualização para novo build sem recarga automática.
 Pendente: Docker Compose/build, HTTPS Dokploy e instalação PWA no sistema operacional. O PostgreSQL está apenas preparado no Compose; sem conexão ou migrações ainda.
 Node 22.23.3 disponível. Go 1.27.1 baixado para `/tmp/go` com checksum oficial validado; não instalado no sistema.
-Docker indisponível neste ambiente. Frontend em `web/`, backend em `cmd/fleetlog` e `internal/httpserver`.
+Docker Engine indisponível neste ambiente. CLI Compose 2.40.3 extraído em `/tmp/fleetlog-compose-cli` para validar `compose.yaml` e `compose.dokploy.yaml`, ambos aprovados; build de imagem não executado. Frontend em `web/`, backend em `cmd/fleetlog` e `internal/httpserver`.
 Playwright adicionado ao frontend. Testes: `cd web && npm run test:e2e`; requer Go e Chromium. Para este ambiente: `GO_BIN=/tmp/go/bin/go`, `GOCACHE=/tmp/fleetlog-gocache`, `PLAYWRIGHT_BROWSERS_PATH=/tmp/fleetlog-browsers`, `LD_LIBRARY_PATH=/tmp/fleetlog-browser-deps/root/usr/lib/x86_64-linux-gnu`, Node no PATH. Browser e bibliotecas extraídos apenas em `/tmp`; são temporários e precisam ser preparados novamente caso removidos.
 Próxima etapa técnica: conexão PostgreSQL/migrações e login local; antes de implementar inclusão de familiares, definir permissões.
 Para retomar: ler este arquivo e o plano, conferir git status e executar os checks do README.
 Ícones simples provisórios com a letra F; idioma pt-BR provisório para esta base. O frontend usa Angular 22.2 e Node 22; Go 1.27.
+
+Build no Dokploy preparado em `compose.dokploy.yaml`: GitHub/main -> Dockerfile -> imagem local por projeto. Próxima ação de implantação: enviar arquivos ao remoto, configurar Compose Path/Environment/Domains no painel conforme `docs/dokploy.md` e executar primeiro deploy. Nenhum acesso ao painel ou deploy foi realizado nesta sessão.

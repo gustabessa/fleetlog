@@ -45,6 +45,8 @@ docker compose up --build -d
 
 O Dockerfile compila Angular e Go em estágios separados. A imagem final roda sem root e não inclui Node. O Go serve frontend e futura API na mesma origem. Configure o domínio HTTPS no Dokploy com destino no serviço `app`, porta 8080. O banco não publica porta externa; os dados persistem no volume `postgres_data`.
 
+Para o Dokploy, use **`compose.dokploy.yaml`**, com build da imagem no próprio servidor, rede do proxy e nenhuma porta publicada no host. O passo a passo está em [docs/dokploy.md](docs/dokploy.md). `compose.yaml` continua sendo a configuração local.
+
 `/healthz` verifica somente o processo HTTP, não a conexão com PostgreSQL. A imagem oferece o comando `fleetlog healthcheck` para o health check Docker.
 
 ## Configuração atual

@@ -1,0 +1,40 @@
+# Dokploy: use Docker Compose mode, repository root as build context.
+# Configure Domains -> service app -> container port 8080 -> HTTPS.
+services:
+  app:
+    image: fleetlog-${COMPOSE_PROJECT_NAME:-homelab}:latest
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    expose:
+      - "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+      - dokploy-network
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fleetlog
+      POSTGRES_USER: fleetlog
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in Dokploy Environment}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fleetlog -d fleetlog"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+volumes:
+  postgres_data:
+networks:
+  backend:
+  dokploy-network:
+    external: true
