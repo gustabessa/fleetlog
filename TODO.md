@@ -21,6 +21,14 @@ Atualizado em 2026-10-07. Plano de produto: [docs/FleetLog-plan.md](docs/FleetLo
 - [x] Criar Dockerfile multi-stage e Compose com PostgreSQL persistente.
 - [x] Documentar configurações reais em `.env.example` e README.
 - [x] Validar build Angular, testes Go e integração SPA/PWA.
+- [x] Testes Chromium desktop/mobile: layout, temas persistentes e rotas sem erros.
+- [x] Validar service worker e atualização com aviso e recarga mediante clique.
+- [x] Corrigir health check com endereço explícito e resposta JSON para `/api`.
+- [x] Remover referências a outro produto dos Markdown; apresentar como sistema de gestão de veículos.
+- [ ] Executar build/health checks Docker Compose (Docker indisponível neste ambiente).
+- [ ] Validar HTTPS no Dokploy e instalação PWA em dispositivos reais.
+
+Checklist de implantação: [docs/deployment-checklist.md](docs/deployment-checklist.md).
 
 ## Etapas seguintes
 
@@ -52,15 +60,16 @@ Atualizado em 2026-10-07. Plano de produto: [docs/FleetLog-plan.md](docs/FleetLo
 ## Backlog
 
 - [ ] Offline e sincronização com conflitos.
-- [ ] Lembretes e importação do LubeLogger, sujeitos a definição de escopo.
+- [ ] Lembretes e importação de dados de outros sistemas de gestão de veículos, sujeitos a definição de escopo.
 
 ## Ponto de retomada
 
 Primeiro scaffold implementado; não há funcionalidades de domínio nem autenticação ainda.
-Validados: build Angular (~56 kB transferidos), testes Go, go vet e smoke HTTP de health, deep link, manifest, worker e 404 de assets/API.
-Pendente: Docker Compose/build e instalação/atualização em navegador real com HTTPS. O PostgreSQL está apenas preparado no Compose; sem conexão ou migrações ainda.
+Validados: build Angular (~57 kB transferidos), testes Go e go vet; 6 testes Chromium aprovados em desktop/mobile, cobrindo layout, tema persistente, rotas, manifest, service worker, respostas API e atualização para novo build sem recarga automática.
+Pendente: Docker Compose/build, HTTPS Dokploy e instalação PWA no sistema operacional. O PostgreSQL está apenas preparado no Compose; sem conexão ou migrações ainda.
 Node 22.23.3 disponível. Go 1.27.1 baixado para `/tmp/go` com checksum oficial validado; não instalado no sistema.
 Docker indisponível neste ambiente. Frontend em `web/`, backend em `cmd/fleetlog` e `internal/httpserver`.
+Playwright adicionado ao frontend. Testes: `cd web && npm run test:e2e`; requer Go e Chromium. Para este ambiente: `GO_BIN=/tmp/go/bin/go`, `GOCACHE=/tmp/fleetlog-gocache`, `PLAYWRIGHT_BROWSERS_PATH=/tmp/fleetlog-browsers`, `LD_LIBRARY_PATH=/tmp/fleetlog-browser-deps/root/usr/lib/x86_64-linux-gnu`, Node no PATH. Browser e bibliotecas extraídos apenas em `/tmp`; são temporários e precisam ser preparados novamente caso removidos.
 Próxima etapa técnica: conexão PostgreSQL/migrações e login local; antes de implementar inclusão de familiares, definir permissões.
 Para retomar: ler este arquivo e o plano, conferir git status e executar os checks do README.
 Ícones simples provisórios com a letra F; idioma pt-BR provisório para esta base. O frontend usa Angular 22.2 e Node 22; Go 1.27.

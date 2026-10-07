@@ -1,13 +1,49 @@
 <header class="topbar">
   <a class="brand" href="/" aria-label="FleetLog início"><span class="mark">F</span> FleetLog</a>
-  <button class="theme" type="button" (click)="toggleTheme()" [attr.aria-label]="dark() ? 'Ativar tema claro' : 'Ativar tema escuro'">{{ dark() ? '☀ Claro' : '☾ Escuro' }}</button>
+  <button
+    class="theme"
+    type="button"
+    (click)="toggleTheme()"
+    [attr.aria-label]="dark() ? 'Ativar tema claro' : 'Ativar tema escuro'"
+  >
+    {{ dark() ? '☀ Claro' : '☾ Escuro' }}
+  </button>
 </header>
 <main>
-  <div class="heading"><p class="eyebrow">SEU HISTÓRICO, EM UM SÓ LUGAR</p><h1>Minha garagem</h1><p>Cuide dos seus veículos. Acompanhe cada quilômetro.</p></div>
+  @if (updateReady() || updateBroken()) {
+    <aside class="update" role="status">
+      <p>
+        {{
+          updateBroken()
+            ? 'Recarregue para continuar usando o FleetLog.'
+            : 'Uma nova versão do FleetLog está pronta.'
+        }}
+      </p>
+      <button class="theme" type="button" (click)="reload()">
+        {{ updateBroken() ? 'Recarregar' : 'Atualizar agora' }}
+      </button>
+    </aside>
+  }
+  <div class="heading">
+    <p class="eyebrow">SEU HISTÓRICO, EM UM SÓ LUGAR</p>
+    <h1>Minha garagem</h1>
+    <p>Cuide dos seus veículos. Acompanhe cada quilômetro.</p>
+  </div>
   <section class="empty" aria-labelledby="garage-title">
-    <svg viewBox="0 0 80 64" width="80" height="64" fill="none" aria-hidden="true"><path d="M8 30 40 6l32 24M16 25v33h48V25M26 58V34h28v24M26 42h28M26 50h28" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg viewBox="0 0 80 64" width="80" height="64" fill="none" aria-hidden="true">
+      <path
+        d="M8 30 40 6l32 24M16 25v33h48V25M26 58V34h28v24M26 42h28M26 50h28"
+        stroke="currentColor"
+        stroke-width="3"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
     <h2 id="garage-title">Uma garagem pronta para começar</h2>
-    <p>A base do FleetLog está em construção. O cadastro de veículos e o acesso da família chegam nas próximas etapas.</p>
+    <p>
+      A base do FleetLog está em construção. O cadastro de veículos e o acesso da família chegam nas
+      próximas etapas.
+    </p>
     <span class="status">Configuração inicial</span>
   </section>
   <router-outlet />

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,7 +18,11 @@ import (
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "healthcheck" {
 		client := http.Client{Timeout: 3 * time.Second}
-		resp, err := client.Get("http://127.0.0.1" + env("HTTP_ADDR", ":8080") + "/healthz")
+		url, err := healthURL(env("HTTP_ADDR", ":8080"))
+		if err != nil {
+			os.Exit(1)
+		}
+		resp, err := client.Get(url)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -39,12 +44,14 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 	// Reserve the API namespace so errors never become HTML responses.
-	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
+	apiNotFound := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Cache-Control", "no-store")
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]string{"error": "endpoint not implemented"})
-	})
+	}
+	mux.HandleFunc("/api/", apiNotFound)
+	mux.HandleFunc("/api", apiNotFound)
 	mux.Handle("/", httpserver.SPA(os.DirFS(directory)))
 	server := &http.Server{Addr: env("HTTP_ADDR", ":8080"), Handler: mux,
 		ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second,
@@ -64,6 +71,19 @@ func main() {
 		slog.Error("server failed", "error", err)
 		os.Exit(1)
 	}
+}
+
+func healthURL(address string) (string, error) {
+	host, port, err := net.SplitHostPort(address)
+	if err != nil {
+		return "", err
+	}
+	if host == "" || host == "0.0.0.0" {
+		host = "127.0.0.1"
+	} else if host == "::" {
+		host = "::1"
+	}
+	return "http://" + net.JoinHostPort(host, port) + "/healthz", nil
 }
 
 func env(key, fallback string) string {

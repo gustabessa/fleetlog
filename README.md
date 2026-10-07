@@ -25,6 +25,16 @@ go test ./...
 go vet ./...
 ```
 
+Para os testes de navegador (Chromium desktop e mobile):
+
+```sh
+cd web
+npx playwright install --with-deps chromium
+npm run test:e2e
+```
+
+O comando faz o build de produção e inicia o servidor Go na porta local 4173, servindo uma cópia temporária do bundle. Requer Go no PATH; alternativamente, informe `GO_BIN=/caminho/para/go`. Os testes verificam temas, layout, rotas, manifest, service worker, API sem cache e atualização de versão. Artefatos ficam em `web/test-results/`, fora do Git.
+
 ## Docker e Dokploy
 
 ```sh
@@ -54,4 +64,6 @@ OIDC e S3/RustFS terão documentação e variáveis quando suas integrações fo
 
 O service worker guarda apenas arquivos do aplicativo e ícones. APIs e imagens privadas não entram no cache; operações de domínio continuarão online. O servidor revalida arquivos e não usa fallback HTML para assets ausentes ou para `/api/`. Cada imagem Docker contém um build completo, evitando publicação parcial do bundle.
 
-Validação em navegador de instalação/atualização PWA e execução Docker ainda pendentes; ver TODO.md.
+Quando uma nova versão está pronta, a interface oferece **Atualizar agora**; a página só recarrega após o clique. Um estado irrecuperável do service worker oferece **Recarregar**. Rotas que ainda não existem voltam para a garagem.
+
+Service worker e atualização validados em Chromium automatizado desktop/mobile, via localhost. Execução Docker, HTTPS no Dokploy e instalação pelo sistema operacional ainda pendentes; ver [checklist de implantação](docs/deployment-checklist.md).

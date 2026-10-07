@@ -3,5 +3,8 @@
 web/node_modules
 web/dist
 web/.angular
+web/.e2e-dist
+web/test-results
+web/playwright-report
 bin
 *.log

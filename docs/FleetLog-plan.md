@@ -4,7 +4,7 @@ Atualizado em 2026-10-07. Status: implementação incremental iniciada; andament
 
 ## Objetivo confirmado
 
-Aplicação inspirada no LubeLogger, com bastante simplificação e interfaces modernas. Foco pessoal e familiar, podendo atender uma frota sem priorizar ferramentas empresariais.
+Sistema para gestão de veículos, com recursos simplificados e interfaces modernas. Foco pessoal e familiar, podendo atender uma frota sem priorizar ferramentas empresariais.
 
 ## Decisões confirmadas
 
@@ -24,7 +24,7 @@ Aplicação inspirada no LubeLogger, com bastante simplificação e interfaces m
 
 ## Home — requisito confirmado
 
-A tela inicial é uma listagem visual dos veículos da garagem, com imagem de cada veículo, inspirada no LubeLogger. Ao selecionar um veículo, abrir sua tela de detalhes. Direção visual do protótipo aprovada: cards responsivos com imagem, nome/modelo e informações essenciais. Badge de km em posição padronizada, no canto superior esquerdo da imagem. Não exibir BRL junto ao nome do usuário no cabeçalho.
+A tela inicial é uma listagem visual dos veículos da garagem, com imagem de cada veículo. Ao selecionar um veículo, abrir sua tela de detalhes. Direção visual do protótipo aprovada: cards responsivos com imagem, nome/modelo e informações essenciais. Badge de km em posição padronizada, no canto superior esquerdo da imagem. Não exibir BRL junto ao nome do usuário no cabeçalho.
 
 ## Tela do veículo — requisitos confirmados
 
@@ -68,7 +68,7 @@ Proposta de campos: veículo, data, odômetro e descrição. Os dois modos de va
 
 ## Abastecimentos — requisitos confirmados
 
-- Registrar preço, litros e odômetro em fluxo semelhante ao LubeLogger.
+- Registrar preço, litros e odômetro em um fluxo simples de lançamento de abastecimentos.
 - Métricas em km/L entre abastecimentos e histórico de consumo do veículo.
 
 ### Proposta de cálculo — ainda não aprovada
@@ -135,7 +135,7 @@ Fontes consultadas em 2026-10-07:
 - Como apresentar totais de uma manutenção com preços em moedas diferentes? Seleção de moeda em toda entrada de preço já confirmada.
 - Integração OIDC já na primeira versão ou posteriormente?
 - Imagens/anexos iniciais: veículos, itens, manutenção, comprovantes?
-- Idioma, lembretes, outras despesas e importação do LubeLogger.
+- Idioma, lembretes, outras despesas e importação de dados de outros sistemas de gestão de veículos.
 - Repositório criado; base executável em implementação.
 
 ## Backlog de melhorias
@@ -160,7 +160,7 @@ Separar decisões confirmadas, propostas e questões em aberto. Não transformar
 
 - 2026-10-07: adicionadas notas/informações do veículo, incluindo chassi e RENAVAM com cópia em um clique, e lançamento de abastecimento pelo contexto da tela do veículo.
 
-- 2026-10-07: definida home como listagem de veículos com imagens, inspirada no LubeLogger.
+- 2026-10-07: definida home como listagem de veículos com imagens.
 
 - 2026-10-07: confirmados custos com documentação, classificação dos custos por tipo e gráficos de gastos.
 
