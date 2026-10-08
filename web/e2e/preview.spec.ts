@@ -251,3 +251,74 @@ test('dialog mantém cabeçalho e ações fixos enquanto o conteúdo rola', asyn
   await dialog.getByRole('button', { name: 'Fechar Escolha o tema', exact: true }).click();
   await expect(dialog).not.toBeVisible();
 });
+
+test('instalação PWA orienta, chama o prompt e oculta após instalar', async ({ page }) => {
+  await page.route('**/api/auth/me', (route) => route.fulfill({ status: 401, json: {} }));
+  await page.goto('/');
+  const install = page.getByRole('button', { name: 'Instalar FleetLog', exact: true });
+  await install.click();
+  await expect(page.getByRole('dialog', { name: 'Instalar FleetLog' })).toBeVisible();
+  await page.getByRole('button', { name: 'Entendi', exact: true }).click();
+  await page.evaluate(() => {
+    const event = new Event('beforeinstallprompt', { cancelable: true });
+    Object.assign(event, {
+      prompt: async () => {
+        (window as Window & { promptCalled?: boolean }).promptCalled = true;
+        return { outcome: 'accepted' };
+      },
+    });
+    window.dispatchEvent(event);
+  });
+  await install.click();
+  expect(
+    await page.evaluate(() => (window as Window & { promptCalled?: boolean }).promptCalled),
+  ).toBe(true);
+  await page.evaluate(() => window.dispatchEvent(new Event('appinstalled')));
+  await expect(install).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('PWA standalone não exibe botão de instalar', async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = window.matchMedia.bind(window);
+    window.matchMedia = (query: string) => {
+      const result = original(query);
+      if (query.includes('display-mode: standalone'))
+        Object.defineProperty(result, 'matches', { value: true });
+      return result;
+    };
+  });
+  await page.route('**/api/auth/me', (route) => route.fulfill({ status: 401, json: {} }));
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Entre na sua garagem' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Instalar FleetLog', exact: true })).toHaveCount(0);
+});
+
+test('calendário escolhe posição pelo espaço visível da tela', async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 700 });
+  await page.route('**/api/auth/me', (route) => route.fulfill({ status: 401, json: {} }));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Explorar prévia da garagem' }).click();
+  await page.getByRole('button', { name: 'Custos', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Custos', exact: true })).toBeVisible();
+  const picker = page.locator('fl-date-range');
+  await picker.evaluate((el) => {
+    const trigger = el.querySelector('.trigger')!;
+    const top = trigger.getBoundingClientRect().top;
+    window.scrollBy(0, top - 560);
+  });
+  await picker.locator('.trigger').click();
+  const calendar = picker.locator('.calendar');
+  await expect(calendar).toHaveAttribute('data-placement', 'top');
+  let bounds = await calendar.boundingBox();
+  expect(bounds!.y).toBeGreaterThanOrEqual(0);
+  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(700);
+  await picker.getByRole('button', { name: 'Fechar', exact: true }).click();
+  await picker.evaluate((el) =>
+    window.scrollBy(0, el.querySelector('.trigger')!.getBoundingClientRect().top - 100),
+  );
+  await picker.locator('.trigger').click();
+  await expect(calendar).toHaveAttribute('data-placement', 'bottom');
+  bounds = await calendar.boundingBox();
+  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(700);
+});

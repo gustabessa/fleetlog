@@ -12,3 +12,4 @@ export { FlDateRange } from './date-range';
 export { FlVehicleSelect } from './vehicle-select';
 export { FlThemePicker } from './theme-picker';
 export { FlDialog } from './dialog';
+export { FlInstallPwa } from './install-pwa';

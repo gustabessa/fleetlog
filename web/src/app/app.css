@@ -15,6 +15,7 @@
   gap: var(--space-3);
   color: var(--text);
   text-decoration: none;
+  margin-right: auto;
 }
 .mark {
   background: var(--accent);
@@ -26,13 +27,12 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  margin-left: auto;
   font: var(--font-label);
 }
-.theme-toggle {
+fl-install-pwa {
   margin-left: auto;
 }
-.account + fl-theme-picker {
+.account + fl-install-pwa {
   margin-left: 0;
 }
 main {
@@ -140,4 +140,8 @@ footer {
     flex-direction: column;
     gap: var(--space-1);
   }
+}
+
+.topbar fl-theme-picker {
+  margin-left: 0;
 }

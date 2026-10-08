@@ -62,3 +62,5 @@ Catálogo de nomes em `ui/themes.ts`. O botão percorre claro/escuro de cada pal
 O ciclo de cliques foi substituído por `fl-theme-picker`: janela modal nativa com dez amostras, modos claro/escuro e seleção imediata persistida no navegador. Recebe palette/dark e emite select. As amostras usam os mesmos tokens da paleta, sem duplicar hexadecimais.
 
 - `fl-dialog`: modal nativo reutilizável com title, corpo projetado rolável e slot `[flDialogFooter]`. Cabeçalho/título/X e rodapé permanecem fixos. Métodos show()/close(), evento closed; mantém foco/modalidade nativos, Escape e fechamento por backdrop. FlThemePicker usa este componente.
+
+- `fl-install-pwa`: ação de instalar no header, oculta quando executado como app; usa prompt nativo capturado ou FlDialog com instruções do navegador. Referência: [beforeinstallprompt no MDN](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeinstallprompt_event).

@@ -252,3 +252,7 @@ Seletor de tema em janela modal reutilizável FlThemePicker: dez amostras visuai
 Paletas adicionais: Preto e cinza (mono) e Petróleo e cobre (copper), com versões clara/escura. Total: 12 paletas / 24 combinações; build e seleção/persistência desktop/mobile aprovados.
 
 Dialog extraído em FlDialog reutilizável, com cabeçalho/rodapé fixos e corpo rolável. Seletor de temas usa projeção de conteúdo/ações. Build e quatro testes de seleção/persistência e posição fixa durante rolagem aprovados desktop/mobile.
+
+Instalação PWA: FlInstallPwa no header fora do modo standalone/fullscreen/minimal-ui e Safari standalone. Usa beforeinstallprompt quando disponível; fallback de orientação em FlDialog e instruções Safari/iOS. Oculta ao receber appinstalled; listeners removidos no destroy. Build aprovado; quatro testes desktop/mobile com prompt e display-mode simulados aprovados. Instalação real/HTTPS ainda exige validação no dispositivo.
+
+Range picker: posicionamento medido pela viewport visível (inclui visualViewport), abre acima quando não cabe abaixo. Caso não caiba inteiro, limita altura ao lado com mais espaço e usa scroll interno. Reposiciona em scroll/resize e mudança de mês; alinhamento horizontal limitado à tela. Build e oito testes desktop/mobile de posicionamento, seleção e fechamento aprovados.

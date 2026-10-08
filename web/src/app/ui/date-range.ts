@@ -7,6 +7,7 @@ import {
   ElementRef,
   inject,
   DestroyRef,
+  afterEveryRender,
 } from '@angular/core';
 import { FlButton } from './button';
 @Component({
@@ -94,7 +95,9 @@ import { FlButton } from './button';
       width: 320px;
       max-width: calc(100vw - 64px);
       padding: var(--space-4);
-      margin-top: var(--space-2);
+      margin-top: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       border: 1px solid var(--line);
       border-radius: var(--radius-card);
       background: var(--surface);
@@ -161,7 +164,17 @@ export class FlDateRange {
   constructor() {
     const dismiss = (event: PointerEvent) => this.outside(event);
     document.addEventListener('pointerdown', dismiss, true);
-    inject(DestroyRef).onDestroy(() => document.removeEventListener('pointerdown', dismiss, true));
+    const reposition = () => this.positionCalendar();
+    afterEveryRender(reposition);
+    window.addEventListener('resize', reposition);
+    window.addEventListener('scroll', reposition, true);
+    window.visualViewport?.addEventListener('resize', reposition);
+    inject(DestroyRef).onDestroy(() => {
+      document.removeEventListener('pointerdown', dismiss, true);
+      window.removeEventListener('resize', reposition);
+      window.removeEventListener('scroll', reposition, true);
+      window.visualViewport?.removeEventListener('resize', reposition);
+    });
   }
   readonly weekdays = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
   readonly monthLabel = computed(() =>
@@ -191,6 +204,30 @@ export class FlDateRange {
       };
     });
   });
+  private positionCalendar() {
+    if (!this.open()) return;
+    const host = this.element.nativeElement;
+    const calendar = host.querySelector<HTMLElement>('.calendar');
+    const trigger = host.querySelector<HTMLElement>('.trigger');
+    if (!calendar || !trigger) return;
+    const anchor = trigger.getBoundingClientRect();
+    const origin = host.getBoundingClientRect();
+    const viewport = window.visualViewport;
+    const viewportTop = viewport?.offsetTop ?? 0;
+    const viewportBottom = viewportTop + (viewport?.height ?? window.innerHeight);
+    const gap = 8;
+    const below = Math.max(0, viewportBottom - anchor.bottom - gap - 8);
+    const above = Math.max(0, anchor.top - viewportTop - gap - 8);
+    calendar.style.maxHeight = 'none';
+    const naturalHeight = calendar.getBoundingClientRect().height;
+    const upwards = naturalHeight > below && (naturalHeight <= above || above > below);
+    const height = Math.min(naturalHeight, upwards ? above : below);
+    calendar.style.maxHeight = `${height}px`;
+    calendar.style.top = `${upwards ? anchor.top - origin.top - gap - height : anchor.bottom - origin.top + gap}px`;
+    const width = calendar.getBoundingClientRect().width;
+    calendar.style.left = `${Math.max(8, Math.min(anchor.left, window.innerWidth - width - 8)) - origin.left}px`;
+    calendar.dataset['placement'] = upwards ? 'top' : 'bottom';
+  }
   private currentMonth() {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;

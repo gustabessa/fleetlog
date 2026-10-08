@@ -18,6 +18,7 @@ import {
   FlDateRange,
   FlVehicleSelect,
   FlThemePicker,
+  FlInstallPwa,
 } from './ui';
 import { LogEntry } from './ui/entry-list';
 import { SwUpdate } from '@angular/service-worker';
@@ -40,6 +41,7 @@ import { SwUpdate } from '@angular/service-worker';
     FlDateRange,
     FlVehicleSelect,
     FlThemePicker,
+    FlInstallPwa,
   ],
   templateUrl: './app.html',
   styleUrls: ['./app.css', './preview.css'],
