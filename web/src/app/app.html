@@ -3,17 +3,12 @@
   @if (user(); as currentUser) {
     <div class="account">
       <span>{{ currentUser.username }}</span
-      ><button class="theme" type="button" (click)="logout()" [disabled]="busy()">Sair</button>
+      ><button flButton variant="secondary" type="button" (click)="logout()" [loading]="busy()">
+        Sair
+      </button>
     </div>
   }
-  <button
-    class="theme theme-icon"
-    type="button"
-    (click)="toggleTheme()"
-    [attr.aria-label]="dark() ? 'Ativar tema claro' : 'Ativar tema escuro'"
-  >
-    <span aria-hidden="true">{{ dark() ? '☀' : '☾' }}</span>
-  </button>
+  <fl-theme-picker [palette]="palette()" [dark]="dark()" (select)="selectTheme($event)" />
 </header>
 <main>
   @if (updateReady() || updateBroken()) {
@@ -25,7 +20,7 @@
             : 'Uma nova versão do FleetLog está pronta.'
         }}
       </p>
-      <button class="theme" type="button" (click)="reload()">
+      <button flButton variant="secondary" type="button" (click)="reload()">
         {{ updateBroken() ? 'Recarregar' : 'Atualizar agora' }}
       </button>
     </aside>
@@ -36,167 +31,137 @@
   @if (loading()) {
     <p role="status">Carregando seu acesso…</p>
   } @else if (!user() && !preview()) {
-    <section class="login" aria-labelledby="login-title">
-      <p class="eyebrow">BEM-VINDO AO FLEETLOG</p>
+    <section flCard class="login" aria-labelledby="login-title">
+      <p class="fl-eyebrow">BEM-VINDO AO FLEETLOG</p>
       <h1 id="login-title">Entre na sua garagem</h1>
       <p>Acompanhe seus veículos em um só lugar.</p>
-      <form (ngSubmit)="login()">
-        <label for="username">Usuário</label>
-        <input
-          id="username"
-          name="username"
-          [(ngModel)]="username"
-          autocomplete="username"
-          required
-          maxlength="64"
-        />
-        <label for="password">Senha</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          [(ngModel)]="password"
-          autocomplete="current-password"
-          required
-        />
-        <button class="theme" type="submit" [disabled]="busy()">
+      <form ngNativeValidate (ngSubmit)="login()">
+        <fl-field controlId="username" label="Usuário">
+          <input
+            flInput
+            id="username"
+            name="username"
+            [(ngModel)]="username"
+            autocomplete="username"
+            required
+            maxlength="64"
+          /> </fl-field
+        ><fl-field controlId="password" label="Senha">
+          <input
+            flInput
+            id="password"
+            name="password"
+            type="password"
+            [(ngModel)]="password"
+            autocomplete="current-password"
+            required
+          /> </fl-field
+        ><button flButton variant="primary" size="lg" type="submit" [loading]="busy()">
           {{ busy() ? 'Entrando…' : 'Entrar' }}
         </button>
       </form>
-      <button class="preview-link" type="button" (click)="preview.set(true)">
+      <button
+        flButton
+        class="preview-link"
+        variant="ghost"
+        type="button"
+        (click)="preview.set(true)"
+      >
         Explorar prévia da garagem <span aria-hidden="true">→</span>
       </button>
     </section>
   } @else {
     @if (!preview()) {
-      <div class="heading">
-        <p class="eyebrow">SEU HISTÓRICO, EM UM SÓ LUGAR</p>
-        <h1>Minha garagem</h1>
-        <p>Cuide dos seus veículos. Acompanhe cada quilômetro.</p>
-      </div>
-      <section class="empty" aria-labelledby="garage-title">
+      <fl-page-heading title="Minha garagem">Veículos cadastrados na sua garagem.</fl-page-heading>
+      <section flCard class="empty" aria-labelledby="garage-title">
         <div class="garage-symbol" aria-hidden="true">⌂</div>
         <h2 id="garage-title">Uma garagem pronta para começar</h2>
         <p>
           O cadastro de veículos chega na próxima etapa. Explore a prévia para conhecer as próximas
           telas.
         </p>
-        <button class="primary" type="button" (click)="preview.set(true)">
+        <button flButton variant="primary" type="button" (click)="preview.set(true)">
           Explorar próximas telas <span aria-hidden="true">→</span>
         </button>
       </section>
     } @else {
       <aside class="demo-banner">
         <span><strong>Prévia do produto</strong> · Dados de exemplo para você explorar.</span
-        ><button type="button" class="text-button" (click)="closePreview()">Sair da prévia</button>
+        ><button flButton type="button" variant="ghost" size="sm" (click)="closePreview()">
+          Sair da prévia
+        </button>
       </aside>
       <nav class="tabs" aria-label="Navegação da prévia">
         <button
+          flButton
           type="button"
-          [class.active]="screen() === 'garage' || screen() === 'vehicle'"
+          variant="tab"
+          [attr.aria-current]="screen() === 'garage' || screen() === 'vehicle' ? 'page' : null"
           (click)="screen.set('garage')"
         >
           Garagem
         </button>
         <button
+          flButton
           type="button"
-          [class.active]="screen() === 'history'"
+          variant="tab"
+          [attr.aria-current]="screen() === 'history' ? 'page' : null"
           (click)="screen.set('history')"
         >
           Histórico
         </button>
-        <button type="button" [class.active]="screen() === 'costs'" (click)="screen.set('costs')">
+        <button
+          flButton
+          type="button"
+          variant="tab"
+          [attr.aria-current]="screen() === 'costs' ? 'page' : null"
+          (click)="screen.set('costs')"
+        >
           Custos
         </button>
       </nav>
       @if (screen() === 'garage') {
-        <div class="heading">
-          <p class="eyebrow">TUDO PRONTO PARA A PRÓXIMA VIAGEM</p>
-          <h1>Minha garagem</h1>
-          <p>Do primeiro trajeto à próxima revisão. Tudo aqui.</p>
-        </div>
-        <div class="stats">
-          <article>
-            <span>Na garagem</span><strong>2 <small>veículos</small></strong>
-          </article>
-          <article><span>Despesas em outubro</span><strong>R$ 1.329,40</strong></article>
-          <article>
-            <span>Rodados em outubro</span><strong>1.284 <small>km</small></strong>
-          </article>
-        </div>
-        <div class="section-heading">
-          <h2>Seus veículos</h2>
-          <span class="muted">2 ativos</span>
-        </div>
+        <fl-page-heading title="Minha garagem"></fl-page-heading>
+
         <section class="vehicle-grid" aria-label="Veículos de exemplo">
           @for (vehicle of vehicles; track vehicle.plate; let i = $index) {
-            <button class="vehicle-card" type="button" (click)="openVehicle(i)">
-              <div class="car-art" [class.teal]="vehicle.color === 'teal'">
-                <span class="status">Em uso</span
-                ><svg viewBox="0 0 320 140" fill="none" aria-hidden="true">
-                  <path
-                    d="M40 88 66 77l29-39h98l48 39 30 9 9 26H31l9-24Z"
-                    fill="currentColor"
-                    opacity=".85"
-                  />
-                  <path d="m103 46-23 31h137l-31-31h-83Z" fill="var(--surface)" opacity=".8" />
-                  <path d="M144 46v31" stroke="currentColor" stroke-width="5" />
-                  <circle cx="83" cy="111" r="21" fill="var(--text)" />
-                  <circle cx="83" cy="111" r="10" fill="var(--surface)" />
-                  <circle cx="233" cy="111" r="21" fill="var(--text)" />
-                  <circle cx="233" cy="111" r="10" fill="var(--surface)" />
-                  <path
-                    d="M37 94h23m191 0h23"
-                    stroke="var(--surface)"
-                    stroke-width="6"
-                    stroke-linecap="round"
-                  />
-                </svg>
-              </div>
-              <div class="vehicle-body">
-                <span class="plate">{{ vehicle.plate }}</span>
-                <h2>{{ vehicle.name }}</h2>
-                <p>{{ vehicle.version }}</p>
-                <div class="vehicle-bottom">
-                  <span>{{ vehicle.km }} <small>km</small></span
-                  ><span class="accent">Ver veículo →</span>
-                </div>
-              </div>
-            </button>
+            <fl-vehicle-card [vehicle]="vehicle" (activate)="openVehicle(i)" />
           }
         </section>
+        <div class="stats">
+          <fl-stat label="Na garagem" value="2" unit="veículos" />
+          <fl-stat label="Despesas em outubro" value="R$ 1.329,40" />
+          <fl-stat label="Rodados em outubro" value="1.284" unit="km" />
+        </div>
         <div class="tip">
           <span aria-hidden="true">↗</span>
           <div>
-            <strong>Seu histórico começa a cada quilômetro.</strong>
-            <p>Abastecimentos, manutenção e documentos conectados ao seu veículo.</p>
+            <strong>Registros por veículo</strong>
+            <p>Abra um veículo para consultar seus dados e lançamentos.</p>
           </div>
         </div>
       } @else if (screen() === 'vehicle') {
         @let vehicle = vehicles[selected()];
-        <button class="text-button back" type="button" (click)="screen.set('garage')">
+        <button
+          flButton
+          class="back"
+          variant="ghost"
+          size="sm"
+          type="button"
+          (click)="screen.set('garage')"
+        >
           ← Voltar à garagem
         </button>
-        <div class="heading">
-          <p class="eyebrow">{{ vehicle.plate }} · EM USO</p>
-          <h1>{{ vehicle.name }}</h1>
-          <p>{{ vehicle.version }}</p>
-        </div>
+        <fl-page-heading title="{{ vehicle.name }}">{{ vehicle.version }}</fl-page-heading>
         <div class="stats">
-          <article>
-            <span>Odômetro atual</span><strong>{{ vehicle.km }} <small>km</small></strong>
-          </article>
-          <article>
-            <span>Despesas em outubro</span><strong>{{ vehicle.total }}</strong>
-          </article>
-          <article>
-            <span>Consumo médio</span><strong>{{ vehicle.consumption }}</strong>
-          </article>
+          <fl-stat label="Odômetro atual" value="{{ vehicle.km }}" unit="km" />
+          <fl-stat label="Despesas em outubro" value="{{ vehicle.total }}" />
+          <fl-stat label="Consumo médio" value="{{ vehicle.consumption }}" />
         </div>
-        <section class="panel">
+        <fl-card class="panel">
           <div class="section-heading">
             <h2>Informações do veículo</h2>
-            <span class="status">Exemplo</span>
+            <fl-badge>Exemplo</fl-badge>
           </div>
           <dl class="vehicle-info">
             <div>
@@ -216,7 +181,25 @@
               <dd>Família</dd>
             </div>
           </dl>
-        </section>
+        </fl-card>
+        <fl-card class="panel"
+          ><div class="tag-settings">
+            <fl-field
+              controlId="vehicle-tag-color"
+              label="Cor da tag do veículo"
+              hint="Usada no histórico e nos custos. Alteração nesta prévia."
+              ><input
+                flInput
+                id="vehicle-tag-color"
+                type="color"
+                [value]="vehicleTagColors()[selected()]"
+                (input)="setTagColor($any($event.target).value)"
+                aria-describedby="vehicle-tag-color-message" /></fl-field
+            ><fl-badge [color]="vehicleTagColors()[selected()]"
+              >{{ vehicle.name }} · {{ vehicle.plate }}</fl-badge
+            >
+          </div></fl-card
+        >
         <div class="tip">
           <span aria-hidden="true">◷</span>
           <div>
@@ -224,72 +207,141 @@
             <p>Lembrete de exemplo para acompanhar os cuidados do veículo.</p>
           </div>
         </div>
-        <section class="panel">
+        <fl-card class="panel">
           <div class="section-heading">
             <h2>Último lançamento</h2>
-            <button class="text-button" type="button" (click)="screen.set('history')">
+            <button
+              flButton
+              variant="ghost"
+              size="sm"
+              type="button"
+              (click)="screen.set('history')"
+            >
               Ver histórico →
             </button>
           </div>
           <p>Abastecimento · Gasolina comum</p>
           <strong>{{ selected() === 0 ? 'R$ 263,50' : 'R$ 223,00' }}</strong>
           <p>05 out. 2026 · {{ vehicle.km }} km</p>
-        </section>
+        </fl-card>
       } @else if (screen() === 'history') {
-        <div class="heading">
-          <p class="eyebrow">CADA CUIDADO TEM UMA HISTÓRIA</p>
-          <h1>Histórico</h1>
-          <p>Os registros de exemplo do Honda Civic, em ordem de data.</p>
-        </div>
-        <section class="panel timeline" aria-label="Lançamentos de exemplo">
-          @for (entry of entries; track entry.title + entry.date) {
-            <article class="entry">
-              <span class="entry-icon" aria-hidden="true">{{
-                entry.kind === 'fuel' ? '↗' : entry.kind === 'service' ? '⚙' : '▤'
-              }}</span>
-              <div>
-                <span class="entry-date">{{ entry.date }} · {{ entry.km }}</span>
-                <h2>{{ entry.title }}</h2>
-                <p>{{ entry.detail }}</p>
-              </div>
-              <strong>{{ entry.value }}</strong>
-            </article>
+        <fl-page-heading title="Histórico"
+          >Os registros de todos os veículos da garagem, em ordem de data.</fl-page-heading
+        >
+        <fl-card class="panel">
+          <div class="history-filters">
+            <fl-field controlId="history-search" label="Buscar"
+              ><input
+                flInput
+                id="history-search"
+                type="search"
+                placeholder="Descrição, veículo ou placa"
+                [ngModel]="historyText()"
+                (ngModelChange)="historyText.set($event)"
+            /></fl-field>
+            <fl-vehicle-select
+              controlId="history-vehicle"
+              [vehicles]="vehicles"
+              [value]="historyVehicle()"
+              (valueChange)="historyVehicle.set($event)"
+            />
+            <fl-field controlId="history-kind" label="Tipo de custo"
+              ><select
+                flInput
+                id="history-kind"
+                [value]="historyKind()"
+                (change)="historyKind.set($any($event.target).value)"
+              >
+                <option value="all">Todos os tipos</option>
+                <option value="fuel">Abastecimentos</option>
+                <option value="service">Manutenção</option>
+                <option value="document">Documentação</option>
+              </select></fl-field
+            >
+            <fl-field controlId="history-price" label="Preço (R$)" [hint]="historyPriceHint()"
+              ><input
+                flInput
+                id="history-price"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Ex.: 250,00"
+                aria-describedby="history-price-message"
+                [ngModel]="historyPrice()"
+                (ngModelChange)="historyPrice.set($event)"
+            /></fl-field>
+            <fl-date-range
+              id="history-period"
+              [from]="historyFrom()"
+              [to]="historyTo()"
+              (rangeChange)="setHistoryRange($event)"
+            />
+          </div>
+          <div class="filter-summary">
+            <span class="muted" role="status">{{ filteredHistory().length }} lançamentos</span
+            ><button flButton variant="ghost" size="sm" (click)="clearHistoryFilters()">
+              Limpar filtros
+            </button>
+          </div>
+          @if (historyRangeInvalid()) {
+            <p class="error" role="alert">
+              A data inicial deve ser anterior ou igual à data final.
+            </p>
           }
-        </section>
+        </fl-card>
+        <fl-card class="panel timeline" aria-label="Lançamentos de exemplo"
+          ><fl-entry-list [entries]="filteredHistory()" [vehicles]="taggedVehicles()"
+        /></fl-card>
       } @else {
-        <div class="heading">
-          <p class="eyebrow">MAIS CLAREZA, MELHORES ESCOLHAS</p>
-          <h1>Custos</h1>
-          <p>Honda Civic · Setembro de 2026 · Valores em reais</p>
+        <fl-page-heading title="Custos"
+          >{{ costVehicleLabel() }} · {{ costPeriodLabel() }} · Valores em reais</fl-page-heading
+        >
+        <div class="cost-filter">
+          <fl-vehicle-select
+            controlId="cost-vehicle"
+            [vehicles]="vehicles"
+            [value]="costVehicle()"
+            (valueChange)="costVehicle.set($event)"
+          />
+          <fl-date-range
+            id="cost-period"
+            [from]="costFrom()"
+            [to]="costTo()"
+            (rangeChange)="setCostRange($event)"
+          />
         </div>
-        <div class="stats">
-          <article><span>Total no período</span><strong>R$ 1.282,90</strong></article>
-          <article><span>Custo por quilômetro</span><strong>R$ 0,86</strong></article>
-          <article>
-            <span>Distância no período</span><strong>1.492 <small>km</small></strong>
-          </article>
+        <div class="stats" aria-live="polite">
+          <fl-stat label="Total no período" [value]="money(costs().total)" />
+          <fl-stat label="Custo por quilômetro" [value]="money(costs().perKm)" />
+          <fl-stat
+            label="Distância estimada no período"
+            [value]="number(costs().distance)"
+            unit="km"
+          />
         </div>
-        <section class="panel">
+        <fl-card class="panel">
           <div class="section-heading">
-            <h2>Para onde foi cada real</h2>
-            <span class="status">Setembro</span>
+            <h2>Custos por categoria</h2>
+            <fl-badge>{{ costPeriodLabel() }}</fl-badge>
           </div>
-          <div class="cost-row">
-            <div><span>Abastecimentos</span><strong>R$ 735,16</strong></div>
-            <div class="bar"><span style="width: 57.3%"></span></div>
-            <small>57,3% do total</small>
+          <fl-pie-chart
+            [categories]="costs().categories"
+            [selected]="costKind()"
+            (choose)="costKind.set($event)"
+          />
+          <p class="muted">Selecione uma fatia para filtrar os lançamentos abaixo.</p>
+        </fl-card>
+        <fl-card class="panel" aria-label="Lançamentos dos custos">
+          <div class="section-heading">
+            <h2>{{ costKindLabel() }}</h2>
+            @if (costKind()) {
+              <button flButton variant="ghost" size="sm" (click)="costKind.set('')">
+                Ver todos os tipos
+              </button>
+            }
           </div>
-          <div class="cost-row">
-            <div><span>Manutenção</span><strong>R$ 380,00</strong></div>
-            <div class="bar"><span style="width: 29.6%"></span></div>
-            <small>29,6% do total</small>
-          </div>
-          <div class="cost-row">
-            <div><span>Documentação</span><strong>R$ 167,74</strong></div>
-            <div class="bar"><span style="width: 13.1%"></span></div>
-            <small>13,1% do total</small>
-          </div>
-        </section>
+          <fl-entry-list [entries]="costEntries()" [vehicles]="taggedVehicles()" />
+        </fl-card>
       }
     }
   }

@@ -135,10 +135,12 @@ Fontes consultadas em 2026-10-07:
 - Como apresentar totais de uma manutenção com preços em moedas diferentes? Seleção de moeda em toda entrada de preço já confirmada.
 - Integração OIDC já na primeira versão ou posteriormente?
 - Imagens/anexos iniciais: veículos, itens, manutenção, comprovantes?
-- Idioma, lembretes, outras despesas e importação de dados de outros sistemas de gestão de veículos.
+- Idioma, lembretes e outras despesas; formato/escopo da importação serão definidos futuramente.
 - Repositório criado; base executável em implementação.
 
 ## Backlog de melhorias
+
+- Importação de histórico de outros sistemas: desejo futuro confirmado; fora da prioridade atual, que é construir o núcleo do produto.
 
 - Uso offline da PWA, incluindo definição de dados disponíveis localmente.
 - Lançamentos offline com sincronização posterior e tratamento de conflitos.

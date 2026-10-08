@@ -1,0 +1,29 @@
+<button class="vehicle-card" type="button" (click)="activate.emit()">
+  <div class="car-art" [class.teal]="vehicle().color === 'teal'">
+    <fl-badge>Em uso</fl-badge
+    ><svg viewBox="0 0 320 140" fill="none" aria-hidden="true">
+      <path d="M40 88 66 77l29-39h98l48 39 30 9 9 26H31l9-24Z" fill="currentColor" opacity=".85" />
+      <path d="m103 46-23 31h137l-31-31h-83Z" fill="var(--surface)" opacity=".8" />
+      <path d="M144 46v31" stroke="currentColor" stroke-width="5" />
+      <circle cx="83" cy="111" r="21" fill="var(--text)" />
+      <circle cx="83" cy="111" r="10" fill="var(--surface)" />
+      <circle cx="233" cy="111" r="21" fill="var(--text)" />
+      <circle cx="233" cy="111" r="10" fill="var(--surface)" />
+      <path
+        d="M37 94h23m191 0h23"
+        stroke="var(--surface)"
+        stroke-width="6"
+        stroke-linecap="round"
+      />
+    </svg>
+  </div>
+  <div class="vehicle-body">
+    <span class="plate">{{ vehicle().plate }}</span>
+    <h2>{{ vehicle().name }}</h2>
+    <p>{{ vehicle().version }}</p>
+    <div class="vehicle-bottom">
+      <span>{{ vehicle().km }} <small>km</small></span
+      ><span class="accent">Ver veículo →</span>
+    </div>
+  </div>
+</button>

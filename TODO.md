@@ -42,7 +42,7 @@ Direção escolhida pelo usuário: Woodpecker self-hosted faz testes/build e pub
 - [x] Validar Compose de produção com CLI, sem iniciar serviços.
 - Orientações de instalação fornecidas no chat; tutorial fora do repositório conforme pedido do usuário.
 - [x] Configurar OAuth App e habilitar repositório no Woodpecker (confirmado pelo usuário).
-- [ ] Enviar pipeline ao remoto e disparar primeiro push em main.
+- [x] Enviar pipeline ao remoto e disparar push em main (commit b19789a); execução da versão atual ainda a conferir.
 - [ ] Instalar Woodpecker no homelab e confirmar agente conectado.
 - [ ] Cadastrar secrets GHCR com evento push; filtro de imagem omitido nesta versão porque o validador rejeita tags com pontos.
 - [ ] Executar primeiro build/publicação e confirmar pacote GHCR.
@@ -54,37 +54,154 @@ Direção escolhida pelo usuário: Woodpecker self-hosted faz testes/build e pub
 
 Pipeline: [.woodpecker/build.yaml](.woodpecker/build.yaml). Produção: [compose.registry.yaml](compose.registry.yaml).
 
-## Etapas seguintes
+## Como acompanhar cada entrega
 
-- [x] PostgreSQL: conexão (pool de 4), migração inicial versionada/transacional e testes de integração.
-- [x] Login local, bootstrap, bcrypt, sessões HttpOnly/Secure, validação de origem/JSON contra CSRF e logout.
-- [ ] Garagem compartilhada, inclusão de familiares e autorização por garagem.
-- [ ] Perfil e moeda padrão, preservando moeda em cada registro.
-- [ ] Cadastro/listagem/detalhes de veículos, compra/venda e informações copiáveis.
-- [ ] Histórico de odômetro com autoria e correções rastreáveis.
-- [ ] Imagens de veículos via S3 privado, com autorização e limites de upload.
-- [ ] Abastecimentos pelo contexto do veículo e histórico de consumo.
-- [ ] Manutenção com total direto ou itens/mão de obra e referências reutilizáveis.
-- [ ] Pesquisa de itens e histórico de preços.
-- [ ] Custos de documentação e outros tipos, sem dupla contabilização.
-- [ ] Gráficos por período/veículo, separados por moeda.
-- [ ] OIDC configurável, identidade pelo par issuer + subject.
-- [ ] Validar implantação no Dokploy, HTTPS e instalação/atualização PWA.
+Ordem técnica proposta: garagem/perfil → veículos/odômetro/imagens → abastecimentos → manutenção/itens → despesas → histórico/gráficos. Definições de produto pendentes devem ser resolvidas antes dos cálculos e regras afetados.
+
+Cada área passa por três estados: **prévia visual → API/persistência integrada → validada**. Marcar funcionalidade como concluída exige salvar dados reais, consultá-los após recarregar, verificar autorização e testar as regras relevantes. Testes com dados mockados validam a interface, não a persistência nem os cálculos do produto.
+
+## Etapa 2 — acesso, garagem e perfil
+
+- [x] Conexão PostgreSQL com pool de 4 e migração inicial transacional/versionada.
+- [x] Primeiro usuário via bootstrap, senha bcrypt e reinício sem recriar conta.
+- [x] Login/logout com sessões persistentes, expiração, rotação e revogação.
+- [x] Cookies HttpOnly/Secure, proteção por origem/JSON e limite de tentativas.
+- [x] Testes de integração de autenticação e testes de navegador antes da refatoração visual.
+- [ ] Reexecutar suíte completa com PostgreSQL após as mudanças de UI/mock/design system.
+- [ ] Criar modelo/migração de garagem e vínculo dos membros com usuários internos.
+- [ ] Definir permissões e forma de inclusão de familiares antes de entregar gestão de membros.
+- [ ] Implementar inclusão/remoção de membros conforme a regra aprovada, com login individual.
+- [ ] Aplicar autorização por garagem em todas as APIs e no acesso a objetos/imagens.
+- [ ] Testar que membros da mesma garagem consultam os mesmos dados e outras garagens não têm acesso.
+- [ ] Implementar perfil com moeda padrão inicial BRL e alteração da preferência.
+- [ ] Fazer seleção de moeda em toda entrada de preço, preenchida pelo perfil.
+- [ ] Guardar moeda e valor decimal no registro; mudar perfil não altera histórico.
+- [ ] Integrar telas de acesso/perfil/garagem ao design system e validar estados de erro/carregamento.
+
+## Etapa 3 — veículos, informações e odômetro
+
+- [ ] Definir campos básicos do cadastro e obrigatoriedade de compra/venda conforme plano.
+- [ ] Criar migrações e API de cadastro, listagem, consulta e edição de veículo vinculado à garagem.
+- [ ] Persistir quilometragem inicial separada do histórico e quilometragem atual.
+- [ ] Registrar data/valor/moeda de compra e venda; proprietários anterior/novo opcionais.
+- [ ] Implementar notas/informações, chassi e RENAVAM; guardar identificadores como texto.
+- [ ] Copiar identificadores com um clique e confirmação visual.
+- [ ] Integrar home com cards/imagens reais, nome/modelo e badge de km no canto superior esquerdo.
+- [ ] Integrar detalhes ao veículo selecionado e manter contexto ao iniciar lançamentos.
+- [ ] Definir arquivamento/venda e política de exclusão de veículo com histórico antes dessas ações.
+- [ ] Definir regra cronológica de odômetro e tratamento de inconsistências/leituras retroativas.
+- [ ] Persistir leituras e suas origens; definir autoria/rastreabilidade de correções conforme decisão aprovada.
+- [ ] Recalcular km atual ao editar/excluir lançamento conforme regras aprovadas, preservando km inicial.
+- [ ] Validar edição, retroatividade, venda e identificadores com zeros iniciais em testes de integração.
+
+## Etapa 3 — imagens dos veículos
+
+- [ ] Implementar cliente S3 configurável (endpoint, região, bucket, credenciais e path-style).
+- [ ] Persistir metadados no PostgreSQL e objetos em bucket privado.
+- [ ] Definir formatos/tamanho máximo e validar conteúdo de upload.
+- [ ] Implementar upload, leitura autorizada, substituição e remoção de imagem de veículo.
+- [ ] Tratar falhas entre banco e S3 sem referências quebradas ou objetos abandonados.
+- [ ] Mostrar placeholder quando veículo não tem imagem.
+- [ ] Validar operações necessárias em uma versão fixada do RustFS.
+- [ ] Documentar variáveis reais do cliente e configuração separada do servidor S3.
+- [ ] Definir outros anexos (itens/manutenção/comprovantes) separadamente; só imagens de veículo entram nesta etapa.
+
+## Etapa 4 — abastecimentos e consumo
+
+- [ ] Aprovar campos complementares e cálculo de consumo antes de implementar métricas.
+- [ ] Criar modelo/API para data, litros, preço/moeda e odômetro do abastecimento.
+- [ ] Abrir formulário na tela do veículo com veículo já definido, sem nova seleção.
+- [ ] Definir relação entre total e preço por litro, precisão e arredondamento.
+- [ ] Implementar cadastro, consulta, edição e exclusão com atualização coerente de odômetro/custos.
+- [ ] Integrar formulário e histórico de abastecimentos com dados reais.
+- [ ] Implementar km/L e histórico somente para intervalos válidos conforme método aprovado.
+- [ ] Se aprovado tanque cheio a tanque cheio: considerar parciais intermediários e primeiro registro como referência.
+- [ ] Definir como indicar dados insuficientes, abastecimentos ausentes e leituras inválidas.
+- [ ] Testar retroatividade/edição/exclusão e evitar métricas enganosas ou dupla contabilização.
+
+## Etapa 5 — manutenção, itens e preços
+
+- [ ] Aprovar composição de moedas diferentes, descontos e ajustes.
+- [ ] Criar modelo/API de manutenção com veículo, data e campos aprovados de descrição/odômetro.
+- [ ] Implementar modo total direto, sem exigir cadastro de itens/suprimentos.
+- [ ] Implementar modo detalhado com peças e mão de obra somadas pelo sistema.
+- [ ] Tornar itens opcionais; definir troca entre modos sem contabilizar os dois totais.
+- [ ] Definir identificação/unidade/escopo do item reutilizável antes da migração de catálogo.
+- [ ] Implementar referência reutilizável separada da ocorrência e seu preço histórico, se aprovado esse modelo.
+- [ ] Reaproveitar item de revisão anterior em nova revisão sem modificar registros passados.
+- [ ] Selecionar moeda em cada preço de peça, mão de obra e total, conforme regras aprovadas.
+- [ ] Implementar cadastro, consulta, edição/exclusão e integração com odômetro/custos.
+- [ ] Buscar item e consultar/comparar preços entre revisões com data, veículo e moeda.
+- [ ] Integrar formulários e histórico real; testar composição do total e preservação de preços históricos.
+
+## Etapa 6 — documentação e outras despesas
+
+- [ ] Definir tipos/subtipos iniciais e necessidade de personalização.
+- [ ] Criar modelo/API para data, veículo, descrição, tipo e valor/moeda de despesa.
+- [ ] Permitir lançar impostos, licenciamento e outras taxas de documentação.
+- [ ] Implementar cadastro, consulta, edição e exclusão, com autorização por garagem.
+- [ ] Integrar lançamentos de documentação ao histórico e às análises.
+- [ ] Fazer manutenção e abastecimento alimentarem gastos automaticamente, sem despesa duplicada.
+- [ ] Testar que itens/mão de obra são detalhamento, não somados novamente ao total da manutenção.
+
+## Etapa 7 — histórico e análises
+
+- [ ] Confirmar critérios de filtros/gráficos a partir da prévia antes do contrato de API.
+- [ ] Integrar histórico unificado de abastecimentos, manutenções e despesas com dados persistidos.
+- [ ] Implementar busca, filtros aprovados por veículo/tipo/período, ordenação e paginação.
+- [ ] Definir inclusão de dias-limite, fuso/data dos registros e comportamento de intervalo inválido.
+- [ ] Confirmar se filtro por preço da prévia usa tolerância de ±10%; considerar moeda no filtro real.
+- [ ] Entregar gráficos por tipos de gasto e demais análises aprovadas, com filtros coerentes com a lista.
+- [ ] Separar totais/comparações por moeda; sem conversão cambial automática.
+- [ ] Calcular indicadores a partir de registros reais; não transportar distâncias estimadas do mock para métricas reais.
+- [ ] Validar atualização de listas/gráficos após criação, edição e exclusão de registros.
+- [ ] Testar períodos vazios, diferentes moedas, duplicação de gastos e autorização dos agregados.
+
+## OIDC — entrega ainda a definir
+
+- [x] Reservar identidades externas pelo par issuer + subject, relacionadas ao usuário interno.
+- [ ] Definir momento de entrega, convivência com login local e vinculação explícita de contas.
+- [ ] Implementar discovery/issuer, client ID, secret quando aplicável, scopes e callback configuráveis.
+- [ ] Validar state, nonce, PKCE e tokens no fluxo apropriado; reutilizar sessão interna após autenticação.
+- [ ] Tratar troca de issuer sem associação automática por e-mail.
+- [ ] Documentar configurações efetivas e testar com provedor substituível.
+
+## Validação de cada entrega
+
+- [ ] Formularios com seleção de moeda, validação e mensagens coerentes entre frontend/backend.
+- [ ] Estados de carregamento, vazio, erro e sucesso; impedir envios duplicados.
+- [ ] Confirmar persistência após recarga e autorização também em chamadas diretas à API.
+- [ ] Validar navegação responsiva, labels, teclado, temas e operações online da PWA.
+- [ ] Testes relevantes de regras de negócio e integração PostgreSQL/S3 quando envolvidos.
+- [ ] Atualizar .env.example/README/TODO conforme novos contratos e parâmetros reais.
 
 ## Decisões de produto pendentes
 
-- [ ] Permissões dos familiares e fluxo de inclusão.
-- [ ] Regras de odômetro, correção e exclusão de lançamentos.
-- [ ] Compra/venda: campos obrigatórios e arquivamento de veículos vendidos.
-- [ ] Consumo: aprovar ou ajustar método tanque cheio a tanque cheio.
-- [ ] Descontos, composição da manutenção e moedas diferentes.
-- [ ] Unidade/escopo dos itens reutilizáveis e categorias personalizáveis.
-- [ ] Momento de entrega OIDC, idioma e escopo inicial de anexos.
+- [ ] Permissões dos familiares, inclusão/remoção e propriedade da garagem.
+- [ ] Campos básicos do veículo; obrigatoriedade de compra/venda e arquivamento/exclusão com histórico.
+- [ ] Formato/quantidade de notas e suporte a campos personalizados.
+- [ ] Regras cronológicas de odômetro, correção e exclusão de lançamentos.
+- [ ] Método de consumo, campos de combustível/tanque cheio e intervalos inválidos.
+- [ ] Manutenção: descontos, ajustes, moedas diferentes e troca entre modos.
+- [ ] Itens: identificação, unidade e compartilhamento entre veículos/garagem.
+- [ ] Tipos/subtipos de custos e personalização.
+- [ ] Filtros/gráficos finais, inclusive filtro de preço e métricas de distância da prévia.
+- [ ] Momento de entrega OIDC, idioma e escopo de anexos além de imagens do veículo.
 
-## Backlog
+## Complementos propostos — prioridade/escopo a aprovar
 
-- [ ] Offline e sincronização com conflitos.
-- [ ] Lembretes e importação de dados de outros sistemas de gestão de veículos, sujeitos a definição de escopo.
+Estas tarefas registram lacunas operacionais identificadas na revisão; não alteram os requisitos confirmados do plano.
+
+- [ ] Definir troca de senha local e recuperação administrativa de acesso.
+- [ ] Planejar backup/restauração de PostgreSQL e S3 e executar restauração de teste.
+- [ ] Definir exportação portátil de dados, formato e inclusão de anexos.
+- [ ] Avaliar lembretes por data/km e recorrência; entrega e notificações ainda a definir.
+
+## Backlog — depois do núcleo do produto
+
+- [ ] Importar histórico de outros sistemas: desejo futuro confirmado pelo usuário, sem prioridade na versão atual. Definir formato, mapeamento, moedas/unidades, validação e duplicatas quando essa etapa começar.
+- [ ] Offline: definir dados disponíveis localmente.
+- [ ] Lançamentos offline e sincronização com tratamento de conflitos.
 
 ## Ponto de retomada
 
@@ -113,3 +230,25 @@ Confirmação do usuário: Woodpecker → GHCR → Dokploy já funcionou para a 
 - Acesso pela tela de login em “Explorar prévia da garagem” e pela garagem autenticada em “Explorar próximas telas”.
 - Build Angular aprovado; aviso de orçamento CSS do componente (7,44 kB / aviso em 4 kB, limite de erro 8 kB). Extrair telas em componentes conforme evoluir a implementação.
 - Teste de navegação da prévia aprovado em Chromium desktop/mobile com API de autenticação mockada; inspeção visual da garagem nos temas claro/escuro concluída.
+
+## Design system — 2026-10-07
+
+Primitivos Angular standalone em `web/src/app/ui`: botão nativo com variantes/tamanhos/loading, diretiva para inputs nativos, field com label/ajuda/erro, card, badge, stat, cabeçalho de página e card de veículo. Tokens de tipografia, espaçamento, raios, alturas e cores em `web/src/styles.css`; aplicados ao login e às telas de prévia. Estilos de composição separados entre shell e prévia. Guia: `docs/design-system.md`.
+Build sem avisos de orçamento; quatro testes da prévia/primitivos aprovados em Chromium desktop/mobile, com autenticação mockada. Verificados: navegação, labels, obrigatoriedade nativa do login, envio via Enter, estado loading/disabled e seleção da navegação. A suíte completa com PostgreSQL não foi executada nesta refatoração de UI.
+
+Prévia revisada: frases decorativas retiradas dos cabeçalhos; veículos antes dos indicadores da garagem. Histórico com busca sem distinção de acentos, filtro de veículo/tipo e datas inclusivas, limpar filtros e estados vazio/intervalo inválido. Custos com pizza interativa e listagem filtrada por fatia + veículo, ambas derivadas dos mesmos lançamentos de setembro. Lista de lançamentos e pizza extraídas em componentes reutilizáveis. Seis testes Chromium desktop/mobile aprovados, incluindo filtros combinados e pizza via teclado; build aprovado sem avisos.
+
+Prévia: filtro de preço no histórico com faixa inclusiva de ±10%, calculado localmente até a integração backend. Dropdown nativo com seta afastada da borda. Cor de tag configurável na tela de veículo (estado em memória), com contraste de texto calculado; aplicada às listas de histórico/custos. Custos com filtro mês/ano, incluindo distância de exemplo por mês, e estado vazio. Fatias da pizza sem outline retangular em foco/active; foco por teclado preservado no contorno da fatia. Build e oito testes Chromium desktop/mobile aprovados, incluindo faixa de preço, troca de cor/período e outline.
+
+Histórico e Custos agora compartilham FlDateRange, calendário de intervalo em um único controle. Custos filtra datas inclusivas, com resumo do intervalo e limpeza; distância de exemplo proporcional aos dias selecionados, identificada como estimativa. Build e oito testes desktop/mobile aprovados usando os calendários.
+
+Revisão de componentização: seletor de veículo extraído e compartilhado por histórico/custos; moeda centralizada; login e estado vazio usam FlCard em section nativa; removidos formatter sem uso e CSS antigo. Corrigida precedência do layout mobile de custos. Seletor de período usa o mesmo fundo dos inputs. Build aprovado; testes desktop e mobile aprovados nas validações da revisão.
+
+Temas: dez paletas claro/escuro (20 combinações) com tokens compartilhados em themes.css e catálogo em ui/themes.ts. Botão de tema percorre combinações; nome no tooltip, preferência persistida. Gráficos seguem tokens da paleta e tags de veículo preservam configuração própria. Build aprovado; teste de ciclo completo/persistência aprovado em desktop/mobile.
+
+- [ ] Persistir paleta e modo claro/escuro no perfil do usuário no banco, com API de preferências. Por enquanto a seleção salva imediatamente em localStorage (`fleetlog.palette` e `fleetlog.theme`) e restaura após recarga.
+Seletor de tema em janela modal reutilizável FlThemePicker: dez amostras visuais com cores derivadas dos tokens de cada paleta, seleção direta, claro/escuro e fechamento via Concluir/Escape/clique no backdrop. Testes de todas as combinações e persistência aprovados em desktop/mobile.
+
+Paletas adicionais: Preto e cinza (mono) e Petróleo e cobre (copper), com versões clara/escura. Total: 12 paletas / 24 combinações; build e seleção/persistência desktop/mobile aprovados.
+
+Dialog extraído em FlDialog reutilizável, com cabeçalho/rodapé fixos e corpo rolável. Seletor de temas usa projeção de conteúdo/ações. Build e quatro testes de seleção/persistência e posição fixa durante rolagem aprovados desktop/mobile.

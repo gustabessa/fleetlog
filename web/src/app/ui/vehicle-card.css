@@ -1,0 +1,88 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.vehicle-card {
+  width: 100%;
+}
+.vehicle-card {
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  padding: 0;
+  background: var(--surface);
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+.vehicle-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+}
+.car-art {
+  position: relative;
+  background: linear-gradient(135deg, var(--soft), var(--bg));
+  color: #668cb5;
+  height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.car-art.teal {
+  color: #57968e;
+}
+.car-art svg {
+  width: 80%;
+  max-width: 340px;
+  height: 150px;
+  margin-top: 20px;
+}
+.car-art fl-badge {
+  position: absolute;
+  left: var(--space-5);
+  top: var(--space-5);
+  background: var(--surface);
+}
+.vehicle-body {
+  padding: var(--space-6);
+}
+.plate {
+  color: var(--muted);
+  font: var(--font-caption);
+  letter-spacing: 1.5px;
+}
+.vehicle-body h2 {
+  margin: var(--space-2) 0 var(--space-1);
+  font-size: var(--text-title);
+}
+.vehicle-body p {
+  margin: 0 0 var(--space-6);
+  font-size: var(--text-label);
+}
+.vehicle-bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-5);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+}
+.vehicle-bottom small {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vehicle-card {
+    transition: none;
+  }
+}
+
+.accent {
+  color: var(--accent);
+}
