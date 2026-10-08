@@ -27,6 +27,15 @@ test('prévia anônima não cria sessão; Enter autentica e logout fecha prévia
   const me = await page.request.get('/api/auth/me');
   expect(me.status()).toBe(200);
   expect((await me.json()).username).toBe('e2e');
+  const garagesResponse = await page.request.get('/api/garages');
+  expect(garagesResponse.status()).toBe(200);
+  expect(garagesResponse.headers()['cache-control']).toBe('no-store');
+  const garages = await garagesResponse.json();
+  expect(garages).toHaveLength(1);
+  expect(garages[0].name).toBe('Minha garagem');
+  expect((await page.request.get(`/api/garages/${garages[0].id}`)).status()).toBe(200);
+  expect((await request.get(`/api/garages/${garages[0].id}`)).status()).toBe(401);
+
   const session = (await page.context().cookies()).find(
     (cookie) => cookie.name === 'fleetlog_session',
   );
@@ -85,4 +94,22 @@ test('falha no login libera formulário; falha no logout preserva sessão', asyn
   await page.unroute('**/api/auth/logout');
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Entre na sua garagem' })).toBeVisible();
+});
+
+test('erro de garagem permite repetir a consulta sem perder login', async ({ page }) => {
+  await page.route('**/api/garages', (route) =>
+    route.fulfill({ status: 503, json: { error: 'unavailable' } }),
+  );
+  await page.goto('/');
+  await page.getByLabel('Usuário', { exact: true }).fill('e2e');
+  await page.getByLabel('Senha', { exact: true }).fill('e2e-password-12345');
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page.getByRole('alert')).toHaveText('Não foi possível carregar sua garagem.');
+  expect((await page.request.get('/api/auth/me')).status()).toBe(200);
+  await expect(page.getByText('Carregando sua garagem…')).not.toBeVisible();
+  await expect(page.getByRole('button', { name: 'Explorar próximas telas' })).not.toBeVisible();
+  await page.unroute('**/api/garages');
+  await page.getByRole('button', { name: 'Tentar novamente', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Explorar próximas telas' })).toBeVisible();
+  await expect(page.getByRole('alert')).not.toBeVisible();
 });

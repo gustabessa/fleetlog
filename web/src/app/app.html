@@ -73,18 +73,29 @@
     </section>
   } @else {
     @if (!preview()) {
-      <fl-page-heading title="Minha garagem">Veículos cadastrados na sua garagem.</fl-page-heading>
-      <section flCard class="empty" aria-labelledby="garage-title">
-        <div class="garage-symbol" aria-hidden="true">⌂</div>
-        <h2 id="garage-title">Uma garagem pronta para começar</h2>
-        <p>
-          O cadastro de veículos chega na próxima etapa. Explore a prévia para conhecer as próximas
-          telas.
-        </p>
-        <button flButton variant="primary" type="button" (click)="preview.set(true)">
-          Explorar próximas telas <span aria-hidden="true">→</span>
-        </button>
-      </section>
+      <fl-page-heading [title]="garage()?.name ?? 'Minha garagem'"
+        >Veículos cadastrados na sua garagem.</fl-page-heading
+      >
+      @if (garageLoading()) {
+        <p role="status">Carregando sua garagem…</p>
+      } @else if (garageError()) {
+        <p class="error" role="alert">{{ garageError() }}</p>
+        <button flButton type="button" (click)="loadGarage()">Tentar novamente</button>
+      } @else if (!garage()) {
+        <p role="status">Você ainda não está vinculado a uma garagem.</p>
+      } @else {
+        <section flCard class="empty" aria-labelledby="garage-title">
+          <div class="garage-symbol" aria-hidden="true">⌂</div>
+          <h2 id="garage-title">Uma garagem pronta para começar</h2>
+          <p>
+            O cadastro de veículos chega na próxima etapa. Explore a prévia para conhecer as
+            próximas telas.
+          </p>
+          <button flButton variant="primary" type="button" (click)="preview.set(true)">
+            Explorar próximas telas <span aria-hidden="true">→</span>
+          </button>
+        </section>
+      }
     } @else {
       <aside class="demo-banner">
         <span><strong>Prévia do produto</strong> · Dados de exemplo para você explorar.</span

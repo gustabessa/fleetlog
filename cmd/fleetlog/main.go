@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"fleetlog/internal/auth"
+	"fleetlog/internal/garage"
 	"fleetlog/internal/httpserver"
 )
 
@@ -48,6 +49,7 @@ func main() {
 	defer authentication.DB.Close()
 	mux := http.NewServeMux()
 	authentication.Routes(mux)
+	(&garage.Service{Auth: authentication}).Routes(mux)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Cache-Control", "no-store")

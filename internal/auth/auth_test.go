@@ -80,6 +80,9 @@ func TestAuthIntegration(t *testing.T) {
 	if e = s.DB.QueryRow(ctx, `SELECT count(*) FROM users`).Scan(&count); e != nil || count != 1 {
 		t.Fatalf("bootstrap count %d err %v", count, e)
 	}
+	if e = s.DB.QueryRow(ctx, `SELECT count(*) FROM garage_members m JOIN users u ON u.id=m.user_id WHERE u.username='tester'`).Scan(&count); e != nil || count != 1 {
+		t.Fatalf("bootstrap garage membership count %d err %v", count, e)
+	}
 	if e = s.DB.QueryRow(ctx, `SELECT password_hash FROM users WHERE username='tester'`).Scan(&hash); e != nil || bcrypt.CompareHashAndPassword([]byte(hash), []byte("test-password-12345")) != nil {
 		t.Fatal("invalid password hash")
 	}

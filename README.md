@@ -2,7 +2,7 @@
 
 Garagem familiar em uma PWA Angular, com backend Go e PostgreSQL, para implantação no homelab.
 
-**Status:** primeira base executável. Shell responsivo, temas claro/escuro, manifest e service worker, servidor de arquivos SPA e health check. Login local, logout, sessões e migração inicial PostgreSQL implementados. Gestão de veículos, inclusão de familiares e OIDC ainda pendentes.
+**Status:** primeira base executável. Shell responsivo, temas claro/escuro, manifest e service worker, servidor de arquivos SPA e health check. Login local, logout, sessões e migração inicial PostgreSQL implementados. Garagem persistida com vínculo ao usuário e consulta autorizada implementada. Gestão de veículos, inclusão de familiares e OIDC ainda pendentes.
 
 Veja [TODO.md](TODO.md) para andamento e retomada e [plano de produto](docs/FleetLog-plan.md) para requisitos e propostas pendentes.
 
@@ -75,11 +75,28 @@ OIDC e S3/RustFS terão documentação e variáveis quando suas integrações fo
 
 ## Primeiro acesso e sessões
 
-O startup aplica a migração SQL versionada em transação com lock, criando usuários, sessões e a reserva de identidades externas (`issuer` + `subject`). Com a tabela de usuários vazia, exige bootstrap e grava a senha com bcrypt. Reiniciar ou mudar bootstrap não altera contas existentes. Não existe cadastro público; criação de familiares e recuperação/troca de senha entram nas próximas etapas.
+O startup aplica migrações SQL versionadas em transação com lock, criando usuários, sessões, garagens/vínculos e a reserva de identidades externas (`issuer` + `subject`). Com a tabela de usuários vazia, exige bootstrap e grava a senha com bcrypt. Reiniciar ou mudar bootstrap não altera contas existentes. Não existe cadastro público; criação de familiares e recuperação/troca de senha entram nas próximas etapas.
 
 Para publicar esta versão no Dokploy, atualize o Raw Compose a partir de `compose.registry.yaml` (novas variáveis PG*), mantenha o volume/senha existentes e defina `PUBLIC_URL=https://SEU-DOMINIO`, `BOOTSTRAP_USERNAME` e `BOOTSTRAP_PASSWORD`. Depois do primeiro login, remova bootstrap e recrie o serviço. Não use a URL do painel Dokploy como PUBLIC_URL: é o domínio do FleetLog.
 
 Sessões expiram em 24 horas; tokens aleatórios são armazenados somente como hash no banco. Cookies são HttpOnly/SameSite Strict e Secure em HTTPS. Login/logout exigem JSON e Origin igual a PUBLIC_URL, sem confiar em headers de proxy. Login tem limite global de 20 tentativas por minuto por instância; sessões expiradas são limpas em novos logins. APIs privadas usam no-store e logout revoga a sessão no servidor. OIDC terá callback/configuração próprios, reutilizando usuários e sessões; não há vinculação automática por e-mail.
+
+## Garagem e autorização
+
+As migrações ficam em `internal/database/migrations/`. A versão 001 foi preservada; a versão 002 adiciona garagens e vínculos. No primeiro upgrade, cada conta já existente recebe uma garagem própria, sem alterar senhas/sessões. Em um banco vazio, o bootstrap cria o usuário e sua garagem na mesma transação. Reinícios não duplicam garagens nem vinculam automaticamente contas criadas depois; inclusão de familiares terá fluxo explícito.
+
+| API | Resposta |
+| --- | --- |
+| `GET /api/garages` | Garagens vinculadas à sessão atual; lista vazia se não há vínculo |
+| `GET /api/garages/{garageID}` | Identificador e nome da garagem, somente para membros |
+
+Sem sessão válida, as rotas retornam 401. ID inexistente/inacessível retorna 404 com a mesma resposta, evitando revelar outra garagem. Respostas usam no-store; expiração, revogação da sessão e vínculo são conferidos em cada chamada.
+
+`auth.RequireUser` fornece usuário autenticado no contexto; `auth.RequireWrite` também exige JSON/origem válida. `garage.RequireMember` fornece a garagem autorizada no contexto e protege futuras rotas com `{garageID}`. Permissões de escrita/gestão dos familiares continuam pendentes; esta etapa entrega somente consultas.
+
+A tela autenticada busca a garagem real, com estados de carregamento, erro/nova tentativa e ausência de vínculo. Usa a primeira garagem da lista ordenada por ID; escolha entre múltiplas garagens não é uma funcionalidade entregue. Prévia visual e dados fictícios continuam separados.
+
+Não há novas variáveis de ambiente nesta etapa. Publique a imagem e faça deploy preservando o volume existente; a migração 002 é aplicada no startup. Não edite migrações já aplicadas: novas mudanças devem acrescentar outra versão.
 
 ## PWA e atualização
 

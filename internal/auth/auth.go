@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
-	_ "embed"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -15,6 +14,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"fleetlog/internal/database"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -64,18 +65,8 @@ func Open(ctx context.Context, dsn, publicURL, username, password string) (*Serv
 	if _, err = tx.Exec(ctx, `SELECT pg_advisory_xact_lock(73194201)`); err != nil {
 		return fail(err)
 	}
-	if _, err = tx.Exec(ctx, `CREATE TABLE IF NOT EXISTS schema_migrations(version integer PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())`); err != nil {
+	if err = database.Migrate(ctx, tx); err != nil {
 		return fail(err)
-	}
-	var migrated bool
-	if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version=1)`).Scan(&migrated); err != nil {
-		return fail(err)
-	}
-	if !migrated {
-		_, err = tx.Exec(ctx, migration1)
-		if err != nil {
-			return fail(err)
-		}
 	}
 	var count int
 	if err = tx.QueryRow(ctx, `SELECT count(*) FROM users`).Scan(&count); err != nil {
@@ -90,7 +81,11 @@ func Open(ctx context.Context, dsn, publicURL, username, password string) (*Serv
 		if e != nil {
 			return fail(e)
 		}
-		if _, err = tx.Exec(ctx, `INSERT INTO users(username,password_hash) VALUES($1,$2)`, username, string(hash)); err != nil {
+		var userID int64
+		if err = tx.QueryRow(ctx, `INSERT INTO users(username,password_hash) VALUES($1,$2) RETURNING id`, username, string(hash)).Scan(&userID); err != nil {
+			return fail(err)
+		}
+		if err = database.CreateInitialGarage(ctx, tx, userID); err != nil {
 			return fail(err)
 		}
 	}
@@ -103,7 +98,7 @@ func Open(ctx context.Context, dsn, publicURL, username, password string) (*Serv
 func (s *Service) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/auth/login", s.write(s.login))
 	mux.HandleFunc("POST /api/auth/logout", s.write(s.logout))
-	mux.HandleFunc("GET /api/auth/me", s.me)
+	mux.HandleFunc("GET /api/auth/me", s.RequireUser(s.me))
 	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()
@@ -200,7 +195,7 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.cookie(w, raw, 86400)
-	s.me(w, requestWithCookie(r, raw))
+	s.RequireUser(s.me)(w, requestWithCookie(r, raw))
 }
 func requestWithCookie(r *http.Request, token string) *http.Request {
 	c := r.Clone(r.Context())
@@ -209,25 +204,7 @@ func requestWithCookie(r *http.Request, token string) *http.Request {
 	return c
 }
 func (s *Service) me(w http.ResponseWriter, r *http.Request) {
-	c, e := r.Cookie("fleetlog_session")
-	if e != nil {
-		reply(w, 401, map[string]string{"error": "authentication required"})
-		return
-	}
-	var user struct {
-		ID       int64  `json:"id"`
-		Username string `json:"username"`
-		Currency string `json:"currency"`
-	}
-	e = s.DB.QueryRow(r.Context(), `SELECT u.id,u.username,u.currency FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token_hash=$1 AND s.expires_at>now()`, digest(c.Value)).Scan(&user.ID, &user.Username, &user.Currency)
-	if e != nil {
-		if !errors.Is(e, pgx.ErrNoRows) {
-			reply(w, 503, map[string]string{"error": "authentication unavailable"})
-			return
-		}
-		reply(w, 401, map[string]string{"error": "authentication required"})
-		return
-	}
+	user, _ := UserFromContext(r.Context())
 	reply(w, 200, user)
 }
 func (s *Service) logout(w http.ResponseWriter, r *http.Request) {
@@ -255,6 +232,3 @@ var dummyHash = func() string {
 	h, _ := bcrypt.GenerateFromPassword([]byte("unusable-dummy-password"), 12)
 	return string(h)
 }()
-
-//go:embed 001_auth.sql
-var migration1 string

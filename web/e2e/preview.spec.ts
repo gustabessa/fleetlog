@@ -48,6 +48,9 @@ test('primitivos preservam labels, validação e envio do login com estado de ca
   page,
 }) => {
   await page.route('**/api/auth/me', (route) => route.fulfill({ status: 401, json: {} }));
+  await page.route('**/api/garages', (route) =>
+    route.fulfill({ json: [{ id: 1, name: 'Minha garagem' }] }),
+  );
   let finishLogin!: () => void;
   const pending = new Promise<void>((resolve) => {
     finishLogin = resolve;

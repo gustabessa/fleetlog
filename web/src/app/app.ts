@@ -315,6 +315,31 @@ export class App {
     this.screen.set('garage');
   }
 
+  readonly garage = signal<{ id: number; name: string } | null>(null);
+  readonly garageLoading = signal(false);
+  readonly garageError = signal('');
+  async loadGarage() {
+    this.garageLoading.set(true);
+    this.garageError.set('');
+    this.garage.set(null);
+    try {
+      const response = await fetch('/api/garages', { cache: 'no-store' });
+      if (response.status === 401) {
+        this.user.set(null);
+        return;
+      }
+      if (!response.ok) {
+        this.garageError.set('Não foi possível carregar sua garagem.');
+        return;
+      }
+      const garages: { id: number; name: string }[] = await response.json();
+      this.garage.set(garages[0] ?? null);
+    } catch {
+      this.garageError.set('Não foi possível carregar sua garagem.');
+    } finally {
+      this.garageLoading.set(false);
+    }
+  }
   readonly user = signal<{ username: string; currency: string } | null>(null);
   readonly loading = signal(true);
   readonly busy = signal(false);
@@ -324,8 +349,10 @@ export class App {
   async loadUser() {
     try {
       const response = await fetch('/api/auth/me', { cache: 'no-store' });
-      if (response.ok) this.user.set(await response.json());
-      else if (response.status !== 401)
+      if (response.ok) {
+        this.user.set(await response.json());
+        await this.loadGarage();
+      } else if (response.status !== 401)
         this.authError.set('Não foi possível conectar ao FleetLog.');
     } catch {
       this.authError.set('Não foi possível conectar ao FleetLog.');
@@ -354,6 +381,7 @@ export class App {
         return;
       }
       this.user.set(await response.json());
+      await this.loadGarage();
     } catch {
       this.authError.set('Não foi possível conectar ao FleetLog.');
     } finally {
@@ -373,6 +401,8 @@ export class App {
       });
       if (response.ok) {
         this.user.set(null);
+        this.garage.set(null);
+        this.garageError.set('');
         this.closePreview();
       } else this.authError.set('Não foi possível sair. Tente novamente.');
     } catch {

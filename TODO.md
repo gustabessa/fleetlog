@@ -22,7 +22,7 @@ Esta fila organiza os checklists detalhados abaixo em entregas escolhíveis. Ord
 
 ### P1 — conseguir cadastrar e consultar o primeiro veículo real
 
-- [ ] **T02 — garagem base e autorização.** Migração de garagem/vínculo com usuário; associar primeiro usuário à garagem; disponibilizar consulta de contexto e proteção reutilizável para APIs. Testar isolamento entre garagens. Gestão de familiares permanece separada e exige aprovação das permissões.
+- [x] **T02 — garagem base e autorização (2026-10-07).** Migração de garagem/vínculo com usuário; associar primeiro usuário à garagem; disponibilizar consulta de contexto e proteção reutilizável para APIs. Testar isolamento entre garagens. Gestão de familiares permanece separada e exige aprovação das permissões.
 - [ ] **T03 — veículos básicos ponta a ponta.** Definir campos/obrigatoriedade; cadastro, listagem, detalhes e edição reais com identificadores próprios (chassi/RENAVAM), km inicial preservado e integração das telas. Placeholder de imagem até T09. Depende de T02; ações de exclusão/arquivamento dependem de definição própria.
 - [ ] **T04 — perfil, moeda e preferências.** Persistir moeda padrão e preferências de tema já previstas; integrar API/UI. Estabelecer representação decimal e moeda por registro para os formulários de preço. Não alterar moedas históricas. Necessário antes dos lançamentos financeiros.
 - [ ] **T05 — odômetro e regras de alteração.** Aprovar cronologia, retroatividade/correção e efeitos de editar/excluir registros; implementar histórico, autoria/origem e leitura atual. Depende de T03; abastecimentos/manutenções usam esta base.
@@ -104,11 +104,12 @@ Cada área passa por três estados: **prévia visual → API/persistência integ
 - [x] Cookies HttpOnly/Secure, proteção por origem/JSON e limite de tentativas.
 - [x] Testes de integração de autenticação e testes de navegador antes da refatoração visual.
 - [x] Reexecutar suíte completa com PostgreSQL após as mudanças de UI/mock/design system (T01: 34 testes Chromium desktop/mobile aprovados).
-- [ ] Criar modelo/migração de garagem e vínculo dos membros com usuários internos.
+- [x] Criar modelo/migração de garagem e vínculo dos membros com usuários internos; bootstrap e upgrade preservam contas/sessões.
 - [ ] Definir permissões e forma de inclusão de familiares antes de entregar gestão de membros.
 - [ ] Implementar inclusão/remoção de membros conforme a regra aprovada, com login individual.
-- [ ] Aplicar autorização por garagem em todas as APIs e no acesso a objetos/imagens.
-- [ ] Testar que membros da mesma garagem consultam os mesmos dados e outras garagens não têm acesso.
+- [x] Criar proteção reutilizável de sessão/vínculo e aplicá-la às APIs de consulta de garagem.
+- [ ] Aplicar proteção de garagem às futuras APIs de veículos/lançamentos e ao acesso S3.
+- [x] Testar que membros da mesma garagem consultam os mesmos dados e outras garagens não têm acesso, incluindo revogação do vínculo com sessão ativa.
 - [ ] Implementar perfil com moeda padrão inicial BRL e alteração da preferência.
 - [ ] Fazer seleção de moeda em toda entrada de preço, preenchida pelo perfil.
 - [ ] Guardar moeda e valor decimal no registro; mudar perfil não altera histórico.
@@ -242,13 +243,13 @@ Estas tarefas registram lacunas operacionais identificadas na revisão; não alt
 
 ## Ponto de retomada
 
-Base com login local e PostgreSQL implementada. Funcionalidades de veículos e garagem compartilhada continuam pendentes.
+Base com login local e PostgreSQL implementada. Garagem base/consulta autorizada implementadas; funcionalidades de veículos e gestão de familiares continuam pendentes.
 Última validação local (T01): build Angular (~89 kB transferidos), testes Go sem cache com PostgreSQL real e go vet aprovados; 34 testes Chromium desktop/mobile aprovados, incluindo acesso real, isolamento da prévia, falhas de API, UI e service worker.
 Pendente: Docker Compose/pull da imagem, HTTPS Dokploy e instalação PWA no sistema operacional. PostgreSQL conectado; migração de usuários/sessões/identidades externas e bootstrap no startup.
 Node 22.23.3 disponível. Go 1.27.1 baixado para `/tmp/go` com checksum oficial validado; não instalado no sistema.
 Docker Engine indisponível neste ambiente. CLI Compose 2.40.3 extraído em `/tmp/fleetlog-compose-cli` para validar `compose.yaml` e `compose.registry.yaml`, ambos aprovados; build de imagem não executado. Frontend em `web/`, backend em `cmd/fleetlog` e `internal/httpserver`.
 Playwright adicionado ao frontend. Testes: `cd web && npm run test:e2e`; requer Go e Chromium. Para este ambiente: `GO_BIN=/tmp/go/bin/go`, `GOCACHE=/tmp/fleetlog-gocache`, `PLAYWRIGHT_BROWSERS_PATH=/tmp/fleetlog-browsers`, `LD_LIBRARY_PATH=/tmp/fleetlog-browser-deps/root/usr/lib/x86_64-linux-gnu`, Node no PATH. Browser e bibliotecas extraídos apenas em `/tmp`; são temporários e precisam ser preparados novamente caso removidos.
-Próxima etapa técnica: garagem e veículos; antes de implementar inclusão de familiares, definir permissões. Publicar a nova imagem e atualizar o Raw Compose no Dokploy com PG*, PUBLIC_URL e bootstrap.
+Próxima etapa técnica: T03, veículos reais; antes de implementar inclusão de familiares, definir permissões. Publicar a nova imagem e atualizar o Raw Compose no Dokploy com PG*, PUBLIC_URL e bootstrap.
 Para retomar: ler este arquivo e o plano, conferir git status e executar os checks do README.
 Ícones simples provisórios com a letra F; idioma pt-BR provisório para esta base. O frontend usa Angular 22.2 e Node 22; Go 1.27.
 
@@ -307,3 +308,13 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Nenhuma mudança de comportamento do aplicativo foi necessária nesta rodada. Testes novos em `web/e2e/access.spec.ts`; ajuste de isolamento em `web/e2e/preview.spec.ts`.
 - Pendência externa: conferir readiness/configuração e acesso na versão implantada no Dokploy; painel/credenciais não acessados nesta tarefa. Instalação real da PWA segue pendente.
 - Próxima tarefa recomendada: T02 (garagem base e autorização), preparando o cadastro real de veículos em T03.
+
+## T02 — garagem base e autorização — 2026-10-07
+
+- Migrações movidas para módulo database; versão 001 preservada e 002 adicionada. Upgrade associa cada usuário antigo à própria garagem; bootstrap novo cria usuário/garagem/vínculo atomicamente. Reinício não altera senhas/sessões nem duplica garagens.
+- APIs GET /api/garages e /api/garages/{garageID} autenticadas; middleware reutilizável consulta sessão e vínculo por requisição. Garagem inexistente e de outro usuário retornam o mesmo 404. Usuário e garagem disponíveis no contexto dos handlers.
+- Tela autenticada consulta garagem persistida e trata carregamento, erro com nova tentativa e falta de vínculo. Prévia anônima permanece separada. Nenhuma tela de gestão de familiares/permissões de escrita foi implementada.
+- Testes PostgreSQL aprovados: banco novo, upgrade v1→v2 com sessão/senha existentes, reinício, isolamento entre usuários, consulta compartilhada, revogação de vínculo, sessão inválida/expirada e IDs inválidos. Fixtures de membros usadas apenas nos testes, sem API pública para inclusão.
+- Build Angular, go test sem cache com PostgreSQL, go vet e build Go CGO_ENABLED=0 aprovados; suíte completa com 36 testes Chromium desktop/mobile aprovada.
+- Sem novas envs. Deploy desta versão aplica migração 002; preservar volume. Pendência de implantação real continua separada.
+- Próxima entrega: T03, definir campos obrigatórios e integrar cadastro/listagem/detalhes/edição de veículos reais à garagem autorizada.
