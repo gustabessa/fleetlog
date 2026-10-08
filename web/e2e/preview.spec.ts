@@ -1,12 +1,15 @@
 import { expect, test, Page } from '@playwright/test';
 
+// These tests mock authentication; real service-worker coverage lives in base.spec.ts.
+test.use({ serviceWorkers: 'block' });
+
 test('prévia navega pelos veículos, histórico e custos sem alterar a garagem', async ({ page }) => {
   await page.route('**/api/auth/me', (route) => route.fulfill({ status: 401, json: {} }));
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Entre na sua garagem' })).toBeVisible();
-  await expect(page.locator('footer')).toHaveText('FeetLog · Acompanhe cada quilômetro.');
+  await expect(page.getByRole('contentinfo')).toHaveText('FeetLog · Acompanhe cada quilômetro.');
   await page.getByRole('button', { name: 'Explorar prévia da garagem' }).click();
   await expect(page.getByRole('heading', { name: 'Minha garagem' })).toBeVisible();
   await page.getByRole('button', { name: /Volkswagen Polo/ }).click();

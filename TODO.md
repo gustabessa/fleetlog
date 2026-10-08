@@ -12,6 +12,42 @@ Atualizado em 2026-10-07. Plano de produto: [docs/FleetLog-plan.md](docs/FleetLo
 - RustFS é uma opção de provedor; integração e versão ainda precisam ser validadas.
 - As regras marcadas como propostas no plano permanecem pendentes.
 
+## Próximas tarefas por prioridade
+
+Esta fila organiza os checklists detalhados abaixo em entregas escolhíveis. Ordem proposta por dependência e uso real, sem alterar decisões de produto pendentes. As prévias e componentes de UI estão disponíveis; backend de veículos/lançamentos ainda não existe. Login, sessões e PostgreSQL já têm implementação funcional.
+
+### P0 — confirmar a base antes de integrar dados reais
+
+- [x] **T01 — validar acesso após as mudanças de UI (localmente, 2026-10-07).** Rodar suíte completa com PostgreSQL; conferir login, sessão após recarga, logout, erros e acesso à garagem vazia. Corrigir regressões encontradas. Confirmar readiness/configuração da versão implantada quando houver acesso ao ambiente. Dependência: nenhuma nova funcionalidade.
+
+### P1 — conseguir cadastrar e consultar o primeiro veículo real
+
+- [ ] **T02 — garagem base e autorização.** Migração de garagem/vínculo com usuário; associar primeiro usuário à garagem; disponibilizar consulta de contexto e proteção reutilizável para APIs. Testar isolamento entre garagens. Gestão de familiares permanece separada e exige aprovação das permissões.
+- [ ] **T03 — veículos básicos ponta a ponta.** Definir campos/obrigatoriedade; cadastro, listagem, detalhes e edição reais com identificadores próprios (chassi/RENAVAM), km inicial preservado e integração das telas. Placeholder de imagem até T09. Depende de T02; ações de exclusão/arquivamento dependem de definição própria.
+- [ ] **T04 — perfil, moeda e preferências.** Persistir moeda padrão e preferências de tema já previstas; integrar API/UI. Estabelecer representação decimal e moeda por registro para os formulários de preço. Não alterar moedas históricas. Necessário antes dos lançamentos financeiros.
+- [ ] **T05 — odômetro e regras de alteração.** Aprovar cronologia, retroatividade/correção e efeitos de editar/excluir registros; implementar histórico, autoria/origem e leitura atual. Depende de T03; abastecimentos/manutenções usam esta base.
+
+### P2 — registrar o uso cotidiano
+
+- [ ] **T06 — abastecimentos reais.** Formulário no contexto do veículo, data/litros/preço/moeda/km, consulta/edição/exclusão e histórico. Consumo depende de método aprovado; concluir casos de tanque parcial/intervalo incompleto antes de apresentar km/L. Depende de T03–T05.
+- [ ] **T07 — manutenção com total direto.** Registro real sem exigir itens, com edição/consulta/exclusão e integração ao histórico/odômetro. Dependências: T03–T05. Detalhamento/reutilização de itens segue em T08.
+- [ ] **T08 — peças, mão de obra e preços históricos.** Segundo modo de manutenção, referências reutilizáveis e pesquisa/comparação por item. Aprovar descontos, unidades/escopo e moedas diferentes; garantir que detalhamento não duplica total. Depende de T07.
+- [ ] **T09 — imagens reais de veículos.** Cliente S3/RustFS, upload/substituição/remoção, metadados e leitura privada autorizada, com limites/validação. Depende de T02/T03; pode avançar em paralelo à sequência de lançamentos sem bloquear formulários.
+- [ ] **T10 — notas, compra/venda e documentação.** Entregas separáveis: notas livres; dados de aquisição/venda após definição de obrigatoriedade/arquivamento; despesas de impostos/licenciamento/taxas com tipo/moeda. Notas não substituem chassi/RENAVAM. Dados financeiros dependem de T04.
+
+### P3 — consolidar histórico, análises e acesso familiar
+
+- [ ] **T11 — histórico integrado e gráficos reais.** Busca/filtros/paginação e agregações dos lançamentos existentes; listas/gráficos coerentes, moedas separadas e gastos contabilizados uma vez. Aproveitar componentes da prévia, substituindo mocks e estimativas. Depende dos tipos de lançamento entregues; evoluir junto deles sem esperar todas as categorias.
+- [ ] **T12 — inclusão de familiares e permissões.** Aprovar como incluir/remover usuários e quais ações cada membro pode fazer; gestão de acesso e testes de garagem compartilhada. Depende de T02. Pode ser antecipada se o próximo teste de uso já envolver a família.
+
+### Entrega a definir e melhorias futuras
+
+- OIDC configurável: requisito confirmado, data de entrega pendente; pode ser antecipado se login com provedor for necessário para uso.
+- Troca/recuperação de senha e backup/restauração: propostas a definir antes de depender de dados reais no uso contínuo.
+- Instalação PWA real/HTTPS e CI de navegador: validação transversal, não exigir nova rodada de polimento visual para cada funcionalidade.
+- Exportação, lembretes e multiarch: escopo/prioridade ainda a aprovar.
+- Importação e offline: backlog, fora da prioridade atual de construir o produto.
+
 ## Etapa 1 — base executável (implementada; validação de implantação pendente)
 
 - [x] Incorporar o plano ao repositório.
@@ -67,7 +103,7 @@ Cada área passa por três estados: **prévia visual → API/persistência integ
 - [x] Login/logout com sessões persistentes, expiração, rotação e revogação.
 - [x] Cookies HttpOnly/Secure, proteção por origem/JSON e limite de tentativas.
 - [x] Testes de integração de autenticação e testes de navegador antes da refatoração visual.
-- [ ] Reexecutar suíte completa com PostgreSQL após as mudanças de UI/mock/design system.
+- [x] Reexecutar suíte completa com PostgreSQL após as mudanças de UI/mock/design system (T01: 34 testes Chromium desktop/mobile aprovados).
 - [ ] Criar modelo/migração de garagem e vínculo dos membros com usuários internos.
 - [ ] Definir permissões e forma de inclusão de familiares antes de entregar gestão de membros.
 - [ ] Implementar inclusão/remoção de membros conforme a regra aprovada, com login individual.
@@ -207,7 +243,7 @@ Estas tarefas registram lacunas operacionais identificadas na revisão; não alt
 ## Ponto de retomada
 
 Base com login local e PostgreSQL implementada. Funcionalidades de veículos e garagem compartilhada continuam pendentes.
-Validados: build Angular (~57 kB transferidos), testes Go e go vet; 8 testes Chromium aprovados em desktop/mobile, cobrindo layout, tema persistente, rotas, manifest, service worker, respostas API e atualização para novo build sem recarga automática.
+Última validação local (T01): build Angular (~89 kB transferidos), testes Go sem cache com PostgreSQL real e go vet aprovados; 34 testes Chromium desktop/mobile aprovados, incluindo acesso real, isolamento da prévia, falhas de API, UI e service worker.
 Pendente: Docker Compose/pull da imagem, HTTPS Dokploy e instalação PWA no sistema operacional. PostgreSQL conectado; migração de usuários/sessões/identidades externas e bootstrap no startup.
 Node 22.23.3 disponível. Go 1.27.1 baixado para `/tmp/go` com checksum oficial validado; não instalado no sistema.
 Docker Engine indisponível neste ambiente. CLI Compose 2.40.3 extraído em `/tmp/fleetlog-compose-cli` para validar `compose.yaml` e `compose.registry.yaml`, ambos aprovados; build de imagem não executado. Frontend em `web/`, backend em `cmd/fleetlog` e `internal/httpserver`.
@@ -259,3 +295,15 @@ Instalação PWA: FlInstallPwa no header fora do modo standalone/fullscreen/mini
 Range picker: posicionamento medido pela viewport visível (inclui visualViewport), abre acima quando não cabe abaixo. Caso não caiba inteiro, limita altura ao lado com mais espaço e usa scroll interno. Reposiciona em scroll/resize e mudança de mês; alinhamento horizontal limitado à tela. Build e oito testes desktop/mobile de posicionamento, seleção e fechamento aprovados.
 
 Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar o tema. HTML/manifest usam branco como fallback inicial. Build e testes desktop/mobile verificando metadado nas 24 combinações e após reload aprovados; aparência da barra no app instalado depende do navegador/SO e requer teste no dispositivo.
+
+## T01 — validação da base concluída localmente — 2026-10-07
+
+- PostgreSQL 18.6 descartável em localhost, sem instalar serviço no sistema. Testes Go executados sem cache; integração auth, migrações, sessão e proteção de origem aprovadas; go vet aprovado.
+- Build Angular de produção aprovado sem avisos de orçamento; suíte completa com 34 testes Chromium desktop/mobile aprovada.
+- Login/senha incorreta, recarga com sessão e logout real verificados. Replay do token após logout retorna 401; logout também fecha a prévia.
+- Prévia anônima não concede sessão e não envia gravações à API; login por Enter funciona com backend real.
+- API indisponível encerra carregamento inicial; falha no login libera formulário e limpa senha; falha no logout preserva sessão e permite tentar novamente. Falhas são injetadas somente nesses cenários, mantendo os testes de acesso com banco real.
+- Corrigidos testes da prévia: seletor de rodapé usa contentinfo para evitar os rodapés dos dialogs; testes com mocks bloqueiam service worker para que interceptações não escapem para a API real. Service worker de produção continua ativo nos testes reais de base/PWA.
+- Nenhuma mudança de comportamento do aplicativo foi necessária nesta rodada. Testes novos em `web/e2e/access.spec.ts`; ajuste de isolamento em `web/e2e/preview.spec.ts`.
+- Pendência externa: conferir readiness/configuração e acesso na versão implantada no Dokploy; painel/credenciais não acessados nesta tarefa. Instalação real da PWA segue pendente.
+- Próxima tarefa recomendada: T02 (garagem base e autorização), preparando o cadastro real de veículos em T03.
