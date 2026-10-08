@@ -84,8 +84,9 @@ Cada área passa por três estados: **prévia visual → API/persistência integ
 - [ ] Criar migrações e API de cadastro, listagem, consulta e edição de veículo vinculado à garagem.
 - [ ] Persistir quilometragem inicial separada do histórico e quilometragem atual.
 - [ ] Registrar data/valor/moeda de compra e venda; proprietários anterior/novo opcionais.
-- [ ] Implementar notas/informações, chassi e RENAVAM; guardar identificadores como texto.
-- [ ] Copiar identificadores com um clique e confirmação visual.
+- [ ] Implementar chassi e RENAVAM como campos próprios nas informações/cadastro do veículo, separados das notas; persistir como texto para preservar zeros iniciais.
+- [ ] Manter notas/anotações do veículo como recurso separado; definir formato e quantidade antes da implementação.
+- [ ] Copiar chassi, RENAVAM e outros identificadores do veículo com um clique e confirmação visual.
 - [ ] Integrar home com cards/imagens reais, nome/modelo e badge de km no canto superior esquerdo.
 - [ ] Integrar detalhes ao veículo selecionado e manter contexto ao iniciar lançamentos.
 - [ ] Definir arquivamento/venda e política de exclusão de veículo com histórico antes dessas ações.
