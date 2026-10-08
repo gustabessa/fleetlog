@@ -2,6 +2,28 @@ import { expect, test } from '@playwright/test';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
+test.beforeEach(async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Usuário', { exact: true }).fill('e2e');
+  await page.getByLabel('Senha', { exact: true }).fill('e2e-password-12345');
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Minha garagem' })).toBeVisible();
+});
+
+test('login persiste e logout revoga o acesso', async ({ page }) => {
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Minha garagem' })).toBeVisible();
+  await page.getByRole('button', { name: 'Sair', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Entre na sua garagem' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Entre na sua garagem' })).toBeVisible();
+  await page.getByLabel('Usuário', { exact: true }).fill('e2e');
+  await page.getByLabel('Senha', { exact: true }).fill('wrong-password');
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page.getByRole('alert')).toHaveText('Usuário ou senha incorretos.');
+  await expect(page.getByLabel('Senha', { exact: true })).toHaveValue('');
+});
+
 test('garagem responsiva, tema persistente e rotas sem erros', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));

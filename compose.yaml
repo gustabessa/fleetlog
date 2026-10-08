@@ -2,6 +2,16 @@ services:
   fleetlog-service:
     image: ${FLEETLOG_IMAGE:-ghcr.io/gustabessa/fleetlog:main}
     pull_policy: always
+    environment:
+      PGHOST: fleetlog-db
+      PGPORT: "5432"
+      PGDATABASE: fleetlog
+      PGUSER: fleetlog
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set database password}
+      PGSSLMODE: disable
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8080}
+      BOOTSTRAP_USERNAME: ${BOOTSTRAP_USERNAME:-}
+      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:-}
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8080}:8080"

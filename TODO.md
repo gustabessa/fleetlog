@@ -56,8 +56,8 @@ Pipeline: [.woodpecker/build.yaml](.woodpecker/build.yaml). Produção: [compose
 
 ## Etapas seguintes
 
-- [ ] PostgreSQL: conexão, migrações versionadas e testes de integração.
-- [ ] Login local, hash de senha, sessões seguras, CSRF e logout.
+- [x] PostgreSQL: conexão (pool de 4), migração inicial versionada/transacional e testes de integração.
+- [x] Login local, bootstrap, bcrypt, sessões HttpOnly/Secure, validação de origem/JSON contra CSRF e logout.
 - [ ] Garagem compartilhada, inclusão de familiares e autorização por garagem.
 - [ ] Perfil e moeda padrão, preservando moeda em cada registro.
 - [ ] Cadastro/listagem/detalhes de veículos, compra/venda e informações copiáveis.
@@ -88,16 +88,28 @@ Pipeline: [.woodpecker/build.yaml](.woodpecker/build.yaml). Produção: [compose
 
 ## Ponto de retomada
 
-Primeiro scaffold implementado; não há funcionalidades de domínio nem autenticação ainda.
-Validados: build Angular (~57 kB transferidos), testes Go e go vet; 6 testes Chromium aprovados em desktop/mobile, cobrindo layout, tema persistente, rotas, manifest, service worker, respostas API e atualização para novo build sem recarga automática.
-Pendente: Docker Compose/pull da imagem, HTTPS Dokploy e instalação PWA no sistema operacional. O PostgreSQL está apenas preparado no Compose; sem conexão ou migrações ainda.
+Base com login local e PostgreSQL implementada. Funcionalidades de veículos e garagem compartilhada continuam pendentes.
+Validados: build Angular (~57 kB transferidos), testes Go e go vet; 8 testes Chromium aprovados em desktop/mobile, cobrindo layout, tema persistente, rotas, manifest, service worker, respostas API e atualização para novo build sem recarga automática.
+Pendente: Docker Compose/pull da imagem, HTTPS Dokploy e instalação PWA no sistema operacional. PostgreSQL conectado; migração de usuários/sessões/identidades externas e bootstrap no startup.
 Node 22.23.3 disponível. Go 1.27.1 baixado para `/tmp/go` com checksum oficial validado; não instalado no sistema.
 Docker Engine indisponível neste ambiente. CLI Compose 2.40.3 extraído em `/tmp/fleetlog-compose-cli` para validar `compose.yaml` e `compose.registry.yaml`, ambos aprovados; build de imagem não executado. Frontend em `web/`, backend em `cmd/fleetlog` e `internal/httpserver`.
 Playwright adicionado ao frontend. Testes: `cd web && npm run test:e2e`; requer Go e Chromium. Para este ambiente: `GO_BIN=/tmp/go/bin/go`, `GOCACHE=/tmp/fleetlog-gocache`, `PLAYWRIGHT_BROWSERS_PATH=/tmp/fleetlog-browsers`, `LD_LIBRARY_PATH=/tmp/fleetlog-browser-deps/root/usr/lib/x86_64-linux-gnu`, Node no PATH. Browser e bibliotecas extraídos apenas em `/tmp`; são temporários e precisam ser preparados novamente caso removidos.
-Próxima etapa técnica: conexão PostgreSQL/migrações e login local; antes de implementar inclusão de familiares, definir permissões.
+Próxima etapa técnica: garagem e veículos; antes de implementar inclusão de familiares, definir permissões. Publicar a nova imagem e atualizar o Raw Compose no Dokploy com PG*, PUBLIC_URL e bootstrap.
 Para retomar: ler este arquivo e o plano, conferir git status e executar os checks do README.
 Ícones simples provisórios com a letra F; idioma pt-BR provisório para esta base. O frontend usa Angular 22.2 e Node 22; Go 1.27.
 
 Fluxo atual: Woodpecker → GHCR → Dokploy Compose. Pipeline e Compose de produção preparados; instalação/tutorial do Woodpecker ficam fora do repo. Configuração antiga de build pelo Dokploy removida (`compose.dokploy.yaml` e `docs/dokploy.md`). Usuário confirmou login OAuth e repositório habilitado. Próximo passo: enviar pipeline, concluir secrets e executar primeiro build. Nenhum push ou deploy foi realizado pelo agente.
 
 Compose principal alterado para consumir `ghcr.io/gustabessa/fleetlog:main` sem build; `FLEETLOG_IMAGE` permite selecionar versão. Dockerfile mantido para CI. Ambos os Compose usam imagens prontas; publicação/pull real ainda dependem do homelab.
+
+Login/PostgreSQL: testes de integração em PostgreSQL 18.6 temporário aprovados (rollback de bootstrap inválido, migração idempotente, hash da senha/token, sessão/rotação/expiração/logout, origem e rate limit). Oito testes Chromium desktop/mobile aprovados, incluindo login e logout. Woodpecker agora possui serviço PostgreSQL descartável para executar os testes de integração. Instância PostgreSQL local usada apenas para testes em `/tmp`, sem instalação de serviço no sistema.
+OIDC: schema reserva `external_identities` com chave issuer+subject e password_hash opcional para futuras contas externas. Provedor OIDC não implementado; nenhuma associação automática por e-mail. PUBLIC_URL é a origem exata; a aplicação deriva cookie Secure de HTTPS, sem confiar em headers do proxy.
+Confirmação do usuário: Woodpecker → GHCR → Dokploy já funcionou para a base anterior. Deploy desta versão ainda pendente. Bootstrap cria somente primeiro usuário; não redefine senha existente. Troca/recuperação de senha e inclusão de familiares continuam pendentes.
+
+## Prévia de UI — 2026-10-07
+
+- Botão de tema somente com ícone e nome acessível; rodapé com a frase solicitada.
+- Prévia navegável de garagem, detalhes de dois veículos, histórico e custos. Dados de exemplo indicados na interface, sem gravação na API.
+- Acesso pela tela de login em “Explorar prévia da garagem” e pela garagem autenticada em “Explorar próximas telas”.
+- Build Angular aprovado; aviso de orçamento CSS do componente (7,44 kB / aviso em 4 kB, limite de erro 8 kB). Extrair telas em componentes conforme evoluir a implementação.
+- Teste de navegação da prévia aprovado em Chromium desktop/mobile com API de autenticação mockada; inspeção visual da garagem nos temas claro/escuro concluída.

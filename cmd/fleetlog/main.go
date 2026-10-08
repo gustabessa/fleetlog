@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"fleetlog/internal/auth"
 	"fleetlog/internal/httpserver"
 )
 
@@ -37,7 +38,16 @@ func main() {
 		slog.Error("Angular build missing; run npm run build in web", "error", err)
 		os.Exit(1)
 	}
+	startup, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	authentication, err := auth.Open(startup, os.Getenv("DATABASE_URL"), os.Getenv("PUBLIC_URL"), os.Getenv("BOOTSTRAP_USERNAME"), os.Getenv("BOOTSTRAP_PASSWORD"))
+	cancel()
+	if err != nil {
+		slog.Error("startup failed", "error", err)
+		os.Exit(1)
+	}
+	defer authentication.DB.Close()
 	mux := http.NewServeMux()
+	authentication.Routes(mux)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Cache-Control", "no-store")

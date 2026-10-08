@@ -3,6 +3,16 @@ services:
   fleetlog-service:
     image: ${FLEETLOG_IMAGE:?Set ghcr.io/gustabessa/fleetlog:sha-COMMIT}
     pull_policy: always
+    environment:
+      PGHOST: fleetlog-db
+      PGPORT: "5432"
+      PGDATABASE: fleetlog
+      PGUSER: fleetlog
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set database password}
+      PGSSLMODE: disable
+      PUBLIC_URL: ${PUBLIC_URL:?Set the public HTTPS URL}
+      BOOTSTRAP_USERNAME: ${BOOTSTRAP_USERNAME:-}
+      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:-}
     restart: unless-stopped
     expose:
       - "8080"
