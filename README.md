@@ -43,9 +43,11 @@ cp .env.example .env
 docker compose up --build -d
 ```
 
-O Dockerfile compila Angular e Go em estágios separados. A imagem final roda sem root e não inclui Node. O Go serve frontend e futura API na mesma origem. Configure o domínio HTTPS no Dokploy com destino no serviço `app`, porta 8080. O banco não publica porta externa; os dados persistem no volume `postgres_data`.
+O Dockerfile compila Angular e Go em estágios separados. A imagem final roda sem root e não inclui Node. O Go serve frontend e futura API na mesma origem. Configure o domínio HTTPS no Dokploy com destino no serviço `fleetlog-service`, porta 8080. O banco não publica porta externa; os dados persistem no volume `postgres_data`.
 
-Para o Dokploy, use **`compose.dokploy.yaml`**, com build da imagem no próprio servidor, rede do proxy e nenhuma porta publicada no host. O passo a passo está em [docs/dokploy.md](docs/dokploy.md). `compose.yaml` continua sendo a configuração local.
+`compose.yaml` é a configuração local com build. Em produção no Dokploy, use `compose.registry.yaml` com provider Raw e defina `FLEETLOG_IMAGE` como `ghcr.io/gustabessa/fleetlog:sha-COMMIT_PUBLICADO` no Environment, junto de `POSTGRES_PASSWORD`. O arquivo usa a rede externa `dokploy-network` e não publica portas no host. Para imagem privada, configure autenticação GHCR no servidor de implantação.
+
+O CI Woodpecker usa `.woodpecker/build.yaml` para testar Go, construir o Dockerfile e publicar tags `main` e `sha-COMMIT` no GHCR. Cada promoção em produção é manual: atualize `FLEETLOG_IMAGE` para a versão aprovada e faça Deploy. A instalação do Woodpecker é gerenciada no painel Dokploy.
 
 `/healthz` verifica somente o processo HTTP, não a conexão com PostgreSQL. A imagem oferece o comando `fleetlog healthcheck` para o health check Docker.
 
@@ -54,6 +56,7 @@ Para o Dokploy, use **`compose.dokploy.yaml`**, com build da imagem no próprio 
 | Opção | Onde | Padrão | Uso |
 | --- | --- | --- | --- |
 | `APP_PORT` | Compose / `.env` | `8080` | Porta publicada da aplicação |
+| `FLEETLOG_IMAGE` | Compose produção / Dokploy | obrigatório | Imagem GHCR com tag do commit aprovado |
 | `POSTGRES_PASSWORD` | Compose / `.env` | obrigatório | Senha na inicialização do banco |
 | `HTTP_ADDR` | Processo Go | `:8080` | Endereço HTTP; manter padrão no container |
 | `STATIC_DIR` | Processo Go | `web/dist/fleetlog/browser` | Diretório do build Angular; Docker usa `/app/web` |

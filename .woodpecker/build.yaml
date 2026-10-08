@@ -1,0 +1,26 @@
+# Publish only trusted pushes to main; no secrets/build privileges for PRs.
+when:
+  - event: push
+    branch: main
+
+steps:
+  - name: backend-checks
+    image: golang:1.27.1-alpine
+    commands:
+      - go test ./...
+      - go vet ./...
+
+  - name: publish-image
+    image: docker.io/woodpeckerci/plugin-docker-buildx:6.1.2
+    settings:
+      registry: ghcr.io
+      repo: ghcr.io/gustabessa/fleetlog
+      dockerfile: Dockerfile
+      context: .
+      tags:
+        - main
+        - sha-${CI_COMMIT_SHA}
+      username:
+        from_secret: ghcr_username
+      password:
+        from_secret: ghcr_token

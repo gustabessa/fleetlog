@@ -1,13 +1,13 @@
 services:
-  app:
+  fleetlog-service:
     build: .
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8080}:8080"
     depends_on:
-      db:
+      fleetlog-db:
         condition: service_healthy
-  db:
+  fleetlog-db:
     image: postgres:18-alpine
     restart: unless-stopped
     environment:

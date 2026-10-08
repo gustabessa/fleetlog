@@ -1,28 +1,24 @@
-# Dokploy: use Docker Compose mode, repository root as build context.
-# Configure Domains -> service app -> container port 8080 -> HTTPS.
+# Dokploy production: Raw provider. Set an image built by Woodpecker.
 services:
-  app:
-    image: fleetlog-${COMPOSE_PROJECT_NAME:-homelab}:latest
-    pull_policy: build
-    build:
-      context: .
-      dockerfile: Dockerfile
+  fleetlog-service:
+    image: ${FLEETLOG_IMAGE:?Set ghcr.io/gustabessa/fleetlog:sha-COMMIT}
+    pull_policy: always
     restart: unless-stopped
     expose:
       - "8080"
     depends_on:
-      db:
+      fleetlog-db:
         condition: service_healthy
     networks:
       - backend
       - dokploy-network
-  db:
+  fleetlog-db:
     image: postgres:18-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: fleetlog
       POSTGRES_USER: fleetlog
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in Dokploy Environment}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set database password}
     volumes:
       - postgres_data:/var/lib/postgresql
     healthcheck:

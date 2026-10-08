@@ -4,6 +4,8 @@ Atualizado em 2026-10-07. Plano de produto: [docs/FleetLog-plan.md](docs/FleetLo
 
 ## Decisões de implementação
 
+- Serviços Compose: `fleetlog-service` (aplicação) e `fleetlog-db` (PostgreSQL); volume existente `postgres_data` preservado.
+
 - A implementação foi autorizada em 2026-10-07, substituindo a pausa do plano original.
 - Aprovado mediante viabilidade: Go servindo o bundle Angular, PostgreSQL e cliente S3 compatível com RustFS. SPA/PWA servida pelo Go é viável; HTTPS fica no proxy do Dokploy.
 - PWA online na v1. Cache somente dos arquivos da aplicação; sem cache de dados privados ou lançamentos offline.
@@ -30,15 +32,27 @@ Atualizado em 2026-10-07. Plano de produto: [docs/FleetLog-plan.md](docs/FleetLo
 
 Checklist de implantação: [docs/deployment-checklist.md](docs/deployment-checklist.md).
 
-## Build gerenciado pelo Dokploy
+## CI separado — Woodpecker + GHCR + Dokploy
 
-- [x] Compose específico com build local da imagem, porta interna e redes de proxy/banco.
-- [x] Documentar fonte Git, branch, Compose Path, variáveis, domínio e atualização da imagem.
-- [x] Validar contrato do Compose com CLI, sem deploy (Compose 2.40.3; imagem por projeto, redes, volume e ausência de portas publicadas).
-- [ ] Enviar alterações ao remoto e configurar serviço no painel Dokploy.
-- [ ] Executar primeiro build/deploy e validar domínio HTTPS/PWA.
+Direção escolhida pelo usuário: Woodpecker self-hosted faz testes/build e publica no GHCR; Dokploy usa Compose para consumir uma imagem versionada. Sem Application permanente como builder e sem GitHub Actions. Promoção inicial manual pelo SHA do commit.
 
-Configuração: [compose.dokploy.yaml](compose.dokploy.yaml). Guia: [docs/dokploy.md](docs/dokploy.md).
+- Instalação do Woodpecker gerenciada no painel Dokploy; Compose de infraestrutura removido do repositório a pedido do usuário.
+- [x] Preparar pipeline Go test/vet + build Dockerfile + publicação `main` e `sha-COMMIT` no GHCR.
+- [x] Preparar Compose de produção com imagem publicada, sem build.
+- [x] Validar Compose de produção com CLI, sem iniciar serviços.
+- Orientações de instalação fornecidas no chat; tutorial fora do repositório conforme pedido do usuário.
+- [x] Configurar OAuth App e habilitar repositório no Woodpecker (confirmado pelo usuário).
+- [ ] Enviar pipeline ao remoto e disparar primeiro push em main.
+- [ ] Instalar Woodpecker no homelab e confirmar agente conectado.
+- [ ] Cadastrar secrets GHCR com evento push; filtro de imagem omitido nesta versão porque o validador rejeita tags com pontos.
+- [ ] Executar primeiro build/publicação e confirmar pacote GHCR.
+- [ ] Configurar credenciais de pull no Dokploy se imagem privada.
+- [ ] Implantar Compose com SHA publicado e validar HTTPS/PWA.
+- [ ] Validar promoção/rollback entre versões.
+- [ ] Adicionar testes Playwright ao CI.
+- [ ] Avaliar deploy automático via webhook após build e builds multiarch.
+
+Pipeline: [.woodpecker/build.yaml](.woodpecker/build.yaml). Produção: [compose.registry.yaml](compose.registry.yaml).
 
 ## Etapas seguintes
 
@@ -78,10 +92,10 @@ Primeiro scaffold implementado; não há funcionalidades de domínio nem autenti
 Validados: build Angular (~57 kB transferidos), testes Go e go vet; 6 testes Chromium aprovados em desktop/mobile, cobrindo layout, tema persistente, rotas, manifest, service worker, respostas API e atualização para novo build sem recarga automática.
 Pendente: Docker Compose/build, HTTPS Dokploy e instalação PWA no sistema operacional. O PostgreSQL está apenas preparado no Compose; sem conexão ou migrações ainda.
 Node 22.23.3 disponível. Go 1.27.1 baixado para `/tmp/go` com checksum oficial validado; não instalado no sistema.
-Docker Engine indisponível neste ambiente. CLI Compose 2.40.3 extraído em `/tmp/fleetlog-compose-cli` para validar `compose.yaml` e `compose.dokploy.yaml`, ambos aprovados; build de imagem não executado. Frontend em `web/`, backend em `cmd/fleetlog` e `internal/httpserver`.
+Docker Engine indisponível neste ambiente. CLI Compose 2.40.3 extraído em `/tmp/fleetlog-compose-cli` para validar `compose.yaml` e `compose.registry.yaml`, ambos aprovados; build de imagem não executado. Frontend em `web/`, backend em `cmd/fleetlog` e `internal/httpserver`.
 Playwright adicionado ao frontend. Testes: `cd web && npm run test:e2e`; requer Go e Chromium. Para este ambiente: `GO_BIN=/tmp/go/bin/go`, `GOCACHE=/tmp/fleetlog-gocache`, `PLAYWRIGHT_BROWSERS_PATH=/tmp/fleetlog-browsers`, `LD_LIBRARY_PATH=/tmp/fleetlog-browser-deps/root/usr/lib/x86_64-linux-gnu`, Node no PATH. Browser e bibliotecas extraídos apenas em `/tmp`; são temporários e precisam ser preparados novamente caso removidos.
 Próxima etapa técnica: conexão PostgreSQL/migrações e login local; antes de implementar inclusão de familiares, definir permissões.
 Para retomar: ler este arquivo e o plano, conferir git status e executar os checks do README.
 Ícones simples provisórios com a letra F; idioma pt-BR provisório para esta base. O frontend usa Angular 22.2 e Node 22; Go 1.27.
 
-Build no Dokploy preparado em `compose.dokploy.yaml`: GitHub/main -> Dockerfile -> imagem local por projeto. Próxima ação de implantação: enviar arquivos ao remoto, configurar Compose Path/Environment/Domains no painel conforme `docs/dokploy.md` e executar primeiro deploy. Nenhum acesso ao painel ou deploy foi realizado nesta sessão.
+Fluxo atual: Woodpecker → GHCR → Dokploy Compose. Pipeline e Compose de produção preparados; instalação/tutorial do Woodpecker ficam fora do repo. Configuração antiga de build pelo Dokploy removida (`compose.dokploy.yaml` e `docs/dokploy.md`). Usuário confirmou login OAuth e repositório habilitado. Próximo passo: enviar pipeline, concluir secrets e executar primeiro build. Nenhum push ou deploy foi realizado pelo agente.
