@@ -28,7 +28,8 @@ A tela inicial é uma listagem visual dos veículos da garagem, com imagem de ca
 
 ## Tela do veículo — requisitos confirmados
 
-- Permitir adicionar notas/informações ao veículo, incluindo número do chassi e RENAVAM.
+- Chassi e RENAVAM como campos próprios nas informações do veículo, separados de notas; preservar identificadores como texto.
+- Manter notas/anotações do veículo como recurso separado.
 - Oferecer ação de copiar em um clique os valores, como chassi e RENAVAM.
 - Iniciar o lançamento de abastecimento dentro da tela do veículo, com o veículo definido pelo contexto, sem exigir seleção adicional no formulário.
 
@@ -171,3 +172,5 @@ Separar decisões confirmadas, propostas e questões em aberto. Não transformar
 - 2026-10-07: nome definitivo atualizado para FleetLog em todos os materiais do projeto.
 
 - 2026-10-07: implementação autorizada; Go servindo Angular SPA/PWA aprovado após avaliação de viabilidade. PostgreSQL e cliente S3 com opção RustFS mantidos. Criado TODO.md para acompanhamento e retomada; detalhes de domínio pendentes continuam como propostas.
+
+- 2026-10-08: aprovado cadastro básico T03 com nome/modelo e km inicial obrigatórios; placa, marca, ano, chassi e RENAVAM opcionais. Compra/venda, notas, fotos e alteração de odômetro seguem nas tarefas posteriores.

@@ -1,0 +1,159 @@
+@if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+}
+@if (loading()) {
+  <p role="status">Carregando veículos…</p>
+} @else if (selected(); as vehicle) {
+  <div class="actions">
+    <button flButton type="button" (click)="selected.set(null)">Voltar à garagem</button>
+    <button flButton type="button" variant="primary" (click)="startEdit(vehicle)">
+      Editar veículo
+    </button>
+  </div>
+  <section flCard>
+    <h2>{{ vehicle.name }}</h2>
+    <dl>
+      <div>
+        <dt>Placa</dt>
+        <dd>{{ vehicle.plate || 'Não informada' }}</dd>
+      </div>
+      <div>
+        <dt>Marca</dt>
+        <dd>{{ vehicle.brand || 'Não informada' }}</dd>
+      </div>
+      <div>
+        <dt>Ano</dt>
+        <dd>{{ vehicle.year ?? 'Não informado' }}</dd>
+      </div>
+      <div>
+        <dt>Quilometragem inicial</dt>
+        <dd>{{ summary(vehicle).km }} km</dd>
+      </div>
+      <div>
+        <dt>Chassi</dt>
+        <dd>
+          <span>{{ vehicle.chassis || 'Não informado' }}</span>
+          @if (vehicle.chassis) {
+            <button flButton size="sm" type="button" (click)="copy('chassis', vehicle.chassis)">
+              Copiar chassi
+            </button>
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>RENAVAM</dt>
+        <dd>
+          <span>{{ vehicle.renavam || 'Não informado' }}</span>
+          @if (vehicle.renavam) {
+            <button flButton size="sm" type="button" (click)="copy('renavam', vehicle.renavam)">
+              Copiar RENAVAM
+            </button>
+          }
+        </dd>
+      </div>
+    </dl>
+    @if (copied()) {
+      <p role="status">{{ copied() === 'chassis' ? 'Chassi' : 'RENAVAM' }} copiado.</p>
+    }
+  </section>
+} @else {
+  <div class="actions">
+    <button flButton type="button" variant="primary" (click)="startCreate()">
+      Adicionar veículo
+    </button>
+  </div>
+  @if (error()) {
+    <button flButton type="button" (click)="load()">Recarregar veículos</button>
+  }
+  @if (!vehicles().length && !error()) {
+    <section flCard class="empty">
+      <h2>Sua garagem está vazia</h2>
+      <p>Adicione o primeiro veículo para começar seu histórico.</p>
+    </section>
+  }
+  <div class="vehicle-grid">
+    @for (vehicle of vehicles(); track vehicle.id) {
+      <fl-vehicle-card
+        [vehicle]="summary(vehicle)"
+        [showMileage]="true"
+        (activate)="open(vehicle)"
+      />
+    }
+  </div>
+}
+<fl-dialog #editor [title]="editing === null ? 'Adicionar veículo' : 'Editar veículo'">
+  <form id="vehicle-form" ngNativeValidate (ngSubmit)="save()">
+    @if (formError()) {
+      <p class="error" role="alert">{{ formError() }}</p>
+    }
+    <fieldset [disabled]="busy()">
+      <fl-field controlId="vehicle-name" label="Nome/modelo"
+        ><input
+          flInput
+          id="vehicle-name"
+          name="name"
+          [(ngModel)]="form.name"
+          required
+          maxlength="120"
+      /></fl-field>
+      <fl-field controlId="vehicle-plate" label="Placa (opcional)"
+        ><input flInput id="vehicle-plate" name="plate" [(ngModel)]="form.plate" maxlength="32"
+      /></fl-field>
+      <fl-field controlId="vehicle-brand" label="Marca (opcional)"
+        ><input flInput id="vehicle-brand" name="brand" [(ngModel)]="form.brand" maxlength="100"
+      /></fl-field>
+      <fl-field controlId="vehicle-year" label="Ano (opcional)"
+        ><input
+          flInput
+          type="number"
+          id="vehicle-year"
+          name="year"
+          [(ngModel)]="form.year"
+          min="1"
+          max="9999"
+          step="1"
+      /></fl-field>
+      <fl-field controlId="vehicle-chassis" label="Chassi (opcional)"
+        ><input
+          flInput
+          id="vehicle-chassis"
+          name="chassis"
+          [(ngModel)]="form.chassis"
+          maxlength="64"
+      /></fl-field>
+      <fl-field controlId="vehicle-renavam" label="RENAVAM (opcional)"
+        ><input
+          flInput
+          id="vehicle-renavam"
+          name="renavam"
+          [(ngModel)]="form.renavam"
+          maxlength="64"
+      /></fl-field>
+      @if (editing === null) {
+        <fl-field controlId="vehicle-km" label="Quilometragem inicial (km)"
+          ><input
+            flInput
+            type="number"
+            id="vehicle-km"
+            name="initialKm"
+            [(ngModel)]="form.initialKm"
+            required
+            min="0"
+            max="999999999.999"
+            step="0.001"
+        /></fl-field>
+      } @else {
+        <p>
+          A quilometragem inicial é preservada. Alterações de odômetro serão feitas pelo histórico
+          de leituras.
+        </p>
+      }
+    </fieldset>
+  </form>
+  <div flDialogFooter class="actions">
+    <button flButton type="button" (click)="editor.close()" [disabled]="busy()">Cancelar</button>
+    <button flButton type="submit" form="vehicle-form" variant="primary" [loading]="busy()">
+      Salvar veículo
+    </button>
+  </div>
+</fl-dialog>

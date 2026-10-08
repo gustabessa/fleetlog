@@ -47,3 +47,6 @@ func (s *Service) RequireUser(next http.HandlerFunc) http.HandlerFunc {
 func (s *Service) RequireWrite(next http.HandlerFunc) http.HandlerFunc {
 	return s.RequireUser(s.write(next))
 }
+
+// RequireJSON protects writes by origin and content type; pair with authentication/authorization.
+func (s *Service) RequireJSON(next http.HandlerFunc) http.HandlerFunc { return s.write(next) }

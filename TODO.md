@@ -23,7 +23,7 @@ Esta fila organiza os checklists detalhados abaixo em entregas escolhíveis. Ord
 ### P1 — conseguir cadastrar e consultar o primeiro veículo real
 
 - [x] **T02 — garagem base e autorização (2026-10-07).** Migração de garagem/vínculo com usuário; associar primeiro usuário à garagem; disponibilizar consulta de contexto e proteção reutilizável para APIs. Testar isolamento entre garagens. Gestão de familiares permanece separada e exige aprovação das permissões.
-- [ ] **T03 — veículos básicos ponta a ponta.** Definir campos/obrigatoriedade; cadastro, listagem, detalhes e edição reais com identificadores próprios (chassi/RENAVAM), km inicial preservado e integração das telas. Placeholder de imagem até T09. Depende de T02; ações de exclusão/arquivamento dependem de definição própria.
+- [x] **T03 — veículos básicos ponta a ponta (2026-10-08).** Campos aprovados: nome/modelo e km inicial obrigatórios; placa, marca, ano, chassi e RENAVAM opcionais; cadastro, listagem, detalhes e edição reais com identificadores próprios (chassi/RENAVAM), km inicial preservado e integração das telas. Placeholder de imagem até T09. Depende de T02; ações de exclusão/arquivamento dependem de definição própria.
 - [ ] **T04 — perfil, moeda e preferências.** Persistir moeda padrão e preferências de tema já previstas; integrar API/UI. Estabelecer representação decimal e moeda por registro para os formulários de preço. Não alterar moedas históricas. Necessário antes dos lançamentos financeiros.
 - [ ] **T05 — odômetro e regras de alteração.** Aprovar cronologia, retroatividade/correção e efeitos de editar/excluir registros; implementar histórico, autoria/origem e leitura atual. Depende de T03; abastecimentos/manutenções usam esta base.
 
@@ -117,15 +117,21 @@ Cada área passa por três estados: **prévia visual → API/persistência integ
 
 ## Etapa 3 — veículos, informações e odômetro
 
-- [ ] Definir campos básicos do cadastro e obrigatoriedade de compra/venda conforme plano.
-- [ ] Criar migrações e API de cadastro, listagem, consulta e edição de veículo vinculado à garagem.
-- [ ] Persistir quilometragem inicial separada do histórico e quilometragem atual.
+- [x] Definir cadastro básico T03: nome/modelo e km inicial obrigatórios; placa, marca, ano, chassi e RENAVAM opcionais (aprovado pelo usuário em 2026-10-08).
+- Compra/venda, notas livres, fotos e alteração do odômetro ficam nas tarefas seguintes (T10/T09/T05); recursos mantidos no escopo, fora desta entrega.
+- [ ] Definir obrigatoriedade de compra/venda na T10.
+- [x] Criar migração 003 e API de cadastro, listagem, consulta e edição de veículo vinculado à garagem.
+- [x] Persistir quilometragem inicial decimal e preservá-la na edição básica.
+- [ ] Implementar histórico e quilometragem atual na T05, separados do km inicial.
 - [ ] Registrar data/valor/moeda de compra e venda; proprietários anterior/novo opcionais.
-- [ ] Implementar chassi e RENAVAM como campos próprios nas informações/cadastro do veículo, separados das notas; persistir como texto para preservar zeros iniciais.
+- [x] Implementar chassi e RENAVAM como campos próprios nas informações/cadastro do veículo, separados das notas; persistir como texto para preservar zeros iniciais.
 - [ ] Manter notas/anotações do veículo como recurso separado; definir formato e quantidade antes da implementação.
-- [ ] Copiar chassi, RENAVAM e outros identificadores do veículo com um clique e confirmação visual.
-- [ ] Integrar home com cards/imagens reais, nome/modelo e badge de km no canto superior esquerdo.
-- [ ] Integrar detalhes ao veículo selecionado e manter contexto ao iniciar lançamentos.
+- [x] Copiar chassi e RENAVAM com um clique e confirmação visual.
+- [ ] Estender cópia a outros identificadores conforme forem necessários.
+- [x] Integrar home com veículos reais, nome/modelo e badge de km inicial no canto superior esquerdo.
+- [ ] Substituir ilustração placeholder por fotos reais na T09.
+- [x] Integrar consulta/edição de detalhes reais ao veículo selecionado.
+- [ ] Manter contexto ao iniciar lançamentos na T06/T07.
 - [ ] Definir arquivamento/venda e política de exclusão de veículo com histórico antes dessas ações.
 - [ ] Definir regra cronológica de odômetro e tratamento de inconsistências/leituras retroativas.
 - [ ] Persistir leituras e suas origens; definir autoria/rastreabilidade de correções conforme decisão aprovada.
@@ -249,7 +255,7 @@ Pendente: Docker Compose/pull da imagem, HTTPS Dokploy e instalação PWA no sis
 Node 22.23.3 disponível. Go 1.27.1 baixado para `/tmp/go` com checksum oficial validado; não instalado no sistema.
 Docker Engine indisponível neste ambiente. CLI Compose 2.40.3 extraído em `/tmp/fleetlog-compose-cli` para validar `compose.yaml` e `compose.registry.yaml`, ambos aprovados; build de imagem não executado. Frontend em `web/`, backend em `cmd/fleetlog` e `internal/httpserver`.
 Playwright adicionado ao frontend. Testes: `cd web && npm run test:e2e`; requer Go e Chromium. Para este ambiente: `GO_BIN=/tmp/go/bin/go`, `GOCACHE=/tmp/fleetlog-gocache`, `PLAYWRIGHT_BROWSERS_PATH=/tmp/fleetlog-browsers`, `LD_LIBRARY_PATH=/tmp/fleetlog-browser-deps/root/usr/lib/x86_64-linux-gnu`, Node no PATH. Browser e bibliotecas extraídos apenas em `/tmp`; são temporários e precisam ser preparados novamente caso removidos.
-Próxima etapa técnica: T03, veículos reais; antes de implementar inclusão de familiares, definir permissões. Publicar a nova imagem e atualizar o Raw Compose no Dokploy com PG*, PUBLIC_URL e bootstrap.
+Próxima etapa técnica: T04, perfil/moeda/preferências; antes de implementar inclusão de familiares, definir permissões. Publicar a nova imagem e atualizar o Raw Compose no Dokploy com PG*, PUBLIC_URL e bootstrap.
 Para retomar: ler este arquivo e o plano, conferir git status e executar os checks do README.
 Ícones simples provisórios com a letra F; idioma pt-BR provisório para esta base. O frontend usa Angular 22.2 e Node 22; Go 1.27.
 
@@ -318,3 +324,14 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Build Angular, go test sem cache com PostgreSQL, go vet e build Go CGO_ENABLED=0 aprovados; suíte completa com 36 testes Chromium desktop/mobile aprovada.
 - Sem novas envs. Deploy desta versão aplica migração 002; preservar volume. Pendência de implantação real continua separada.
 - Próxima entrega: T03, definir campos obrigatórios e integrar cadastro/listagem/detalhes/edição de veículos reais à garagem autorizada.
+
+## T03 — veículos básicos reais — 2026-10-08
+
+- Campos aprovados pelo usuário e registrados antes da implementação: nome/modelo (um campo textual) e km inicial obrigatórios; placa, marca, ano, chassi e RENAVAM opcionais.
+- Migração 003 cria veículos vinculados à garagem; GET lista/detalhes, POST cadastro e PUT edição com validação e no-store. Identificadores como texto; quilometragem initial numeric(12,3), preservada na edição, sem leitura atual/histórico ainda.
+- Componente VehicleGarage separado da prévia: cadastro/edição em FlDialog, lista com FlVehicleCard, detalhes reais e cópia de chassi/RENAVAM com confirmação. Badge de km inicial no canto superior esquerdo e ilustração placeholder até T09. Dados persistem após recarga.
+- Escrita temporariamente limitada ao criador da garagem, mantendo membros como leitores até definir permissões na T12. APIs verificam sessão/vínculo/origem/JSON; consultas/edições de veículo incluem garage_id para impedir troca de contexto.
+- Testes PostgreSQL aprovados: criação, campos opcionais, precisão/zeros iniciais, edição/imutabilidade de km inicial, reinício, isolamento entre garagens, vínculo removido, leitura compartilhada e escrita negada a não criador.
+- Build Angular, Go test com PostgreSQL e go vet aprovados; suíte completa com 38 testes Chromium desktop/mobile aprovada. Teste de cópia intercepta somente a escrita no clipboard; cadastro/consulta/edição usam backend e banco reais.
+- Compra/venda, notas, fotos, alterações do odômetro e exclusão/arquivamento continuam nas tarefas posteriores. Não há nova env; deploy aplica migração 003 preservando volume existente.
+- Próxima tarefa recomendada: T04 (perfil e moeda/preferências), depois T05 (odômetro) e T06 (abastecimentos).

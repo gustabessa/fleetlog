@@ -15,5 +15,6 @@ export interface VehicleSummary {
 })
 export class FlVehicleCard {
   readonly vehicle = input.required<VehicleSummary>();
+  readonly showMileage = input(false);
   readonly activate = output<void>();
 }

@@ -12,8 +12,9 @@ import (
 )
 
 type Garage struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	CreatedBy int64  `json:"-"`
 }
 type garageKey struct{}
 
@@ -40,7 +41,7 @@ func (s *Service) RequireMember(next http.HandlerFunc) http.HandlerFunc {
 		}
 		user, _ := auth.UserFromContext(r.Context())
 		var g Garage
-		err = s.Auth.DB.QueryRow(r.Context(), `SELECT g.id,g.name FROM garages g JOIN garage_members m ON m.garage_id=g.id WHERE g.id=$1 AND m.user_id=$2`, id, user.ID).Scan(&g.ID, &g.Name)
+		err = s.Auth.DB.QueryRow(r.Context(), `SELECT g.id,g.name,g.created_by FROM garages g JOIN garage_members m ON m.garage_id=g.id WHERE g.id=$1 AND m.user_id=$2`, id, user.ID).Scan(&g.ID, &g.Name, &g.CreatedBy)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				reply(w, 404, map[string]string{"error": "garage not found"})
@@ -84,4 +85,17 @@ func reply(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(value)
+}
+
+// RequireCreatorWrite limits mutations to the garage creator while family roles are undefined.
+func (s *Service) RequireCreatorWrite(next http.HandlerFunc) http.HandlerFunc {
+	return s.RequireMember(s.Auth.RequireJSON(func(w http.ResponseWriter, r *http.Request) {
+		user, _ := auth.UserFromContext(r.Context())
+		g, _ := FromContext(r.Context())
+		if g.CreatedBy != user.ID {
+			reply(w, http.StatusForbidden, map[string]string{"error": "write access not granted"})
+			return
+		}
+		next(w, r)
+	}))
 }

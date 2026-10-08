@@ -1,3 +1,4 @@
+import { VehicleGarage } from './vehicles/vehicle-garage';
 import { palettes } from './ui/themes';
 import { formatMoney, formatNumber } from './ui/format';
 import { Component, computed, inject, signal } from '@angular/core';
@@ -27,6 +28,7 @@ import { SwUpdate } from '@angular/service-worker';
   selector: 'app-root',
   imports: [
     RouterOutlet,
+    VehicleGarage,
     FormsModule,
     FlButton,
     FlInput,

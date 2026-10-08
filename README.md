@@ -2,7 +2,7 @@
 
 Garagem familiar em uma PWA Angular, com backend Go e PostgreSQL, para implantação no homelab.
 
-**Status:** primeira base executável. Shell responsivo, temas claro/escuro, manifest e service worker, servidor de arquivos SPA e health check. Login local, logout, sessões e migração inicial PostgreSQL implementados. Garagem persistida com vínculo ao usuário e consulta autorizada implementada. Gestão de veículos, inclusão de familiares e OIDC ainda pendentes.
+**Status:** primeira base executável. Shell responsivo, temas claro/escuro, manifest e service worker, servidor de arquivos SPA e health check. Login local, logout, sessões e migração inicial PostgreSQL implementados. Garagem persistida com vínculo ao usuário e consulta autorizada implementada. Cadastro/listagem/detalhes/edição básicos de veículos implementados; lançamentos, inclusão de familiares e OIDC ainda pendentes.
 
 Veja [TODO.md](TODO.md) para andamento e retomada e [plano de produto](docs/FleetLog-plan.md) para requisitos e propostas pendentes.
 
@@ -92,11 +92,28 @@ As migrações ficam em `internal/database/migrations/`. A versão 001 foi prese
 
 Sem sessão válida, as rotas retornam 401. ID inexistente/inacessível retorna 404 com a mesma resposta, evitando revelar outra garagem. Respostas usam no-store; expiração, revogação da sessão e vínculo são conferidos em cada chamada.
 
-`auth.RequireUser` fornece usuário autenticado no contexto; `auth.RequireWrite` também exige JSON/origem válida. `garage.RequireMember` fornece a garagem autorizada no contexto e protege futuras rotas com `{garageID}`. Permissões de escrita/gestão dos familiares continuam pendentes; esta etapa entrega somente consultas.
+`auth.RequireUser` fornece usuário autenticado no contexto; `auth.RequireWrite` também exige JSON/origem válida. `garage.RequireMember` fornece a garagem autorizada no contexto e protege futuras rotas com `{garageID}`. Permissões de escrita/gestão dos familiares continuam pendentes. Até essa definição, `garage.RequireCreatorWrite` permite criar/editar veículos apenas ao criador da garagem, com sessão, vínculo, JSON e origem válida. Membros podem consultar; gestão de membros ainda não tem API pública.
 
 A tela autenticada busca a garagem real, com estados de carregamento, erro/nova tentativa e ausência de vínculo. Usa a primeira garagem da lista ordenada por ID; escolha entre múltiplas garagens não é uma funcionalidade entregue. Prévia visual e dados fictícios continuam separados.
 
 Não há novas variáveis de ambiente nesta etapa. Publique a imagem e faça deploy preservando o volume existente; a migração 002 é aplicada no startup. Não edite migrações já aplicadas: novas mudanças devem acrescentar outra versão.
+
+## Veículos básicos
+
+Nome/modelo (um campo textual) e quilometragem inicial são obrigatórios. Placa, marca, ano, chassi e RENAVAM são opcionais. Chassi/RENAVAM são campos próprios, guardados como texto e copiáveis na tela de detalhes. Notas, compra/venda e fotos continuam previstos para as próximas tarefas.
+
+| API | Uso |
+| --- | --- |
+| `GET /api/garages/{garageID}/vehicles` | Lista de veículos da garagem autorizada |
+| `GET /api/garages/{garageID}/vehicles/{vehicleID}` | Detalhes, com escopo da garagem |
+| `POST /api/garages/{garageID}/vehicles` | Criar veículo (criador da garagem) |
+| `PUT /api/garages/{garageID}/vehicles/{vehicleID}` | Substituir campos editáveis (criador da garagem) |
+
+Corpo de criação: `name`, `plate`, `brand`, `year` (inteiro ou null), `chassis`, `renavam` e `initialKm` (número decimal não negativo, até três casas e 999999999.999 km). O backend guarda odômetro como numeric e devolve `initialKm` como texto decimal. Na edição, não envie `initialKm`: esse valor é preservado; atualização de quilometragem pelo histórico fica na T05. Não há exclusão/arquivamento nesta entrega.
+
+Limites: nome 120 caracteres, placa 32, marca 100, chassi/RENAVAM 64; ano opcional entre 1 e 9999. O cadastro não força formato nacional de placa/identificadores. Campos inválidos retornam 400 e nomes dos campos em `fields`; tentativa de escrita de membro não criador retorna 403; veículo de outra garagem retorna 404. APIs não são cacheadas.
+
+A migração 003 adiciona veículos sem alterar dados das migrações anteriores. No deploy, preserve o volume do banco. Sem novas variáveis de ambiente. Home e detalhes reais usam componente separado da prévia; cards apresentam ilustração placeholder e km inicial até as etapas de S3/odômetro.
 
 ## PWA e atualização
 
