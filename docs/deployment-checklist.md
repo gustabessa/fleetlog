@@ -4,9 +4,11 @@ Os testes locais validam o bundle Angular de produção servido pelo Go em Chrom
 
 ## Docker Compose
 
+O Compose baixa a imagem pronta do GHCR. Confirme a publicação da imagem e autentique com `docker login ghcr.io` se ela for privada. Para uma versão específica, defina `FLEETLOG_IMAGE` com a tag publicada.
+
 - [ ] Copiar `.env.example` para `.env` e definir uma senha própria para PostgreSQL.
 - [ ] Executar `docker compose config --quiet` para validar interpolação/configuração.
-- [ ] Executar `docker compose up --build -d` e confirmar `fleetlog-service` e `fleetlog-db` saudáveis em `docker compose ps`.
+- [ ] Executar `docker compose up -d` e confirmar `fleetlog-service` e `fleetlog-db` saudáveis em `docker compose ps`.
 - [ ] Confirmar `docker compose exec fleetlog-service /app/fleetlog healthcheck` e `curl --fail http://localhost:8080/healthz`.
 - [ ] Verificar que o processo da aplicação roda sem root: `docker compose exec fleetlog-service id`.
 - [ ] Abrir a garagem e alternar temas; recarregar e confirmar a preferência.

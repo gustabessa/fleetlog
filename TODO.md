@@ -27,7 +27,7 @@ Atualizado em 2026-10-07. Plano de produto: [docs/FleetLog-plan.md](docs/FleetLo
 - [x] Validar service worker e atualização com aviso e recarga mediante clique.
 - [x] Corrigir health check com endereço explícito e resposta JSON para `/api`.
 - [x] Remover referências a outro produto dos Markdown; apresentar como sistema de gestão de veículos.
-- [ ] Executar build/health checks Docker Compose (Docker indisponível neste ambiente).
+- [ ] Executar pull/health checks Docker Compose (Docker Engine indisponível neste ambiente).
 - [ ] Validar HTTPS no Dokploy e instalação PWA em dispositivos reais.
 
 Checklist de implantação: [docs/deployment-checklist.md](docs/deployment-checklist.md).
@@ -90,7 +90,7 @@ Pipeline: [.woodpecker/build.yaml](.woodpecker/build.yaml). Produção: [compose
 
 Primeiro scaffold implementado; não há funcionalidades de domínio nem autenticação ainda.
 Validados: build Angular (~57 kB transferidos), testes Go e go vet; 6 testes Chromium aprovados em desktop/mobile, cobrindo layout, tema persistente, rotas, manifest, service worker, respostas API e atualização para novo build sem recarga automática.
-Pendente: Docker Compose/build, HTTPS Dokploy e instalação PWA no sistema operacional. O PostgreSQL está apenas preparado no Compose; sem conexão ou migrações ainda.
+Pendente: Docker Compose/pull da imagem, HTTPS Dokploy e instalação PWA no sistema operacional. O PostgreSQL está apenas preparado no Compose; sem conexão ou migrações ainda.
 Node 22.23.3 disponível. Go 1.27.1 baixado para `/tmp/go` com checksum oficial validado; não instalado no sistema.
 Docker Engine indisponível neste ambiente. CLI Compose 2.40.3 extraído em `/tmp/fleetlog-compose-cli` para validar `compose.yaml` e `compose.registry.yaml`, ambos aprovados; build de imagem não executado. Frontend em `web/`, backend em `cmd/fleetlog` e `internal/httpserver`.
 Playwright adicionado ao frontend. Testes: `cd web && npm run test:e2e`; requer Go e Chromium. Para este ambiente: `GO_BIN=/tmp/go/bin/go`, `GOCACHE=/tmp/fleetlog-gocache`, `PLAYWRIGHT_BROWSERS_PATH=/tmp/fleetlog-browsers`, `LD_LIBRARY_PATH=/tmp/fleetlog-browser-deps/root/usr/lib/x86_64-linux-gnu`, Node no PATH. Browser e bibliotecas extraídos apenas em `/tmp`; são temporários e precisam ser preparados novamente caso removidos.
@@ -99,3 +99,5 @@ Para retomar: ler este arquivo e o plano, conferir git status e executar os chec
 Ícones simples provisórios com a letra F; idioma pt-BR provisório para esta base. O frontend usa Angular 22.2 e Node 22; Go 1.27.
 
 Fluxo atual: Woodpecker → GHCR → Dokploy Compose. Pipeline e Compose de produção preparados; instalação/tutorial do Woodpecker ficam fora do repo. Configuração antiga de build pelo Dokploy removida (`compose.dokploy.yaml` e `docs/dokploy.md`). Usuário confirmou login OAuth e repositório habilitado. Próximo passo: enviar pipeline, concluir secrets e executar primeiro build. Nenhum push ou deploy foi realizado pelo agente.
+
+Compose principal alterado para consumir `ghcr.io/gustabessa/fleetlog:main` sem build; `FLEETLOG_IMAGE` permite selecionar versão. Dockerfile mantido para CI. Ambos os Compose usam imagens prontas; publicação/pull real ainda dependem do homelab.

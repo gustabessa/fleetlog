@@ -1,6 +1,7 @@
 services:
   fleetlog-service:
-    build: .
+    image: ${FLEETLOG_IMAGE:-ghcr.io/gustabessa/fleetlog:main}
+    pull_policy: always
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8080}:8080"
