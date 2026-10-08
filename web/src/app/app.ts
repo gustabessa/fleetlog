@@ -426,5 +426,9 @@ export class App {
   private applyTheme() {
     document.documentElement.dataset['palette'] = this.palette();
     document.documentElement.dataset['theme'] = this.dark() ? 'dark' : 'light';
+    const surface = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
+    document
+      .querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+      ?.setAttribute('content', surface);
   }
 }

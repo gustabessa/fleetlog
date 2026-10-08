@@ -209,6 +209,10 @@ test('seletor mostra doze paletas nos dois modos e persiste escolha', async ({ p
     for (let i = 0; i < 12; i++) {
       await dialog.locator('.palette').nth(i).click();
       await expect(dialog.locator('.palette').nth(i)).toHaveAttribute('aria-pressed', 'true');
+      const surface = await page.evaluate(() =>
+        getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(),
+      );
+      await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', surface);
       combinations.add(
         await page.evaluate(
           () =>
@@ -226,6 +230,7 @@ test('seletor mostra doze paletas nos dois modos e persiste escolha', async ({ p
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-palette', 'orange');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#222329');
   await page.getByRole('button', { name: 'Escolher tema', exact: true }).click();
   await expect(
     dialog.getByRole('button', { name: 'Grafite e laranja', exact: true }),
