@@ -9,6 +9,7 @@ import (
 	"fleetlog/internal/apiutil"
 	"fleetlog/internal/garage"
 	"fleetlog/internal/odometer"
+	"github.com/jackc/pgx/v5"
 	_ "golang.org/x/image/webp"
 	"image"
 	_ "image/jpeg"
@@ -25,11 +26,32 @@ type Service struct {
 	Store  Store
 }
 
+func target(r *http.Request) (table, column string, id int64) {
+	if r.PathValue("noteID") != "" {
+		return "note_photos", "note_id", apiutil.ID(r, "noteID")
+	}
+	return "vehicle_photos", "vehicle_id", apiutil.ID(r, "vehicleID")
+}
+func (s *Service) checkNote(r *http.Request, tx pgx.Tx) error {
+	if r.PathValue("noteID") == "" {
+		return nil
+	}
+	q := s.Garage.Auth.DB.QueryRow
+	if tx != nil {
+		q = tx.QueryRow
+	}
+	var id int64
+	return q(r.Context(), `SELECT id FROM vehicle_notes WHERE id=$1 AND vehicle_id=$2`, apiutil.ID(r, "noteID"), apiutil.ID(r, "vehicleID")).Scan(&id)
+}
 func (s *Service) Routes(m *http.ServeMux) {
 	base := "/api/garages/{garageID}/vehicles/{vehicleID}/image"
 	m.HandleFunc("GET "+base, s.Garage.RequireMember(s.read))
 	m.HandleFunc("PUT "+base, s.Garage.RequireMember(s.authorizeUpload(s.upload)))
 	m.HandleFunc("DELETE "+base, s.Garage.RequireMemberWrite(s.remove))
+	notes := "/api/garages/{garageID}/vehicles/{vehicleID}/notes/{noteID}/image"
+	m.HandleFunc("GET "+notes, s.Garage.RequireMember(s.read))
+	m.HandleFunc("PUT "+notes, s.Garage.RequireMember(s.authorizeUpload(s.upload)))
+	m.HandleFunc("DELETE "+notes, s.Garage.RequireMemberWrite(s.remove))
 }
 
 // Uploads are raw image bytes, with same-origin protection rather than the JSON write wrapper.
@@ -77,6 +99,10 @@ func (s *Service) upload(w http.ResponseWriter, r *http.Request) {
 		odometer.Failure(w, err)
 		return
 	}
+	if err := s.checkNote(r, nil); err != nil {
+		odometer.Failure(w, err)
+		return
+	}
 	data, err := io.ReadAll(http.MaxBytesReader(w, r.Body, MaxBytes))
 	if err != nil {
 		apiutil.Reply(w, 413, map[string]string{"error": "image exceeds 10 MB"})
@@ -112,11 +138,16 @@ func (s *Service) upload(w http.ResponseWriter, r *http.Request) {
 		odometer.Failure(w, err)
 		return
 	}
-	if _, err = tx.Exec(r.Context(), `UPDATE photo_objects SET state='delete' WHERE object_key=(SELECT object_key FROM vehicle_photos WHERE vehicle_id=$1)`, vid); err != nil {
+	if err = s.checkNote(r, tx); err != nil {
 		odometer.Failure(w, err)
 		return
 	}
-	if _, err = tx.Exec(r.Context(), `INSERT INTO vehicle_photos(vehicle_id,object_key) VALUES($1,$2) ON CONFLICT(vehicle_id) DO UPDATE SET object_key=excluded.object_key`, vid, key); err != nil {
+	table, column, targetID := target(r)
+	if _, err = tx.Exec(r.Context(), `UPDATE photo_objects SET state='delete' WHERE object_key=(SELECT object_key FROM `+table+` WHERE `+column+`=$1)`, targetID); err != nil {
+		odometer.Failure(w, err)
+		return
+	}
+	if _, err = tx.Exec(r.Context(), `INSERT INTO `+table+`(`+column+`,object_key) VALUES($1,$2) ON CONFLICT(`+column+`) DO UPDATE SET object_key=excluded.object_key`, targetID, key); err != nil {
 		odometer.Failure(w, err)
 		return
 	}
@@ -137,7 +168,12 @@ func (s *Service) read(w http.ResponseWriter, r *http.Request) {
 	g, _ := garage.FromContext(r.Context())
 	var key, kind string
 	var size int64
-	err := s.Garage.Auth.DB.QueryRow(r.Context(), `SELECT p.object_key,o.content_type,o.byte_size FROM vehicle_photos p JOIN vehicles v ON v.id=p.vehicle_id JOIN photo_objects o ON o.object_key=p.object_key WHERE v.garage_id=$1 AND v.id=$2 AND o.state='active'`, g.ID, apiutil.ID(r, "vehicleID")).Scan(&key, &kind, &size)
+	var err error
+	if r.PathValue("noteID") != "" {
+		err = s.Garage.Auth.DB.QueryRow(r.Context(), `SELECT p.object_key,o.content_type,o.byte_size FROM note_photos p JOIN vehicle_notes n ON n.id=p.note_id JOIN vehicles v ON v.id=n.vehicle_id JOIN photo_objects o ON o.object_key=p.object_key WHERE v.garage_id=$1 AND v.id=$2 AND n.id=$3 AND o.state='active'`, g.ID, apiutil.ID(r, "vehicleID"), apiutil.ID(r, "noteID")).Scan(&key, &kind, &size)
+	} else {
+		err = s.Garage.Auth.DB.QueryRow(r.Context(), `SELECT p.object_key,o.content_type,o.byte_size FROM vehicle_photos p JOIN vehicles v ON v.id=p.vehicle_id JOIN photo_objects o ON o.object_key=p.object_key WHERE v.garage_id=$1 AND v.id=$2 AND o.state='active'`, g.ID, apiutil.ID(r, "vehicleID")).Scan(&key, &kind, &size)
+	}
 	if err != nil {
 		odometer.Failure(w, err)
 		return
@@ -174,11 +210,16 @@ func (s *Service) remove(w http.ResponseWriter, r *http.Request) {
 		odometer.Failure(w, err)
 		return
 	}
-	if _, err = tx.Exec(r.Context(), `UPDATE photo_objects SET state='delete' WHERE object_key=(SELECT object_key FROM vehicle_photos WHERE vehicle_id=$1)`, vid); err != nil {
+	if err = s.checkNote(r, tx); err != nil {
 		odometer.Failure(w, err)
 		return
 	}
-	if _, err = tx.Exec(r.Context(), `DELETE FROM vehicle_photos WHERE vehicle_id=$1`, vid); err != nil {
+	table, column, targetID := target(r)
+	if _, err = tx.Exec(r.Context(), `UPDATE photo_objects SET state='delete' WHERE object_key=(SELECT object_key FROM `+table+` WHERE `+column+`=$1)`, targetID); err != nil {
+		odometer.Failure(w, err)
+		return
+	}
+	if _, err = tx.Exec(r.Context(), `DELETE FROM `+table+` WHERE `+column+`=$1`, targetID); err != nil {
 		odometer.Failure(w, err)
 		return
 	}
@@ -200,7 +241,7 @@ func (s *Service) Cleanup(ctx context.Context) error {
 		return err
 	}
 	defer tx.Rollback(ctx)
-	rows, err := tx.Query(ctx, `SELECT object_key FROM photo_objects WHERE (state='delete' OR state='pending' AND created_at<now()-interval '1 hour') AND NOT EXISTS(SELECT 1 FROM vehicle_photos WHERE vehicle_photos.object_key=photo_objects.object_key) ORDER BY created_at LIMIT 50 FOR UPDATE SKIP LOCKED`)
+	rows, err := tx.Query(ctx, `SELECT object_key FROM photo_objects WHERE (state='delete' OR state='pending' AND created_at<now()-interval '1 hour') AND NOT EXISTS(SELECT 1 FROM vehicle_photos WHERE vehicle_photos.object_key=photo_objects.object_key) AND NOT EXISTS(SELECT 1 FROM note_photos WHERE note_photos.object_key=photo_objects.object_key) ORDER BY created_at LIMIT 50 FOR UPDATE SKIP LOCKED`)
 	if err != nil {
 		return err
 	}

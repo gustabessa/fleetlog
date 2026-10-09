@@ -16,6 +16,7 @@ import (
 )
 
 type Vehicle struct {
+	TagColor     string `json:"tagColor"`
 	ID           int64  `json:"id"`
 	GarageID     int64  `json:"garageId"`
 	Name         string `json:"name"`
@@ -30,6 +31,7 @@ type Vehicle struct {
 	Archived     bool   `json:"archived"`
 }
 type Input struct {
+	TagColor  *string      `json:"tagColor"`
 	Name      string       `json:"name"`
 	Plate     string       `json:"plate"`
 	Brand     string       `json:"brand"`
@@ -49,7 +51,7 @@ func (s *Service) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT "+base+"/{vehicleID}", s.Garage.RequireMemberWrite(s.update))
 }
 
-const columns = `id,garage_id,name,plate,brand,model_year,chassis,renavam,initial_km::text,COALESCE((SELECT km FROM odometer_readings WHERE vehicle_id=vehicles.id ORDER BY reading_date DESC,id DESC LIMIT 1),initial_km)::text,COALESCE((SELECT object_key FROM vehicle_photos WHERE vehicle_id=vehicles.id),''),archived`
+const columns = `id,garage_id,name,plate,brand,model_year,chassis,renavam,initial_km::text,COALESCE((SELECT km FROM odometer_readings WHERE vehicle_id=vehicles.id ORDER BY reading_date DESC,id DESC LIMIT 1),initial_km)::text,COALESCE((SELECT object_key FROM vehicle_photos WHERE vehicle_id=vehicles.id),''),archived,tag_color`
 
 var kmPattern = regexp.MustCompile(`^(0|[1-9][0-9]{0,8})(\.[0-9]{1,3})?$`)
 
@@ -67,6 +69,9 @@ func readInput(w http.ResponseWriter, r *http.Request, creating bool) (Input, ma
 	input.Chassis = strings.TrimSpace(input.Chassis)
 	input.Renavam = strings.TrimSpace(input.Renavam)
 	fields := map[string]string{}
+	if input.TagColor != nil && !regexp.MustCompile(`^#[0-9a-fA-F]{6}$`).MatchString(*input.TagColor) {
+		fields["tagColor"] = "invalid color"
+	}
 	for _, f := range []struct {
 		name, value string
 		limit       int
@@ -95,7 +100,7 @@ func invalid(w http.ResponseWriter, fields map[string]string) {
 }
 func scan(row pgx.Row) (Vehicle, error) {
 	var v Vehicle
-	err := row.Scan(&v.ID, &v.GarageID, &v.Name, &v.Plate, &v.Brand, &v.Year, &v.Chassis, &v.Renavam, &v.InitialKM, &v.CurrentKM, &v.ImageVersion, &v.Archived)
+	err := row.Scan(&v.ID, &v.GarageID, &v.Name, &v.Plate, &v.Brand, &v.Year, &v.Chassis, &v.Renavam, &v.InitialKM, &v.CurrentKM, &v.ImageVersion, &v.Archived, &v.TagColor)
 	return v, err
 }
 func vehicleID(w http.ResponseWriter, r *http.Request) (int64, bool) {
@@ -157,7 +162,7 @@ func (s *Service) create(w http.ResponseWriter, r *http.Request) {
 	}
 	g, _ := garage.FromContext(r.Context())
 	user, _ := auth.UserFromContext(r.Context())
-	v, err := scan(s.Garage.Auth.DB.QueryRow(r.Context(), `INSERT INTO vehicles(garage_id,name,plate,brand,model_year,chassis,renavam,initial_km,created_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8::numeric,$9) RETURNING `+columns, g.ID, input.Name, input.Plate, input.Brand, input.Year, input.Chassis, input.Renavam, input.InitialKM.String(), user.ID))
+	v, err := scan(s.Garage.Auth.DB.QueryRow(r.Context(), `INSERT INTO vehicles(garage_id,name,plate,brand,model_year,chassis,renavam,initial_km,created_by,tag_color) VALUES($1,$2,$3,$4,$5,$6,$7,$8::numeric,$9,COALESCE($10,'#087e83')) RETURNING `+columns, g.ID, input.Name, input.Plate, input.Brand, input.Year, input.Chassis, input.Renavam, input.InitialKM.String(), user.ID, input.TagColor))
 	result(w, v, err, 201)
 }
 func (s *Service) update(w http.ResponseWriter, r *http.Request) {
@@ -171,7 +176,7 @@ func (s *Service) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	g, _ := garage.FromContext(r.Context())
-	v, err := scan(s.Garage.Auth.DB.QueryRow(r.Context(), `UPDATE vehicles SET name=$1,plate=$2,brand=$3,model_year=$4,chassis=$5,renavam=$6,updated_at=now() WHERE garage_id=$7 AND id=$8 RETURNING `+columns, input.Name, input.Plate, input.Brand, input.Year, input.Chassis, input.Renavam, g.ID, id))
+	v, err := scan(s.Garage.Auth.DB.QueryRow(r.Context(), `UPDATE vehicles SET name=$1,plate=$2,brand=$3,model_year=$4,chassis=$5,renavam=$6,tag_color=COALESCE($9,tag_color),updated_at=now() WHERE garage_id=$7 AND id=$8 RETURNING `+columns, input.Name, input.Plate, input.Brand, input.Year, input.Chassis, input.Renavam, g.ID, id, input.TagColor))
 	result(w, v, err, 200)
 }
 func reply(w http.ResponseWriter, status int, value any) {

@@ -74,6 +74,33 @@ func TestPhotoIntegration(t *testing.T) {
 	if w.Code != 400 {
 		t.Fatal("bad image accepted", w.Code)
 	}
+	noteResponse := a.Request("POST", fmt.Sprintf("%s/%d/notes", base, v.ID), `{"content":"Photo note"}`)
+	if noteResponse.Code != 200 {
+		t.Fatal(noteResponse.Code, noteResponse.Body.String())
+	}
+	noteID := noteResponse.Header().Get("X-Note-ID")
+	noteURL := fmt.Sprintf("%s/%d/notes/%s/image", base, v.ID, noteID)
+	if w = a.Request("PUT", noteURL, b.String()); w.Code != 200 {
+		t.Fatal(w.Code, w.Body.String())
+	}
+	if w = a.Request("GET", noteURL, ""); w.Code != 200 || !bytes.Equal(w.Body.Bytes(), b.Bytes()) {
+		t.Fatal("note image read failed", w.Code)
+	}
+	if err = s.Cleanup(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if w = a.Request("GET", noteURL, ""); w.Code != 200 {
+		t.Fatal("cleanup deleted active note", w.Code)
+	}
+	if w = a.Request("PUT", fmt.Sprintf("%s/%d/notes/%s/image", base, v.ID+100, noteID), b.String()); w.Code != 404 {
+		t.Fatal("note isolation failed", w.Code)
+	}
+	if w = a.Request("DELETE", fmt.Sprintf("%s/%d/notes/%s", base, v.ID, noteID), `{}`); w.Code != 200 {
+		t.Fatal(w.Code, w.Body.String())
+	}
+	if err = s.Cleanup(context.Background()); err != nil {
+		t.Fatal(err)
+	}
 	for i := 0; i < 2; i++ {
 		w = a.Request("PUT", url, b.String())
 		if w.Code != 200 {

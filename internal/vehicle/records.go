@@ -8,6 +8,7 @@ import (
 	"fleetlog/internal/money"
 	"fleetlog/internal/odometer"
 	"net/http"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 )
@@ -43,7 +44,7 @@ func (s *Service) notes(w http.ResponseWriter, r *http.Request) {
 		odometer.Failure(w, err)
 		return
 	}
-	rows, err := s.Garage.Auth.DB.Query(r.Context(), `SELECT jsonb_build_object('id',n.id,'content',n.content,'author',u.username,'updatedAt',n.updated_at) FROM vehicle_notes n JOIN users u ON u.id=n.created_by WHERE n.vehicle_id=$1 ORDER BY n.id DESC`, apiutil.ID(r, "vehicleID"))
+	rows, err := s.Garage.Auth.DB.Query(r.Context(), `SELECT jsonb_build_object('id',n.id,'content',n.content,'author',u.username,'updatedAt',n.updated_at,'imageVersion',COALESCE((SELECT object_key FROM note_photos WHERE note_id=n.id),'')) FROM vehicle_notes n JOIN users u ON u.id=n.created_by WHERE n.vehicle_id=$1 ORDER BY n.id DESC`, apiutil.ID(r, "vehicleID"))
 	if err != nil {
 		odometer.Failure(w, err)
 		return
@@ -91,14 +92,18 @@ func (s *Service) writeNote(w http.ResponseWriter, r *http.Request) {
 		odometer.Failure(w, err)
 		return
 	}
+	var recordID int64
 	if r.Method == "POST" {
-		_, err = tx.Exec(r.Context(), `INSERT INTO vehicle_notes(vehicle_id,content,created_by,updated_by) VALUES($1,$2,$3,$3)`, vid, input.Content, user.ID)
+		err = tx.QueryRow(r.Context(), `INSERT INTO vehicle_notes(vehicle_id,content,created_by,updated_by) VALUES($1,$2,$3,$3) RETURNING id`, vid, input.Content, user.ID).Scan(&recordID)
 	} else {
-		var id int64
 		if r.Method == "DELETE" {
-			err = tx.QueryRow(r.Context(), `DELETE FROM vehicle_notes WHERE vehicle_id=$1 AND id=$2 RETURNING id`, vid, apiutil.ID(r, "noteID")).Scan(&id)
+			if _, err = tx.Exec(r.Context(), `UPDATE photo_objects SET state='delete' WHERE object_key=(SELECT p.object_key FROM note_photos p JOIN vehicle_notes n ON n.id=p.note_id WHERE n.vehicle_id=$1 AND n.id=$2)`, vid, apiutil.ID(r, "noteID")); err != nil {
+				odometer.Failure(w, err)
+				return
+			}
+			err = tx.QueryRow(r.Context(), `DELETE FROM vehicle_notes WHERE vehicle_id=$1 AND id=$2 RETURNING id`, vid, apiutil.ID(r, "noteID")).Scan(&recordID)
 		} else {
-			err = tx.QueryRow(r.Context(), `UPDATE vehicle_notes SET content=$1,updated_by=$2,updated_at=now() WHERE vehicle_id=$3 AND id=$4 RETURNING id`, input.Content, user.ID, vid, apiutil.ID(r, "noteID")).Scan(&id)
+			err = tx.QueryRow(r.Context(), `UPDATE vehicle_notes SET content=$1,updated_by=$2,updated_at=now() WHERE vehicle_id=$3 AND id=$4 RETURNING id`, input.Content, user.ID, vid, apiutil.ID(r, "noteID")).Scan(&recordID)
 		}
 	}
 	if err != nil {
@@ -109,6 +114,7 @@ func (s *Service) writeNote(w http.ResponseWriter, r *http.Request) {
 		odometer.Failure(w, err)
 		return
 	}
+	w.Header().Set("X-Note-ID", strconv.FormatInt(recordID, 10))
 	s.notes(w, r)
 }
 
