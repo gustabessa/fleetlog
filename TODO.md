@@ -250,23 +250,18 @@ Estas tarefas registram lacunas operacionais identificadas na revisão; não alt
 
 ## Ponto de retomada
 
-Base com login local e PostgreSQL implementada. Garagem base/consulta autorizada implementadas; funcionalidades de veículos e gestão de familiares continuam pendentes.
-Última validação local (T01): build Angular (~89 kB transferidos), testes Go sem cache com PostgreSQL real e go vet aprovados; 34 testes Chromium desktop/mobile aprovados, incluindo acesso real, isolamento da prévia, falhas de API, UI e service worker.
-Pendente: Docker Compose/pull da imagem, HTTPS Dokploy e instalação PWA no sistema operacional. PostgreSQL conectado; migração de usuários/sessões/identidades externas e bootstrap no startup.
-Node 22.23.3 disponível. Go 1.27.1 baixado para `/tmp/go` com checksum oficial validado; não instalado no sistema.
-Docker Engine indisponível neste ambiente. CLI Compose 2.40.3 extraído em `/tmp/fleetlog-compose-cli` para validar `compose.yaml` e `compose.registry.yaml`, ambos aprovados; build de imagem não executado. Frontend em `web/`, backend em `cmd/fleetlog` e `internal/httpserver`.
-Playwright adicionado ao frontend. Testes: `cd web && npm run test:e2e`; requer Go e Chromium. Para este ambiente: `GO_BIN=/tmp/go/bin/go`, `GOCACHE=/tmp/fleetlog-gocache`, `PLAYWRIGHT_BROWSERS_PATH=/tmp/fleetlog-browsers`, `LD_LIBRARY_PATH=/tmp/fleetlog-browser-deps/root/usr/lib/x86_64-linux-gnu`, Node no PATH. Browser e bibliotecas extraídos apenas em `/tmp`; são temporários e precisam ser preparados novamente caso removidos.
-Próxima etapa técnica: T04, perfil/moeda/preferências; antes de implementar inclusão de familiares, definir permissões. Publicar a nova imagem e atualizar o Raw Compose no Dokploy com PG*, PUBLIC_URL e bootstrap.
-Para retomar: ler este arquivo e o plano, conferir git status e executar os checks do README.
-Ícones simples provisórios com a letra F; idioma pt-BR provisório para esta base. O frontend usa Angular 22.2 e Node 22; Go 1.27.
+Núcleo T01–T12 e OIDC implementado e validado localmente: 58 testes de navegador
+mais 14 rechecagens dos formulários; testes Go/PostgreSQL, build e vet aprovados.
+Os dois Compose encaminham todas as variáveis das integrações S3/OIDC.
 
-Fluxo atual: Woodpecker → GHCR → Dokploy Compose. Pipeline e Compose de produção preparados; instalação/tutorial do Woodpecker ficam fora do repo. Configuração antiga de build pelo Dokploy removida (`compose.dokploy.yaml` e `docs/dokploy.md`). Usuário confirmou login OAuth e repositório habilitado. Próximo passo: enviar pipeline, concluir secrets e executar primeiro build. Nenhum push ou deploy foi realizado pelo agente.
+Antes de retomar: conferir git status, README e decisões atuais acima.
+Pendências externas: publicar imagem contendo os commits atuais, atualizar o
+Raw Compose do Dokploy, configurar bucket privado/provedor OIDC e recriar a
+aplicação. Nenhum push/deploy feito nesta rodada. Testes reais RustFS/HTTPS/PWA
+instalada e CI de navegador continuam separados; exportação/extras adiados pelo usuário.
 
-Compose principal alterado para consumir `ghcr.io/gustabessa/fleetlog:main` sem build; `FLEETLOG_IMAGE` permite selecionar versão. Dockerfile mantido para CI. Ambos os Compose usam imagens prontas; publicação/pull real ainda dependem do homelab.
-
-Login/PostgreSQL: testes de integração em PostgreSQL 18.6 temporário aprovados (rollback de bootstrap inválido, migração idempotente, hash da senha/token, sessão/rotação/expiração/logout, origem e rate limit). Oito testes Chromium desktop/mobile aprovados, incluindo login e logout. Woodpecker agora possui serviço PostgreSQL descartável para executar os testes de integração. Instância PostgreSQL local usada apenas para testes em `/tmp`, sem instalação de serviço no sistema.
-OIDC: schema reserva `external_identities` com chave issuer+subject e password_hash opcional para futuras contas externas. Provedor OIDC não implementado; nenhuma associação automática por e-mail. PUBLIC_URL é a origem exata; a aplicação deriva cookie Secure de HTTPS, sem confiar em headers do proxy.
-Confirmação do usuário: Woodpecker → GHCR → Dokploy já funcionou para a base anterior. Deploy desta versão ainda pendente. Bootstrap cria somente primeiro usuário; não redefine senha existente. Troca/recuperação de senha e inclusão de familiares continuam pendentes.
+As seções abaixo registram o histórico das entregas; descrições antigas de
+funcionalidades pendentes não substituem o estado atual acima.
 
 ## Prévia de UI — 2026-10-07
 
@@ -433,3 +428,11 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Exportação e extras explicitamente adiados pelo usuário para outra tarefa. Campos personalizados/outros anexos e importação/offline seguem separados do núcleo. Lembretes têm proposta/TODO próprio a pedido do usuário; troca de senha local não foi implementada por sua decisão.
 
 - Após os ajustes finais de apresentação/atualização, **14 testes dos formulários/histórico/veículos em desktop/mobile reexecutados e aprovados**; rastreabilidade do cadastro verificada em PostgreSQL.
+
+## Encaminhamento de configuração corrigido — 2026-10-09
+
+- compose.yaml e compose.registry.yaml passam S3__, OIDC__ e AUTH_LOCAL_ENABLED para fleetlog-service, com defaults iguais aos do código. Integrações continuam opcionais; AUTH_LOCAL_ENABLED=false é preservado.
+- .env.example/README atualizados e ponto de retomada antigo corrigido. HTTP_ADDR/STATIC_DIR continuam definidos pela imagem; PostgreSQL continua configurado pelo Compose, sem alterar volume/senha/rede.
+- Restam configuração do bucket privado e cliente/callback OIDC no provedor, publicação de imagem atual e aplicação do Compose atualizado. São ações externas, não funcionalidades faltantes do código.
+
+- Validação sem daemon: CLI Compose conferiu os dois arquivos com integrações desabilitadas e configuração preenchida, cobrindo as 13 variáveis do código e preservação explícita de AUTH_LOCAL_ENABLED=false. git diff --check aprovado.

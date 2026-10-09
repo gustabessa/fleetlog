@@ -13,6 +13,19 @@ services:
       PUBLIC_URL: ${PUBLIC_URL:?Set the public HTTPS URL}
       BOOTSTRAP_USERNAME: ${BOOTSTRAP_USERNAME:-}
       BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:-}
+      S3_ENDPOINT: "${S3_ENDPOINT:-}"
+      S3_REGION: "${S3_REGION:-us-east-1}"
+      S3_BUCKET: "${S3_BUCKET:-}"
+      S3_ACCESS_KEY_ID: "${S3_ACCESS_KEY_ID:-}"
+      S3_SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY:-}"
+      S3_PATH_STYLE: "${S3_PATH_STYLE:-false}"
+      OIDC_ISSUER: "${OIDC_ISSUER:-}"
+      OIDC_DISCOVERY_URL: "${OIDC_DISCOVERY_URL:-}"
+      OIDC_CLIENT_ID: "${OIDC_CLIENT_ID:-}"
+      OIDC_CLIENT_SECRET: "${OIDC_CLIENT_SECRET:-}"
+      OIDC_SCOPES: "${OIDC_SCOPES:-openid profile}"
+      OIDC_CALLBACK_PATH: "${OIDC_CALLBACK_PATH:-/api/auth/oidc/callback}"
+      AUTH_LOCAL_ENABLED: "${AUTH_LOCAL_ENABLED:-true}"
     restart: unless-stopped
     expose:
       - "8080"

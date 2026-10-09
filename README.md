@@ -71,7 +71,7 @@ O CI Woodpecker usa `.woodpecker/build.yaml` para testar Go, construir o Dockerf
 
 Recrie o serviço afetado após mudar variáveis (`docker compose up -d`). A senha PostgreSQL só é aplicada ao inicializar um volume vazio; mudar a variável não altera a senha de um banco existente. Secrets ficam fora do repositório.
 
-OIDC e S3 estão documentados abaixo; preferências de moeda/tema ficam no perfil. As variáveis novas são do processo Go e precisam ser encaminhadas à aplicação na implantação; o encaminhamento nos Compose não foi alterado nesta rodada, que exclui infraestrutura.
+OIDC e S3 estão documentados abaixo; preferências de moeda/tema ficam no perfil. Os dois Compose encaminham S3__, OIDC__ e AUTH_LOCAL_ENABLED ao processo Go. Defina os valores no .env local ou Environment do Dokploy e recrie a aplicação para aplicá-los. O bucket/provedor precisam existir e estar configurados; os Compose não criam esses serviços.
 
 ## Primeiro acesso e sessões
 
