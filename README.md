@@ -138,3 +138,32 @@ Reservas/remoções são persistidas no banco. Limpezas pendentes são repetidas
 cada minuto e após reinício; uploads interrompidos são removidos após uma hora.
 Configurar o servidor RustFS, criar bucket e validar a versão no homelab são
 ações externas a esta entrega de código; o cliente segue o contrato S3.
+
+
+### OIDC e vínculo de contas
+
+`OIDC_ISSUER` e `OIDC_CLIENT_ID` habilitam discovery e login com provedor.
+`OIDC_CLIENT_SECRET` é opcional para cliente público com PKCE; clientes
+confidenciais devem configurá-lo. `OIDC_DISCOVERY_URL` opcional substitui a URL
+do documento, mas seu issuer deve continuar idêntico a `OIDC_ISSUER`.
+`OIDC_SCOPES` padrão `openid profile`; openid sempre é incluído.
+`OIDC_CALLBACK_PATH` padrão `/api/auth/oidc/callback`, podendo usar um caminho
+sob `/api/auth/oidc/callback/`. Redirect URI: `PUBLIC_URL` + esse caminho.
+URLs do provedor exigem HTTPS; HTTP somente para localhost/loopback de testes.
+Reinicie a aplicação após alterar variáveis. OIDC mal configurado falha no
+início; não há fallback silencioso de verificação.
+
+O criador cadastra/vincula o usuário da família. Cada usuário entra com sua
+conta local temporária, abre Perfil e escolhe **Vincular conta do provedor**.
+Depois usa **Entrar com provedor**. A identidade é issuer + subject; nome/e-mail
+não criam nem associam contas. Um vínculo existente não pode ser transferido
+para outro usuário; remover alguém da garagem conserva identidade/autoria.
+Trocar issuer exige vincular explicitamente a nova identidade (sem migrar por
+subject ou e-mail). Nenhum token de acesso/refresh do provedor fica no banco.
+
+`AUTH_LOCAL_ENABLED` padrão `true`. Pode ser `false` quando o administrador e
+os usuários necessários já estiverem vinculados; sem OIDC a aplicação rejeita
+essa configuração. Novas vinculações continuam exigindo uma sessão interna
+válida; planeje provisionamento antes de desligar o login local. Logout revoga
+a sessão FleetLog; não encerra a sessão global no provedor. Senha inicial não é
+redefinida pelo bootstrap nem por reinclusão de familiar.

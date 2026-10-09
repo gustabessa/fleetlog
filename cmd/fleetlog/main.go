@@ -51,6 +51,13 @@ func main() {
 		os.Exit(1)
 	}
 	defer authentication.DB.Close()
+	oidcContext, oidcCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	err = authentication.ConfigureOIDCFromEnv(oidcContext)
+	oidcCancel()
+	if err != nil {
+		slog.Error("OIDC configuration failed", "error", err)
+		os.Exit(1)
+	}
 	store, err := photo.FromEnv()
 	if err != nil {
 		slog.Error("image configuration failed", "error", err)

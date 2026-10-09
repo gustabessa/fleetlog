@@ -23,12 +23,16 @@ import (
 )
 
 type Service struct {
-	DB       *pgxpool.Pool
-	Origin   string
-	Secure   bool
-	mu       sync.Mutex
-	attempts int
-	window   time.Time
+	OIDC          *OIDCService
+	LocalDisabled bool
+	oidcAttempts  int
+	oidcWindow    time.Time
+	DB            *pgxpool.Pool
+	Origin        string
+	Secure        bool
+	mu            sync.Mutex
+	attempts      int
+	window        time.Time
 }
 
 func Open(ctx context.Context, dsn, publicURL, username, password string) (*Service, error) {
@@ -96,6 +100,7 @@ func Open(ctx context.Context, dsn, publicURL, username, password string) (*Serv
 }
 
 func (s *Service) Routes(mux *http.ServeMux) {
+	s.oidcRoutes(mux)
 	mux.HandleFunc("POST /api/auth/login", s.write(s.login))
 	mux.HandleFunc("POST /api/auth/logout", s.write(s.logout))
 	mux.HandleFunc("GET /api/auth/me", s.RequireUser(s.me))
@@ -124,6 +129,10 @@ func (s *Service) write(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 func (s *Service) login(w http.ResponseWriter, r *http.Request) {
+	if s.LocalDisabled {
+		reply(w, 403, map[string]string{"error": "local login disabled"})
+		return
+	}
 	s.mu.Lock()
 	if time.Since(s.window) >= time.Minute {
 		s.attempts = 0

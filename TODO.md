@@ -201,14 +201,14 @@ Cada área passa por três estados: **prévia visual → API/persistência integ
 - [ ] Validar atualização de listas/gráficos após criação, edição e exclusão de registros.
 - [ ] Testar períodos vazios, diferentes moedas, duplicação de gastos e autorização dos agregados.
 
-## OIDC — entrega ainda a definir
+## OIDC — entregue e validado
 
 - [x] Reservar identidades externas pelo par issuer + subject, relacionadas ao usuário interno.
-- [ ] Definir momento de entrega, convivência com login local e vinculação explícita de contas.
-- [ ] Implementar discovery/issuer, client ID, secret quando aplicável, scopes e callback configuráveis.
-- [ ] Validar state, nonce, PKCE e tokens no fluxo apropriado; reutilizar sessão interna após autenticação.
-- [ ] Tratar troca de issuer sem associação automática por e-mail.
-- [ ] Documentar configurações efetivas e testar com provedor substituível.
+- [x] Definir momento de entrega, convivência com login local e vinculação explícita de contas.
+- [x] Implementar discovery/issuer, client ID, secret quando aplicável, scopes e callback configuráveis.
+- [x] Validar state, nonce, PKCE e tokens no fluxo apropriado; reutilizar sessão interna após autenticação.
+- [x] Tratar troca de issuer sem associação automática por e-mail.
+- [x] Documentar configurações efetivas e testar com provedor substituível.
 
 ## Validação de cada entrega
 
@@ -423,3 +423,12 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Tela Familiares com carregamento/erro, inclusão e confirmação de remoção. Consulta de garagem informa capacidade de gestão; seleção de garagem ativa aparece quando há mais de uma. Navegação mobile permite quebra de linha.
 - Testes Go/PostgreSQL de acesso compartilhado/revogação/reinclusão e regressões aprovados; build e 10 testes Chromium desktop/mobile de familiares/base/PWA aprovados.
 - Mesmo usuário interno será reutilizado pela vinculação OIDC; não existe associação por e-mail nem recriação de usuário ao autenticar externamente.
+
+
+## OIDC — concluído — 2026-10-08
+
+- Migração 011 persiste fluxos de curta duração. Discovery/issuer/client ID/secret/scopes/callback configuráveis; token verifica assinatura, issuer, audience/azp, validade, nonce e at_hash quando informado. Código usa PKCE S256 e state ligado a cookie HttpOnly/Lax do navegador; replay/expiração são recusados.
+- Vinculação explícita pelo perfil exige sessão válida do usuário que iniciou o fluxo; logout/troca de sessão cancela vínculo. Issuer + subject aponta ao mesmo usuário interno, sem cadastro público nem associação por e-mail; conflito não transfere identidade.
+- Login externo emite/rotaciona sessão FleetLog; tokens do provedor não persistem. AUTH_LOCAL_ENABLED permite manter/desligar login local após vincular contas necessárias; configuração sem OIDC não pode desabilitar todos os métodos.
+- UI de login/perfil com fluxo externo e mensagens de vínculo/erro. README/.env.example documentam configuração real e efeitos de trocar issuer; nenhum provedor do homelab configurado.
+- Testes Go/PostgreSQL com provedor assinado substituível aprovados: PKCE/nonce/audience/assinatura/expiração, cookies/state/replay, identidade não vinculada, conflito, logout, troca de issuer e login local desabilitado. Build/go vet e fluxo Chromium desktop/mobile aprovados.

@@ -1,3 +1,4 @@
+import { oidcFixture } from './oidc-provider.mjs';
 import { createServer } from 'node:http';
 import { cpSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -40,6 +41,7 @@ const s3 = createServer(async (request, response) => {
   } else response.writeHead(405).end();
 });
 await new Promise((resolve) => s3.listen(0, '127.0.0.1', resolve));
+const identity = await oidcFixture();
 const server = spawn(binary, [], {
   env: {
     ...process.env,
@@ -47,6 +49,10 @@ const server = spawn(binary, [], {
     STATIC_DIR: assets,
     DATABASE_URL: process.env.E2E_DATABASE_URL,
     PUBLIC_URL: 'http://127.0.0.1:4173',
+    OIDC_ISSUER: identity.issuer,
+    OIDC_CLIENT_ID: 'e2e-client',
+    OIDC_CLIENT_SECRET: 'e2e-oidc-secret',
+    AUTH_LOCAL_ENABLED: 'true',
     S3_ENDPOINT: `http://127.0.0.1:${s3.address().port}`,
     S3_BUCKET: 'e2e-private',
     S3_REGION: 'us-east-1',
@@ -60,6 +66,7 @@ const server = spawn(binary, [], {
 });
 const cleanup = () => {
   s3.close();
+  identity.close();
   rmSync(temporary, { recursive: true, force: true });
   rmSync(assets, { recursive: true, force: true });
 };

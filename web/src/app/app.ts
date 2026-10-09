@@ -370,6 +370,7 @@ export class App {
     this.accountGeneration++;
     this.user.set(user);
     this.currencyDraft = user.currency;
+    void this.loadOIDCStatus();
     if (user.palette && palettes.some((p) => p.id === user.palette)) this.palette.set(user.palette);
     if (user.theme) this.dark.set(user.theme === 'dark');
     this.cacheTheme();
@@ -415,6 +416,39 @@ export class App {
   }
   readonly loading = signal(true);
   readonly busy = signal(false);
+  readonly authOptions = signal({ oidcEnabled: false, localEnabled: true });
+  readonly oidcStatus = signal({ enabled: false, linked: false });
+  readonly oidcBusy = signal(false);
+  readonly oidcNotice = signal('');
+  async loadAuthOptions() {
+    try {
+      const r = await fetch('/api/auth/options', { cache: 'no-store' });
+      if (r.ok) this.authOptions.set(await r.json());
+    } catch {}
+  }
+  async loadOIDCStatus() {
+    try {
+      const r = await fetch('/api/auth/oidc/status', { cache: 'no-store' });
+      if (r.ok) this.oidcStatus.set(await r.json());
+    } catch {}
+  }
+  async startOIDC(link: boolean) {
+    if (this.oidcBusy()) return;
+    this.oidcBusy.set(true);
+    this.authError.set('');
+    try {
+      const r = await fetch('/api/auth/oidc/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ link }),
+      });
+      if (!r.ok) throw Error();
+      location.assign((await r.json()).url);
+    } catch {
+      this.authError.set('Não foi possível iniciar o acesso pelo provedor. Tente novamente.');
+      this.oidcBusy.set(false);
+    }
+  }
   readonly authError = signal('');
   username = '';
   password = '';
@@ -475,6 +509,7 @@ export class App {
         this.accountGeneration++;
         this.user.set(null);
         this.profileError.set('');
+        this.oidcNotice.set('');
         this.garage.set(null);
         this.garages.set([]);
         this.realScreen.set('garage');
@@ -507,6 +542,22 @@ export class App {
   );
   constructor() {
     this.applyTheme();
+    const result = new URLSearchParams(location.search).get('oidc');
+    if (result) {
+      const messages: Record<string, string> = {
+        invalid:
+          'O acesso pelo provedor foi cancelado, expirou ou não pôde ser validado. Tente novamente.',
+        unlinked:
+          'Esta conta do provedor ainda não está vinculada. Entre com seu usuário local e vincule no perfil.',
+        conflict:
+          'Esta identidade já pertence a outro usuário. Use a identidade correta do provedor.',
+        unavailable: 'O provedor está indisponível. Tente novamente.',
+      };
+      if (result === 'linked') this.oidcNotice.set('Conta do provedor vinculada.');
+      else if (messages[result]) this.authError.set(messages[result]);
+      history.replaceState(null, '', location.pathname);
+    }
+    void this.loadAuthOptions();
     void this.loadUser();
     if (this.updates.isEnabled) {
       this.updates.versionUpdates.pipe(takeUntilDestroyed()).subscribe((event) => {

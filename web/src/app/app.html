@@ -20,6 +20,20 @@
   <fl-theme-picker [palette]="palette()" [dark]="dark()" (select)="selectTheme($event)" />
 </header>
 <fl-dialog #profileDialog title="Meu perfil">
+  @if (oidcStatus().enabled) {
+    <p>
+      {{
+        oidcStatus().linked
+          ? 'Sua conta está vinculada ao provedor.'
+          : 'Vincule sua própria identidade para usar o provedor.'
+      }}
+    </p>
+    <button flButton type="button" [loading]="oidcBusy()" (click)="startOIDC(true)">
+      {{
+        oidcStatus().linked ? 'Vincular outra identidade do provedor' : 'Vincular conta do provedor'
+      }}
+    </button>
+  }
   <form id="profile-form" ngNativeValidate (ngSubmit)="saveCurrency()">
     <fl-field
       controlId="profile-currency"
@@ -41,6 +55,9 @@
   </button>
 </fl-dialog>
 <main>
+  @if (oidcNotice()) {
+    <p role="status">{{ oidcNotice() }}</p>
+  }
   @if (profileError()) {
     <p class="error" role="alert">{{ profileError() }}</p>
     <button
@@ -77,31 +94,44 @@
       <p class="fl-eyebrow">BEM-VINDO AO FLEETLOG</p>
       <h1 id="login-title">Entre na sua garagem</h1>
       <p>Acompanhe seus veículos em um só lugar.</p>
-      <form ngNativeValidate (ngSubmit)="login()">
-        <fl-field controlId="username" label="Usuário">
-          <input
-            flInput
-            id="username"
-            name="username"
-            [(ngModel)]="username"
-            autocomplete="username"
-            required
-            maxlength="64"
-          /> </fl-field
-        ><fl-field controlId="password" label="Senha">
-          <input
-            flInput
-            id="password"
-            name="password"
-            type="password"
-            [(ngModel)]="password"
-            autocomplete="current-password"
-            required
-          /> </fl-field
-        ><button flButton variant="primary" size="lg" type="submit" [loading]="busy()">
-          {{ busy() ? 'Entrando…' : 'Entrar' }}
+      @if (authOptions().localEnabled) {
+        <form ngNativeValidate (ngSubmit)="login()">
+          <fl-field controlId="username" label="Usuário">
+            <input
+              flInput
+              id="username"
+              name="username"
+              [(ngModel)]="username"
+              autocomplete="username"
+              required
+              maxlength="64"
+            /> </fl-field
+          ><fl-field controlId="password" label="Senha">
+            <input
+              flInput
+              id="password"
+              name="password"
+              type="password"
+              [(ngModel)]="password"
+              autocomplete="current-password"
+              required
+            /> </fl-field
+          ><button flButton variant="primary" size="lg" type="submit" [loading]="busy()">
+            {{ busy() ? 'Entrando…' : 'Entrar' }}
+          </button>
+        </form>
+      }
+      @if (authOptions().oidcEnabled) {
+        <button
+          flButton
+          variant="primary"
+          type="button"
+          [loading]="oidcBusy()"
+          (click)="startOIDC(false)"
+        >
+          Entrar com provedor
         </button>
-      </form>
+      }
       <button
         flButton
         class="preview-link"
