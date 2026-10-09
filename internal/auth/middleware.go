@@ -12,6 +12,8 @@ type User struct {
 	ID       int64  `json:"id"`
 	Username string `json:"username"`
 	Currency string `json:"currency"`
+	Palette  string `json:"palette"`
+	Theme    string `json:"theme"`
 }
 type userKey struct{}
 
@@ -30,7 +32,7 @@ func (s *Service) RequireUser(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		var user User
-		err = s.DB.QueryRow(r.Context(), `SELECT u.id,u.username,u.currency FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token_hash=$1 AND s.expires_at>now()`, digest(cookie.Value)).Scan(&user.ID, &user.Username, &user.Currency)
+		err = s.DB.QueryRow(r.Context(), `SELECT u.id,u.username,u.currency,u.palette,u.theme FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token_hash=$1 AND s.expires_at>now()`, digest(cookie.Value)).Scan(&user.ID, &user.Username, &user.Currency, &user.Palette, &user.Theme)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				reply(w, 401, map[string]string{"error": "authentication required"})

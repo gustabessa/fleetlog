@@ -23,7 +23,9 @@ func TestOriginProtection(t *testing.T) {
 		req.Header.Set("Origin", origin)
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
-		s.write(func(http.ResponseWriter, *http.Request) { t.Fatal("cross-origin request accepted") })(w, req)
+		s.write(func(http.ResponseWriter, *http.Request) {
+		t.Fatal("cross-origin request accepted")
+	})(w, req)
 		if w.Code != 403 {
 			t.Fatalf("status %d", w.Code)
 		}
@@ -130,6 +132,47 @@ func TestAuthIntegration(t *testing.T) {
 	if me.Header().Get("Cache-Control") != "no-store" {
 		t.Fatal("private response cacheable")
 	}
+
+	if request("PUT", "/api/profile", `{"currency":"USD"}`, nil).Code != 401 {
+		t.Fatal("anonymous profile write accepted")
+	}
+	for _, invalid := range []string{`{}`, `{"currency":"XYZ"}`, `{"currency":"BRL|USD"}`, `{"theme":"auto"}`, `{"palette":"unknown"}`, `{"username":"other"}`, `{"currency":"EUR"} {}`} {
+		if request("PUT", "/api/profile", invalid, cookie).Code != 400 {
+			t.Fatalf("invalid profile accepted: %s", invalid)
+		}
+	}
+	if _, e = s.DB.Exec(ctx, `INSERT INTO users(username,currency) VALUES('profile-other','EUR')`); e != nil {
+		t.Fatal(e)
+	}
+	updated := request("PUT", "/api/profile", `{"currency":"USD","palette":"copper","theme":"dark"}`, cookie)
+	if updated.Code != 200 {
+		t.Fatalf("profile update: %d %s", updated.Code, updated.Body.String())
+	}
+	if request("PUT", "/api/profile", `{"currency":"JPY"}`, cookie).Code != 200 {
+		t.Fatal("partial profile update failed")
+	}
+	persisted := request("GET", "/api/auth/me", "", cookie)
+	var profile User
+	if json.Unmarshal(persisted.Body.Bytes(), &profile) != nil || profile.Currency != "JPY" || profile.Palette != "copper" || profile.Theme != "dark" {
+		t.Fatalf("profile not persisted: %s", persisted.Body.String())
+	}
+	var otherCurrency string
+	if e = s.DB.QueryRow(ctx, `SELECT currency FROM users WHERE username='profile-other'`).Scan(&otherCurrency); e != nil || otherCurrency != "EUR" {
+		t.Fatal("other user's profile changed")
+	}
+	if _, e = s.DB.Exec(ctx, `DELETE FROM users WHERE username='profile-other'`); e != nil {
+		t.Fatal(e)
+	}
+	req := httptest.NewRequest("PUT", "/api/profile", strings.NewReader(`{"currency":"BRL"}`))
+	req.AddCookie(cookie)
+	req.Header.Set("Origin", "https://attacker.test")
+	req.Header.Set("Content-Type", "application/json")
+	denied := httptest.NewRecorder()
+	mux.ServeHTTP(denied, req)
+	if denied.Code != 403 {
+		t.Fatal("cross-origin profile update accepted")
+	}
+
 	rotated := request("POST", "/api/auth/login", body, cookie)
 	if rotated.Code != 200 {
 		t.Fatal("session rotation failed")

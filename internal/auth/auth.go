@@ -99,6 +99,7 @@ func (s *Service) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/auth/login", s.write(s.login))
 	mux.HandleFunc("POST /api/auth/logout", s.write(s.logout))
 	mux.HandleFunc("GET /api/auth/me", s.RequireUser(s.me))
+	mux.HandleFunc("PUT /api/profile", s.RequireWrite(s.updateProfile))
 	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()

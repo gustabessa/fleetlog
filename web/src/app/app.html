@@ -2,7 +2,15 @@
   <a class="brand" href="/" aria-label="FleetLog início"><span class="mark">F</span> FleetLog</a>
   @if (user(); as currentUser) {
     <div class="account">
-      <span>{{ currentUser.username }}</span
+      <button
+        flButton
+        variant="ghost"
+        type="button"
+        (click)="
+          currencyDraft = currentUser.currency; profileSaved.set(false); profileDialog.show()
+        "
+      >
+        Perfil de {{ currentUser.username }}</button
       ><button flButton variant="secondary" type="button" (click)="logout()" [loading]="busy()">
         Sair
       </button>
@@ -11,7 +19,40 @@
   <fl-install-pwa />
   <fl-theme-picker [palette]="palette()" [dark]="dark()" (select)="selectTheme($event)" />
 </header>
+<fl-dialog #profileDialog title="Meu perfil">
+  <form id="profile-form" ngNativeValidate (ngSubmit)="saveCurrency()">
+    <fl-field
+      controlId="profile-currency"
+      label="Moeda padrão"
+      hint="Preenchida nos novos lançamentos. O histórico mantém sua moeda original."
+    >
+      <select flInput id="profile-currency" name="currency" [(ngModel)]="currencyDraft">
+        @for (currency of currencies; track currency) {
+          <option [value]="currency">{{ currency }}</option>
+        }
+      </select>
+    </fl-field>
+  </form>
+  @if (profileSaved()) {
+    <p role="status">Preferências salvas.</p>
+  }
+  <button flDialogFooter flButton type="submit" form="profile-form" [loading]="profileBusy()">
+    Salvar perfil
+  </button>
+</fl-dialog>
 <main>
+  @if (profileError()) {
+    <p class="error" role="alert">{{ profileError() }}</p>
+    <button
+      flButton
+      variant="secondary"
+      type="button"
+      (click)="retryPreferences()"
+      [disabled]="profileBusy()"
+    >
+      Tentar salvar preferências novamente
+    </button>
+  }
   @if (updateReady() || updateBroken()) {
     <aside class="update" role="status">
       <p>

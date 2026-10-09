@@ -1,6 +1,6 @@
 # FleetLog — andamento
 
-Atualizado em 2026-10-07. Plano de produto: [docs/FleetLog-plan.md](docs/FleetLog-plan.md).
+Atualizado em 2026-10-08. Plano de produto: [docs/FleetLog-plan.md](docs/FleetLog-plan.md).
 
 ## Decisões de implementação
 
@@ -24,7 +24,7 @@ Esta fila organiza os checklists detalhados abaixo em entregas escolhíveis. Ord
 
 - [x] **T02 — garagem base e autorização (2026-10-07).** Migração de garagem/vínculo com usuário; associar primeiro usuário à garagem; disponibilizar consulta de contexto e proteção reutilizável para APIs. Testar isolamento entre garagens. Gestão de familiares permanece separada e exige aprovação das permissões.
 - [x] **T03 — veículos básicos ponta a ponta (2026-10-08).** Campos aprovados: nome/modelo e km inicial obrigatórios; placa, marca, ano, chassi e RENAVAM opcionais; cadastro, listagem, detalhes e edição reais com identificadores próprios (chassi/RENAVAM), km inicial preservado e integração das telas. Placeholder de imagem até T09. Depende de T02; ações de exclusão/arquivamento dependem de definição própria.
-- [ ] **T04 — perfil, moeda e preferências.** Persistir moeda padrão e preferências de tema já previstas; integrar API/UI. Estabelecer representação decimal e moeda por registro para os formulários de preço. Não alterar moedas históricas. Necessário antes dos lançamentos financeiros.
+- [ ] **T04 — perfil, moeda e preferências (implementada; validação integrada pendente).** Persistir moeda padrão e preferências de tema já previstas; integrar API/UI. Estabelecer representação decimal e moeda por registro para os formulários de preço. Não alterar moedas históricas. Necessário antes dos lançamentos financeiros.
 - [ ] **T05 — odômetro e regras de alteração.** Aprovar cronologia, retroatividade/correção e efeitos de editar/excluir registros; implementar histórico, autoria/origem e leitura atual. Depende de T03; abastecimentos/manutenções usam esta base.
 
 ### P2 — registrar o uso cotidiano
@@ -335,3 +335,14 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Build Angular, Go test com PostgreSQL e go vet aprovados; suíte completa com 38 testes Chromium desktop/mobile aprovada. Teste de cópia intercepta somente a escrita no clipboard; cadastro/consulta/edição usam backend e banco reais.
 - Compra/venda, notas, fotos, alterações do odômetro e exclusão/arquivamento continuam nas tarefas posteriores. Não há nova env; deploy aplica migração 003 preservando volume existente.
 - Próxima tarefa recomendada: T04 (perfil e moeda/preferências), depois T05 (odômetro) e T06 (abastecimentos).
+
+
+## T04 — perfil, moeda e preferências — 2026-10-08
+
+- Migração 004 adiciona paleta/modo ao usuário com defaults original/light; moeda existente mantém BRL inicial. Login e consulta de sessão retornam as preferências.
+- PUT /api/profile altera apenas o usuário autenticado, com proteção de origem/JSON, validação de campos/moedas/paletas/modos e respostas no-store. Alterações parciais preservam os demais campos.
+- Perfil acessível no cabeçalho permite salvar moeda padrão. Tema autenticado grava no banco; login/recarga restaura o perfil acima do cache local. Gravações de tema são ordenadas; falha mostra opção de nova tentativa. Seleção anônima permanece local.
+- Contrato decimal/moeda para futuras APIs documentado em [docs/money.md](docs/money.md): string decimal, numeric(18,6), moeda própria por registro, sem conversão automática nem alteração de histórico. Os formulários reais de preço serão integrados em T06/T07/T10; prévia mantém BRL fictício.
+- Build Angular de produção aprovado e git diff --check aprovado. Testes de integração Go ampliados para perfil, valores inválidos, atualizações parciais, isolamento e proteção de origem. Teste Playwright adicionado para falha/nova tentativa, moeda/tema após recarga e novo login.
+- Validação Go/PostgreSQL e Playwright **não executada** nesta rodada: Go/PostgreSQL indisponíveis no ambiente e resolução de rede falhou ao tentar obter Go. T04 permanece desmarcada até validar persistência/autorização com banco real; nenhum deploy realizado.
+- Próximo passo: executar testes integrados da T04; depois definir cronologia, correções e efeitos de edição/exclusão para T05.

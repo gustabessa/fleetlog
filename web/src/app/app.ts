@@ -20,6 +20,7 @@ import {
   FlVehicleSelect,
   FlThemePicker,
   FlInstallPwa,
+  FlDialog,
 } from './ui';
 import { LogEntry } from './ui/entry-list';
 import { SwUpdate } from '@angular/service-worker';
@@ -44,6 +45,7 @@ import { SwUpdate } from '@angular/service-worker';
     FlVehicleSelect,
     FlThemePicker,
     FlInstallPwa,
+    FlDialog,
   ],
   templateUrl: './app.html',
   styleUrls: ['./app.css', './preview.css'],
@@ -342,7 +344,66 @@ export class App {
       this.garageLoading.set(false);
     }
   }
-  readonly user = signal<{ username: string; currency: string } | null>(null);
+  readonly user = signal<{
+    id?: number;
+    username: string;
+    currency: string;
+    palette?: string;
+    theme?: string;
+  } | null>(null);
+  readonly currencies = ['BRL', 'USD', 'EUR', 'GBP', 'ARS', 'CAD', 'JPY', 'CHF'];
+  currencyDraft = 'BRL';
+  readonly profileError = signal('');
+  readonly profileSaved = signal(false);
+  readonly profileBusy = signal(false);
+  private profileQueue: Promise<void> = Promise.resolve();
+  private accountGeneration = 0;
+  private acceptUser(user: NonNullable<ReturnType<typeof this.user>>) {
+    this.accountGeneration++;
+    this.user.set(user);
+    this.currencyDraft = user.currency;
+    if (user.palette && palettes.some((p) => p.id === user.palette)) this.palette.set(user.palette);
+    if (user.theme) this.dark.set(user.theme === 'dark');
+    this.cacheTheme();
+  }
+  saveCurrency() {
+    return this.saveProfile({ currency: this.currencyDraft });
+  }
+  retryPreferences() {
+    return this.saveProfile({
+      currency: this.currencyDraft,
+      palette: this.palette(),
+      theme: this.dark() ? 'dark' : 'light',
+    });
+  }
+  private saveProfile(change: { currency?: string; palette?: string; theme?: string }) {
+    const generation = this.accountGeneration;
+    this.profileSaved.set(false);
+    this.profileQueue = this.profileQueue.then(async () => {
+      if (!this.user() || generation !== this.accountGeneration) return;
+      this.profileBusy.set(true);
+      this.profileError.set('');
+      try {
+        const response = await fetch('/api/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(change),
+        });
+        if (!response.ok) throw new Error();
+        const updated = await response.json();
+        if (generation === this.accountGeneration) {
+          this.user.set(updated);
+          this.profileSaved.set(true);
+        }
+      } catch {
+        if (generation === this.accountGeneration)
+          this.profileError.set('Não foi possível salvar suas preferências. Tente novamente.');
+      } finally {
+        this.profileBusy.set(false);
+      }
+    });
+    return this.profileQueue;
+  }
   readonly loading = signal(true);
   readonly busy = signal(false);
   readonly authError = signal('');
@@ -352,7 +413,7 @@ export class App {
     try {
       const response = await fetch('/api/auth/me', { cache: 'no-store' });
       if (response.ok) {
-        this.user.set(await response.json());
+        this.acceptUser(await response.json());
         await this.loadGarage();
       } else if (response.status !== 401)
         this.authError.set('Não foi possível conectar ao FleetLog.');
@@ -382,7 +443,7 @@ export class App {
         );
         return;
       }
-      this.user.set(await response.json());
+      this.acceptUser(await response.json());
       await this.loadGarage();
     } catch {
       this.authError.set('Não foi possível conectar ao FleetLog.');
@@ -402,7 +463,9 @@ export class App {
         body: '{}',
       });
       if (response.ok) {
+        this.accountGeneration++;
         this.user.set(null);
+        this.profileError.set('');
         this.garage.set(null);
         this.garageError.set('');
         this.closePreview();
@@ -446,11 +509,14 @@ export class App {
   reload() {
     location.reload();
   }
-  // TODO: Persist palette and mode in the authenticated user profile via API.
-  // Until then, localStorage restores this browser’s selection across reloads.
   selectTheme(theme: { palette: string; dark: boolean }) {
     this.palette.set(theme.palette);
     this.dark.set(theme.dark);
+    this.cacheTheme();
+    if (this.user())
+      void this.saveProfile({ palette: theme.palette, theme: theme.dark ? 'dark' : 'light' });
+  }
+  private cacheTheme() {
     localStorage.setItem('fleetlog.palette', this.palette());
     localStorage.setItem('fleetlog.theme', this.dark() ? 'dark' : 'light');
     this.applyTheme();

@@ -20,7 +20,7 @@ func Migrate(ctx context.Context, tx pgx.Tx) error {
 	for _, m := range []struct {
 		version int
 		file    string
-	}{{1, "001_auth.sql"}, {2, "002_garages.sql"}, {3, "003_vehicles.sql"}} {
+	}{{1, "001_auth.sql"}, {2, "002_garages.sql"}, {3, "003_vehicles.sql"}, {4, "004_profile.sql"}} {
 		var applied bool
 		if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version=$1)`, m.version).Scan(&applied); err != nil {
 			return err
