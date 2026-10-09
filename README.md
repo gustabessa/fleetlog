@@ -109,7 +109,7 @@ Nome/modelo (um campo textual) e quilometragem inicial são obrigatórios. Placa
 | `POST /api/garages/{garageID}/vehicles`            | Criar veículo (membro da garagem)               |
 | `PUT /api/garages/{garageID}/vehicles/{vehicleID}` | Substituir campos editáveis (membro da garagem) |
 
-Corpo de criação: `name`, `plate`, `brand`, `year` (inteiro ou null), `chassis`, `renavam` e `initialKm` (número decimal não negativo, até três casas e 999999999.999 km). O backend guarda odômetro como numeric e devolve `initialKm` como texto decimal. Na edição, não envie `initialKm`: esse valor é preservado; leituras e lançamentos atualizam `currentKm`, preservando o inicial. Venda arquiva; `includeArchived=true` inclui vendidos na listagem. DELETE no caminho de detalhe exige ausência de histórico, incluindo auditoria.
+Corpo de criação: `name`, `plate`, `brand`, `year` (inteiro ou null), `chassis`, `renavam` e `initialKm` (número decimal não negativo, até três casas e 999999999.999 km). O backend guarda odômetro como numeric e devolve `initialKm` como texto decimal. Na edição, não envie `initialKm`: esse valor é preservado; leituras e lançamentos atualizam `currentKm`, preservando o inicial. Venda arquiva; `includeArchived=true` inclui vendidos na listagem. DELETE no caminho de detalhe arquiva sem remover dados; PUT em /archive permite archived true/false, inclusive com histórico.
 
 Limites: nome 120 caracteres, placa 32, marca 100, chassi/RENAVAM 64; ano opcional entre 1 e 9999. O cadastro não força formato nacional de placa/identificadores. Campos inválidos retornam 400 e nomes dos campos em `fields`; gestão de membros por não criador retorna 403; veículo de outra garagem retorna 404. APIs não são cacheadas.
 

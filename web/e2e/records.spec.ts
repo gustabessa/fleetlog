@@ -43,12 +43,20 @@ test('notas, despesas e venda preservam histórico e arquivam veículo', async (
   await expect
     .poll(async () => (await (await page.request.get(`${base}/${v.id}`)).json()).archived)
     .toBe(true);
-  await page.getByRole('button', { name: 'Excluir veículo', exact: true }).click();
+  await page.getByRole('button', { name: 'Desarquivar veículo', exact: true }).click();
   await page
     .getByRole('dialog', { name: 'Confirmar ação' })
     .getByRole('button', { name: 'Confirmar', exact: true })
     .click();
-  await expect(page.getByRole('alert')).toContainText('histórico');
+  await expect(page.getByRole('button', { name: 'Arquivar veículo', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Arquivar veículo', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Confirmar ação' })
+    .getByRole('button', { name: 'Confirmar', exact: true })
+    .click();
+  await expect(
+    page.getByRole('button', { name: 'Desarquivar veículo', exact: true }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Voltar à garagem' }).click();
   await expect(page.locator('button.vehicle-open').filter({ hasText: v.name })).not.toBeVisible();
   await page.getByLabel('Incluir veículos vendidos/arquivados').check();

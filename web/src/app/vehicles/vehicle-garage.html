@@ -8,14 +8,14 @@
     <button flButton type="button" (click)="navigate.emit(null)">Voltar à garagem</button>
     <button
       size="icon"
-      aria-label="Excluir veículo"
-      title="Excluir veículo"
+      [attr.aria-label]="vehicle.archived ? 'Desarquivar veículo' : 'Arquivar veículo'"
+      [attr.title]="vehicle.archived ? 'Desarquivar veículo' : 'Arquivar veículo'"
       flButton
       type="button"
-      (click)="removeVehicle(vehicle)"
+      (click)="toggleArchive(vehicle)"
       [disabled]="busy()"
     >
-      <fl-icon name="delete" />
+      <fl-icon [name]="vehicle.archived ? 'restore' : 'archive'" />
     </button>
     <button
       size="icon"
@@ -31,6 +31,9 @@
   </div>
   <section flCard>
     <h2>{{ vehicle.name }}</h2>
+    @if (vehicle.archived) {
+      <p class="fl-caption">Arquivado · dados preservados</p>
+    }
     <dl>
       <div>
         <dt>Placa</dt>
@@ -174,9 +177,7 @@
       Adicionar veículo
     </button>
   </div>
-  @if (error()) {
-    <button flButton type="button" (click)="load()">Recarregar veículos</button>
-  }
+
   @if (!vehicles().length && !error()) {
     <section flCard class="empty">
       <h2>Sua garagem está vazia</h2>

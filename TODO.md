@@ -484,3 +484,14 @@ paginação e imagem privada da anotação. Demais anexos continuam no TODO acim
 Instância de demonstração em http://127.0.0.1:8080, banco separado, dados
 fictícios; usuário demo e senha de teste fornecidos no chat. Armazenamento S3
 de demonstração local, sem acesso ao homelab.
+
+
+## Arquivamento reversível — 2026-10-09
+
+- Pedido posterior substitui exclusão física por arquivar/desarquivar, inclusive
+  com histórico; dados/fotos/notas/leituras e autoria preservados.
+- DELETE do veículo passa a arquivar por compatibilidade; PUT /archive aceita
+  archived true/false. Mudanças auditadas. Edição comum de compra/venda não
+  sobrescreve decisão manual de arquivamento; novo registro/remoção de venda
+  ainda aplica a transição já definida.
+- UI mostra Arquivar/Desarquivar; Recarregar veículos removido.

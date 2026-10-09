@@ -126,7 +126,7 @@ export class VehicleGarage {
     return {
       name: vehicle.name,
       version:
-        [vehicle.brand, vehicle.year, vehicle.archived ? 'Vendido · Arquivado' : '']
+        [vehicle.brand, vehicle.year, vehicle.archived ? 'Arquivado' : '']
           .filter(Boolean)
           .join(' · ') || 'Informações do veículo',
       plate: vehicle.plate || 'Sem placa informada',
@@ -246,29 +246,24 @@ export class VehicleGarage {
       this.busy.set(false);
     }
   }
-  async removeVehicle(vehicle: Vehicle) {
-    if (this.busy() || !(await this.confirmation.ask('Excluir este veículo sem histórico?')))
-      return;
+  async toggleArchive(vehicle: Vehicle) {
+    if (this.busy()) return;
+    const message = vehicle.archived
+      ? 'Desarquivar este veículo e voltar a mostrá-lo na garagem ativa?'
+      : 'Arquivar este veículo? Notas, fotos e lançamentos serão preservados.';
+    if (!(await this.confirmation.ask(message))) return;
     this.busy.set(true);
+    this.error.set('');
     try {
-      const r = await fetch(`${this.endpoint}/${vehicle.id}`, {
-        method: 'DELETE',
+      const response = await fetch(`${this.endpoint}/${vehicle.id}/archive`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: '{}',
+        body: JSON.stringify({ archived: !vehicle.archived }),
       });
-      if (!r.ok) {
-        this.error.set(
-          r.status === 409
-            ? 'Veículos com histórico não podem ser excluídos.'
-            : 'Não foi possível excluir veículo.',
-        );
-        return;
-      }
-      this.selected.set(null);
-      this.navigate.emit(null);
-      await this.load();
+      if (!response.ok) throw Error();
+      await this.refreshSelected();
     } catch {
-      this.error.set('Não foi possível excluir veículo.');
+      this.error.set('Não foi possível alterar o arquivamento.');
     } finally {
       this.busy.set(false);
     }

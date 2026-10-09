@@ -23,8 +23,11 @@ func TestVehicleRecordsIntegration(t *testing.T) {
 	if w.Code != 200 {
 		t.Fatal(w.Code, w.Body.String())
 	}
-	if w = a.Request("DELETE", url, `{}`); w.Code != 409 {
-		t.Fatal("vehicle with note deleted", w.Code)
+	if w = a.Request("DELETE", url, `{}`); w.Code != 200 {
+		t.Fatal("vehicle with note could not archive", w.Code)
+	}
+	if w = a.Request("PUT", url+"/archive", `{"archived":false}`); w.Code != 200 {
+		t.Fatal(w.Code, w.Body.String())
 	}
 	w = a.Request("PUT", url+"/ownership", `{"purchase":{"date":"2026-01-01","amount":"10000.12","currency":"BRL","party":"Anterior"},"sale":{"date":"2026-10-08","amount":"2000.5","currency":"USD"}}`)
 	if w.Code != 200 {
@@ -61,8 +64,23 @@ func TestVehicleRecordsIntegration(t *testing.T) {
 		t.Fatal(w.Body.String())
 	}
 	w = a.Request("DELETE", url, `{}`)
-	if w.Code != 409 {
-		t.Fatal("history deletion accepted", w.Code)
+	if w.Code != 200 {
+		t.Fatal("history archive failed", w.Code)
+	}
+	if w = a.Request("GET", url+"/notes", ""); w.Code != 200 || !strings.Contains(w.Body.String(), "Anotação") {
+		t.Fatal("archive removed note", w.Body.String())
+	}
+	if w = a.Request("PUT", url+"/archive", `{"archived":false}`); w.Code != 200 {
+		t.Fatal(w.Code, w.Body.String())
+	}
+	if w = a.Request("GET", url, ""); w.Code != 200 || strings.Contains(w.Body.String(), `"archived":true`) {
+		t.Fatal("restore failed", w.Body.String())
+	}
+	if w = a.Request("PUT", url+"/archive", `{}`); w.Code != 400 {
+		t.Fatal("missing archive flag accepted", w.Code)
+	}
+	if w = a.Request("PUT", fmt.Sprintf("/api/garages/%d/vehicles/%d/archive", a.GarageID+100, v.ID), `{"archived":true}`); w.Code != 404 {
+		t.Fatal("archive isolation failed", w.Code)
 	}
 	w = a.Request("POST", base, `{"name":"Empty","initialKm":0}`)
 	json.Unmarshal(w.Body.Bytes(), &v)

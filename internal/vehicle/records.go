@@ -32,7 +32,8 @@ func (s *Service) recordRoutes(m *http.ServeMux) {
 	m.HandleFunc("DELETE "+base+"/notes/{noteID}", s.Garage.RequireMemberWrite(s.writeNote))
 	m.HandleFunc("GET "+base+"/ownership", s.Garage.RequireMember(s.ownership))
 	m.HandleFunc("PUT "+base+"/ownership", s.Garage.RequireMemberWrite(s.writeOwnership))
-	m.HandleFunc("DELETE "+base, s.Garage.RequireMemberWrite(s.removeVehicle))
+	m.HandleFunc("DELETE "+base, s.Garage.RequireMemberWrite(s.archiveVehicle))
+	m.HandleFunc("PUT "+base+"/archive", s.Garage.RequireMemberWrite(s.archiveVehicle))
 }
 func (s *Service) checkVehicle(r *http.Request) error {
 	g, _ := garage.FromContext(r.Context())
@@ -187,7 +188,12 @@ func (s *Service) writeOwnership(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if _, err = tx.Exec(r.Context(), `UPDATE vehicles SET archived=$1,updated_at=now() WHERE id=$2`, input.Sale != nil, vid); err != nil {
+	var previous Ownership
+	if err = json.Unmarshal(before, &previous); err != nil {
+		odometer.Failure(w, err)
+		return
+	}
+	if _, err = tx.Exec(r.Context(), `UPDATE vehicles SET archived=CASE WHEN $1::boolean<>$2::boolean THEN $1 ELSE archived END,updated_at=now() WHERE id=$3`, input.Sale != nil, previous.Sale != nil, vid); err != nil {
 		odometer.Failure(w, err)
 		return
 	}
@@ -205,8 +211,25 @@ func (s *Service) writeOwnership(w http.ResponseWriter, r *http.Request) {
 	}
 	apiutil.Reply(w, 200, after)
 }
-func (s *Service) removeVehicle(w http.ResponseWriter, r *http.Request) {
+
+// DELETE is a compatibility alias for archiving. No vehicle data is physically removed.
+func (s *Service) archiveVehicle(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Archived *bool `json:"archived"`
+	}
+	value := true
+	if r.Method != "DELETE" {
+		if !apiutil.Decode(w, r, &input) {
+			return
+		}
+		if input.Archived == nil {
+			apiutil.Reply(w, 400, map[string]string{"error": "archived is required"})
+			return
+		}
+		value = *input.Archived
+	}
 	g, _ := garage.FromContext(r.Context())
+	user, _ := auth.UserFromContext(r.Context())
 	vid := apiutil.ID(r, "vehicleID")
 	tx, err := s.Garage.Auth.DB.Begin(r.Context())
 	if err != nil {
@@ -218,32 +241,26 @@ func (s *Service) removeVehicle(w http.ResponseWriter, r *http.Request) {
 		odometer.Failure(w, err)
 		return
 	}
-	var history bool
-	if err = tx.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM entries WHERE vehicle_id=$1) OR EXISTS(SELECT 1 FROM odometer_audit WHERE vehicle_id=$1) OR EXISTS(SELECT 1 FROM entry_audit WHERE vehicle_id=$1) OR EXISTS(SELECT 1 FROM vehicle_notes WHERE vehicle_id=$1) OR EXISTS(SELECT 1 FROM vehicle_transactions WHERE vehicle_id=$1) OR EXISTS(SELECT 1 FROM vehicle_audit WHERE vehicle_id=$1)`, vid).Scan(&history); err != nil {
+	var before bool
+	if err = tx.QueryRow(r.Context(), `SELECT archived FROM vehicles WHERE id=$1`, vid).Scan(&before); err != nil {
 		odometer.Failure(w, err)
 		return
 	}
-	if history {
-		apiutil.Reply(w, 409, map[string]string{"error": "vehicle has history and cannot be deleted"})
-		return
-	}
-	if _, err = tx.Exec(r.Context(), `UPDATE photo_objects SET state='delete' WHERE object_key=(SELECT object_key FROM vehicle_photos WHERE vehicle_id=$1)`, vid); err != nil {
+	if _, err = tx.Exec(r.Context(), `UPDATE vehicles SET archived=$1,updated_at=now() WHERE id=$2`, value, vid); err != nil {
 		odometer.Failure(w, err)
 		return
 	}
-	if _, err = tx.Exec(r.Context(), `DELETE FROM vehicle_photos WHERE vehicle_id=$1`, vid); err != nil {
-		odometer.Failure(w, err)
-		return
-	}
-	if _, err = tx.Exec(r.Context(), `DELETE FROM vehicles WHERE id=$1`, vid); err != nil {
-		odometer.Failure(w, err)
-		return
+	if before != value {
+		if _, err = tx.Exec(r.Context(), `INSERT INTO vehicle_audit(vehicle_id,actor_id,before_value,after_value) VALUES($1,$2,jsonb_build_object('archived',$3::boolean),jsonb_build_object('archived',$4::boolean))`, vid, user.ID, before, value); err != nil {
+			odometer.Failure(w, err)
+			return
+		}
 	}
 	if err = tx.Commit(r.Context()); err != nil {
 		odometer.Failure(w, err)
 		return
 	}
-	apiutil.Reply(w, 200, map[string]bool{"deleted": true})
+	apiutil.Reply(w, 200, map[string]any{"id": vid, "archived": value})
 }
 func validRecordText(s string, max int) bool {
 	return utf8.ValidString(s) && utf8.RuneCountInString(s) <= max && !strings.ContainsRune(s, 0)
