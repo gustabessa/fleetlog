@@ -329,8 +329,15 @@ interface Item {
               </div>
             }
 
-            <button flButton type="button" (click)="addItem()">
-              Adicionar peça ou mão de obra
+            <button
+              flButton
+              size="icon"
+              type="button"
+              aria-label="Adicionar peça ou mão de obra"
+              title="Adicionar peça ou mão de obra"
+              (click)="addItem()"
+            >
+              +
             </button>
             <fl-field controlId="service-discount" label="Desconto"
               ><input
