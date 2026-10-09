@@ -55,6 +55,7 @@ type Service struct{ Garage *garage.Service }
 const columns = `e.id,e.vehicle_id,e.kind,e.entry_date::text,e.title,e.amount::text,e.currency,e.km::text,e.details,u.username`
 
 func (s *Service) Routes(m *http.ServeMux) {
+	m.HandleFunc("GET /api/garages/{garageID}/history", s.Garage.RequireMember(s.history))
 	s.routesKind(m, "fuel")
 	s.routesKind(m, "service")
 	s.routesKind(m, "expense")

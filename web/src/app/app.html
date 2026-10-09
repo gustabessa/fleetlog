@@ -125,7 +125,38 @@
       } @else if (!garage()) {
         <p role="status">Você ainda não está vinculado a uma garagem.</p>
       } @else {
-        <fl-vehicle-garage [garageId]="garage()!.id" [currency]="user()!.currency" />
+        <nav class="tabs" aria-label="Navegação da garagem">
+          <button
+            flButton
+            [attr.aria-current]="realScreen() === 'garage' ? 'page' : null"
+            (click)="realScreen.set('garage')"
+          >
+            Veículos
+          </button>
+          <button
+            flButton
+            [attr.aria-current]="realScreen() === 'history' ? 'page' : null"
+            (click)="realScreen.set('history')"
+          >
+            Histórico
+          </button>
+          <button
+            flButton
+            [attr.aria-current]="realScreen() === 'costs' ? 'page' : null"
+            (click)="realScreen.set('costs')"
+          >
+            Custos
+          </button>
+        </nav>
+        @if (realScreen() === 'garage') {
+          <fl-vehicle-garage [garageId]="garage()!.id" [currency]="user()!.currency" />
+        } @else {
+          <fl-real-history
+            [garageId]="garage()!.id"
+            [currency]="user()!.currency"
+            [mode]="realScreen() === 'costs' ? 'costs' : 'history'"
+          />
+        }
         <button flButton variant="ghost" type="button" (click)="preview.set(true)">
           Explorar próximas telas
         </button>

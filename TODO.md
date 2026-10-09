@@ -37,7 +37,7 @@ Esta fila organiza os checklists detalhados abaixo em entregas escolhíveis. Ord
 
 ### P3 — consolidar histórico, análises e acesso familiar
 
-- [ ] **T11 — histórico integrado e gráficos reais.** Busca/filtros/paginação e agregações dos lançamentos existentes; listas/gráficos coerentes, moedas separadas e gastos contabilizados uma vez. Aproveitar componentes da prévia, substituindo mocks e estimativas. Depende dos tipos de lançamento entregues; evoluir junto deles sem esperar todas as categorias.
+- [x] **T11 — histórico integrado e gráficos reais.** Busca/filtros/paginação e agregações dos lançamentos existentes; listas/gráficos coerentes, moedas separadas e gastos contabilizados uma vez. Aproveitar componentes da prévia, substituindo mocks e estimativas. Depende dos tipos de lançamento entregues; evoluir junto deles sem esperar todas as categorias.
 - [ ] **T12 — inclusão de familiares e permissões.** Aprovar como incluir/remover usuários e quais ações cada membro pode fazer; gestão de acesso e testes de garagem compartilhada. Depende de T02. Pode ser antecipada se o próximo teste de uso já envolver a família.
 
 ### Entrega a definir e melhorias futuras
@@ -405,3 +405,12 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Veículo sem histórico pode ser excluído; existência de notas, lançamentos, leituras/auditoria ou compra/venda bloqueia exclusão. Foto removida passa pela fila persistida de limpeza.
 - Despesas de documentação (IPVA/licenciamento/transferência/taxas/outros), seguro e outros: cadastro/consulta/edição/exclusão reais com moeda própria. Compra/venda ficam como informações patrimoniais; gráficos operacionais usam lançamentos de gastos, sem somar novamente detalhamento de manutenção.
 - Atualização de dados após salvar não desmonta os demais formulários do veículo. Build Angular e suíte Go/PostgreSQL aprovados; 6 testes Chromium desktop/mobile de notas/venda/despesas/fotos/odômetro aprovados.
+
+
+## T11 — histórico e gráficos reais concluídos — 2026-10-08
+
+- GET history por garagem consulta todos os gastos persistidos; busca sem acentos, filtros veículo/tipo/datas inclusivas/moeda e preço ±10%, ordenação e paginação com limites. Datas civis/intervalos inválidos validados na API/UI.
+- Lista, contagem e agregações por moeda/tipo/mês/veículo usam o mesmo snapshot PostgreSQL. Cada lançamento conta seu total uma vez; peças/mão de obra não duplicam a manutenção e moedas não são convertidas/somadas juntas.
+- Navegação real Veículos/Histórico/Custos; componentes de lista/pizza aceitam dados reais e rótulos monetários na moeda correta. Formatação de totais decimais usa BigInt para evitar perda de precisão.
+- Distância usa somente diferença entre leituras reais do veículo dentro do período; menos de duas leituras indica dados insuficientes, sem transportar estimativas do mock.
+- Build/go vet e testes PostgreSQL de busca/datas/paginação/moedas/totais/isolamento aprovados; testes Chromium desktop/mobile de lista e gráficos reais aprovados.

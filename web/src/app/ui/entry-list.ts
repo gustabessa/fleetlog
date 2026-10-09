@@ -1,7 +1,10 @@
-import { formatMoney } from './format';
+import { formatMoney, formatMoneyDecimal } from './format';
 import { Component, input } from '@angular/core';
 import { FlBadge } from './badge';
 export interface LogEntry {
+  id?: number;
+  amount?: string;
+  currency?: string;
   vehicle: number;
   title: string;
   detail: string;
@@ -14,7 +17,7 @@ export interface LogEntry {
 @Component({
   selector: 'fl-entry-list',
   imports: [FlBadge],
-  template: `@for (entry of entries(); track entry.vehicle + entry.title + entry.isoDate) {
+  template: `@for (entry of entries(); track entry.id ?? $index) {
       <article class="entry">
         <span class="icon" aria-hidden="true">{{
           entry.kind === 'fuel' ? '↗' : entry.kind === 'service' ? '⚙' : '▤'
@@ -27,7 +30,11 @@ export interface LogEntry {
           <h3>{{ entry.title }}</h3>
           <p>{{ entry.detail }}</p>
         </div>
-        <strong>{{ money(entry.cents) }}</strong>
+        <strong>{{
+          entry.amount !== undefined
+            ? decimalMoney(entry.amount, entry.currency ?? 'BRL')
+            : money(entry.cents)
+        }}</strong>
       </article>
     } @empty {
       <p class="empty" role="status">Nenhum lançamento encontrado para estes filtros.</p>
@@ -99,5 +106,6 @@ export interface LogEntry {
 export class FlEntryList {
   readonly entries = input.required<LogEntry[]>();
   readonly vehicles = input.required<{ name: string; plate: string; tagColor: string }[]>();
+  readonly decimalMoney = formatMoneyDecimal;
   readonly money = formatMoney;
 }

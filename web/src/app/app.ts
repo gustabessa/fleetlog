@@ -1,3 +1,4 @@
+import { RealHistory } from './vehicles/history';
 import { VehicleGarage } from './vehicles/vehicle-garage';
 import { palettes } from './ui/themes';
 import { formatMoney, formatNumber } from './ui/format';
@@ -30,6 +31,7 @@ import { SwUpdate } from '@angular/service-worker';
   imports: [
     RouterOutlet,
     VehicleGarage,
+    RealHistory,
     FormsModule,
     FlButton,
     FlInput,
@@ -51,6 +53,7 @@ import { SwUpdate } from '@angular/service-worker';
   styleUrls: ['./app.css', './preview.css'],
 })
 export class App {
+  readonly realScreen = signal<'garage' | 'history' | 'costs'>('garage');
   readonly preview = signal(false);
   readonly screen = signal<'garage' | 'vehicle' | 'history' | 'costs'>('garage');
   readonly selected = signal(0);

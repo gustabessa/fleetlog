@@ -1,6 +1,7 @@
 import { formatMoney } from './format';
 import { Component, computed, input, output } from '@angular/core';
 export interface PieCategory {
+  moneyLabel?: string;
   kind: string;
   label: string;
   amount: number;
@@ -41,7 +42,8 @@ export interface PieCategory {
           ><span
             >{{ slice.label
             }}<small
-              >{{ format(slice.amount) }} · {{ slice.percent.toFixed(1).replace('.', ',') }}%</small
+              >{{ slice.moneyLabel ?? format(slice.amount) }} ·
+              {{ slice.percent.toFixed(1).replace('.', ',') }}%</small
             ></span
           >
         </button>
