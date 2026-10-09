@@ -13,3 +13,6 @@ export { FlVehicleSelect } from './vehicle-select';
 export { FlThemePicker } from './theme-picker';
 export { FlDialog } from './dialog';
 export { FlInstallPwa } from './install-pwa';
+
+export { FlCheckbox } from './checkbox';
+export { FlMoneyInput } from './money-input';

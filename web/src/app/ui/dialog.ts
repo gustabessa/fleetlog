@@ -6,6 +6,7 @@ import { FlButton } from './button';
   template: `<dialog
     #native
     [attr.aria-label]="title()"
+    [attr.data-size]="size()"
     (click)="backdrop($event)"
     (close)="closed.emit()"
   >
@@ -25,6 +26,16 @@ import { FlButton } from './button';
     <footer><ng-content select="[flDialogFooter]" /></footer>
   </dialog>`,
   styles: `
+    :host {
+      display: contents;
+    }
+    dialog[data-size='lg'] {
+      width: 720px;
+    }
+    dialog[data-size='sm'] {
+      width: 420px;
+    }
+
     dialog {
       width: 520px;
       max-width: calc(100vw - 32px);
@@ -73,6 +84,7 @@ import { FlButton } from './button';
   `,
 })
 export class FlDialog {
+  readonly size = input<'sm' | 'md' | 'lg'>('md');
   readonly title = input.required<string>();
   readonly closed = output<void>();
   private readonly native = viewChild.required<ElementRef<HTMLDialogElement>>('native');

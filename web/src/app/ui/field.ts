@@ -15,7 +15,7 @@ import { Component, input } from '@angular/core';
     :host {
       display: flex;
       flex-direction: column;
-      gap: var(--space-2);
+      gap: 6px;
     }
     label {
       font: var(--font-label);

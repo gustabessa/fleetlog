@@ -139,7 +139,8 @@ import { palettes } from './themes';
       color: var(--accent);
     }
     .done {
-      width: 100%;
+      width: auto;
+      float: right;
     }
   `,
 })

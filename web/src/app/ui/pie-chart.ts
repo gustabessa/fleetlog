@@ -77,13 +77,13 @@ export interface PieCategory {
     }
     path:hover,
     path.selected {
-      stroke: var(--text);
-      stroke-width: 4;
+      stroke: var(--accent);
+      stroke-width: 2;
     }
     path:focus-visible {
       outline: none !important;
-      stroke: var(--text);
-      stroke-width: 6;
+      stroke: var(--accent);
+      stroke-width: 3;
     }
     .legend {
       flex: 1;

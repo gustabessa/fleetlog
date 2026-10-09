@@ -31,9 +31,9 @@
   --radius-control: 0.625rem;
   --radius-card: 1rem;
   --radius-pill: 999px;
-  --control-sm: 2.25rem;
-  --control-md: 2.75rem;
-  --control-lg: 3rem;
+  --control-sm: 2rem;
+  --control-md: 2.375rem;
+  --control-lg: 2.75rem;
   font-family: var(--font-family);
 }
 * {
@@ -77,8 +77,8 @@ small,
 button:focus-visible,
 a:focus-visible,
 .fl-input:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 3px;
+  outline: 2px solid color-mix(in srgb, var(--accent) 65%, transparent);
+  outline-offset: 2px;
 }
 .fl-input {
   width: 100%;
@@ -127,4 +127,278 @@ input.fl-input[type='color'] {
   width: 80px;
   padding: var(--space-1);
   cursor: pointer;
+}
+
+.fl-input:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.fl-input {
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+fl-checkbox input[type='checkbox'] {
+  appearance: none;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+fl-checkbox input[type='checkbox']::before {
+  content: '';
+  width: 9px;
+  height: 5px;
+  border-left: 2px solid var(--on-accent);
+  border-bottom: 2px solid var(--on-accent);
+  transform: rotate(-45deg) scale(0);
+  margin-top: -2px;
+}
+fl-checkbox input[type='checkbox']:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+fl-checkbox input[type='checkbox']:checked::before {
+  transform: rotate(-45deg) scale(1);
+}
+fl-checkbox input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+fl-checkbox input[type='checkbox']:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+@media (forced-colors: active) {
+  fl-checkbox input[type='checkbox'] {
+    appearance: auto;
+  }
+  fl-checkbox input[type='checkbox']::before {
+    display: none;
+  }
+}
+
+fl-real-history fl-date-range .trigger {
+  width: 100%;
+}
+
+.record-table {
+  overflow-x: auto;
+  margin-top: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+.record-table table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--text-label);
+}
+.record-table th {
+  font: var(--font-caption);
+  color: var(--muted);
+  background: var(--soft);
+  white-space: nowrap;
+}
+.record-table td,
+.record-table th {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.record-table tr:last-child td {
+  border-bottom: 0;
+}
+.record-table small,
+.record-table strong {
+  display: block;
+}
+.record-table small {
+  color: var(--muted);
+  margin-top: 4px;
+}
+.record-table .amount {
+  white-space: nowrap;
+  font-weight: 600;
+}
+.row-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  min-width: 150px;
+}
+fl-fuel fieldset,
+fl-maintenance fieldset,
+fl-vehicle-records fieldset {
+  max-width: 720px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+fl-fuel fieldset fl-checkbox,
+fl-maintenance fieldset section,
+fl-maintenance fieldset > p,
+fl-vehicle-records fieldset > p {
+  grid-column: 1/-1;
+}
+fl-fuel fieldset button,
+fl-maintenance fieldset button,
+fl-vehicle-records fieldset button {
+  justify-self: start;
+}
+@media (max-width: 700px) {
+  fl-fuel fieldset,
+  fl-maintenance fieldset,
+  fl-vehicle-records fieldset {
+    grid-template-columns: 1fr;
+  }
+  .record-table td,
+  .record-table th {
+    padding: var(--space-3);
+  }
+}
+@media (pointer: coarse) {
+  :root {
+    --control-sm: 2.75rem;
+    --control-md: 2.75rem;
+  }
+  fl-checkbox label {
+    min-height: 44px;
+    align-items: center;
+  }
+}
+
+fl-readings fieldset {
+  max-width: 560px;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+fl-readings fieldset button {
+  justify-self: start;
+}
+@media (max-width: 500px) {
+  fl-readings fieldset {
+    grid-template-columns: 1fr;
+  }
+}
+
+:root {
+  --control-md: 2.125rem;
+  --control-sm: 1.875rem;
+}
+button[data-size='md'] {
+  padding-inline: 12px;
+}
+button[data-size='icon'] {
+  padding: 0;
+}
+button[data-size='sm'] {
+  padding-inline: 8px;
+}
+fl-checkbox label {
+  align-items: center;
+}
+fl-checkbox input[type='checkbox'] {
+  vertical-align: middle;
+}
+button,
+input,
+select,
+textarea {
+  margin: 0;
+}
+.topbar button.profile-trigger[data-variant='ghost'] {
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+}
+@media (pointer: coarse) {
+  :root {
+    --control-md: 2.75rem;
+    --control-sm: 2.75rem;
+  }
+}
+
+.fl-input {
+  height: var(--control-md);
+  min-height: var(--control-md);
+  padding: 4px 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  min-width: 0;
+}
+textarea.fl-input {
+  height: auto;
+  min-height: 84px;
+  resize: vertical;
+  padding: 8px 10px;
+  line-height: 1.5;
+}
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  grid-column: 1/-1;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.row-actions {
+  min-width: 64px;
+  gap: 6px;
+}
+.row-actions button {
+  margin: 0;
+}
+fl-checkbox {
+  align-self: center;
+}
+fl-checkbox label {
+  line-height: 20px;
+  gap: 8px;
+}
+
+.fl-dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0;
+}
+.fl-dialog-actions button {
+  margin: 0;
+  flex: none;
+}
+
+.topbar button.profile-trigger[data-variant='ghost'] {
+  border-radius: var(--radius-control);
+}
+
+:root {
+  --control-hover-bg: color-mix(in srgb, var(--surface) 90%, var(--accent));
+  --control-hover-border: var(--accent);
+}
+.fl-input:hover:not(:disabled):not(:focus) {
+  background-color: var(--control-hover-bg);
+  border-color: var(--control-hover-border);
+}
+fl-checkbox input[type='checkbox']:hover:not(:disabled) {
+  border-color: var(--control-hover-border);
+}
+fl-checkbox input[type='checkbox']:not(:checked):hover:not(:disabled) {
+  background: var(--control-hover-bg);
+}
+fl-table-pager select:hover {
+  background: var(--control-hover-bg);
+  border-color: var(--control-hover-border);
 }

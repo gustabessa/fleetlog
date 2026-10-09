@@ -1,3 +1,4 @@
+import { FlIcon } from './icon';
 import {
   Component,
   computed,
@@ -12,19 +13,22 @@ import {
 import { FlButton } from './button';
 @Component({
   selector: 'fl-date-range',
-  imports: [FlButton],
+  imports: [FlButton, FlIcon],
   host: { '(keydown.escape)': 'close()' },
   template: `<span class="label" [id]="id() + '-label'">{{ label() }}</span>
     <button
       flButton
       class="trigger"
+      size="md"
       [attr.aria-labelledby]="id() + '-label ' + id() + '-value'"
       [attr.aria-expanded]="open()"
       [attr.aria-controls]="id() + '-calendar'"
       (click)="toggle()"
     >
-      <span [id]="id() + '-value'">{{ summary() }}</span
-      ><span aria-hidden="true">▦</span>
+      <span class="range-value" [attr.title]="summary()" [id]="id() + '-value'">{{
+        summary()
+      }}</span
+      ><fl-icon name="calendar" />
     </button>
     @if (open()) {
       <div
@@ -78,7 +82,17 @@ import { FlButton } from './button';
     .label {
       display: block;
       font: var(--font-label);
-      margin-bottom: var(--space-2);
+      margin-bottom: 6px;
+    }
+    .trigger {
+      height: var(--control-md);
+      min-height: var(--control-md);
+      padding: 4px 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-control);
+      font: var(--font-label);
+      font-weight: 400;
+      line-height: 1.4;
     }
     .trigger {
       background: var(--bg);
@@ -86,6 +100,15 @@ import { FlButton } from './button';
       justify-content: space-between;
       text-align: left;
       font-weight: 400;
+    }
+    .range-value {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .trigger > span:last-child {
+      flex-shrink: 0;
     }
     .calendar {
       position: absolute;
