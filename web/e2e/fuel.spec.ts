@@ -16,7 +16,8 @@ test('abastecimento real deriva total, preserva moeda e integra odômetro', asyn
     })
   ).json();
   await page.reload();
-  await page.getByRole('button', { name: new RegExp(v.name) }).click();
+  if (!new URL(page.url()).pathname.endsWith('/vehicles/' + v.id))
+    await page.locator('button.vehicle-open').filter({ hasText: v.name }).click();
   await page.getByRole('button', { name: 'Registrar abastecimento' }).click();
   await page.getByLabel('Data do abastecimento').fill('2026-10-08');
   await page.getByLabel('Litros', { exact: true }).fill('42,5');
@@ -25,13 +26,20 @@ test('abastecimento real deriva total, preserva moeda e integra odômetro', asyn
   await page.getByLabel('Moeda do abastecimento').selectOption('USD');
   await page.getByRole('button', { name: 'Salvar abastecimento' }).click();
   await expect(page.getByText(/263,50/)).toBeVisible();
-  await expect(page.getByText('2026-10-08 · 200 km · Abastecimento · e2e')).toBeVisible();
+  await expect(
+    page
+      .locator('fl-readings')
+      .getByRole('row')
+      .filter({ hasText: '2026-10-08' })
+      .filter({ hasText: 'Abastecimento' }),
+  ).toBeVisible();
   const e = await (await page.request.get(`${base}/${v.id}/fuel`)).json();
   expect(e[0].amount).toBe('263.500000');
   expect(e[0].currency).toBe('USD');
   const actual = await (await page.request.get(`${base}/${v.id}`)).json();
   expect(actual.currentKm).toBe('200.000');
   await page.reload();
-  await page.getByRole('button', { name: new RegExp(v.name) }).click();
+  if (!new URL(page.url()).pathname.endsWith('/vehicles/' + v.id))
+    await page.locator('button.vehicle-open').filter({ hasText: v.name }).click();
   await expect(page.getByText(/263,50/)).toBeVisible();
 });

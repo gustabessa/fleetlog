@@ -436,3 +436,51 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Restam configuração do bucket privado e cliente/callback OIDC no provedor, publicação de imagem atual e aplicação do Compose atualizado. São ações externas, não funcionalidades faltantes do código.
 
 - Validação sem daemon: CLI Compose conferiu os dois arquivos com integrações desabilitadas e configuração preenchida, cobrindo as 13 variáveis do código e preservação explícita de AUTH_LOCAL_ENABLED=false. git diff --check aprovado.
+
+## Revisão de UI e navegação — 2026-10-09 — concluída
+
+- [x] Revisar espaçamentos da home, detalhes e demais telas; botões compactos no desktop e alvos acessíveis no mobile.
+- [x] Perfil com ícone no header; logout dentro do diálogo de perfil; copiar identificadores somente com ícone e label acessível.
+- [x] Padronizar foco/hover, checkbox custom tematizado e indicação clara da aba ativa.
+- [x] Filtros de histórico/custos alinhados; estado vazio compacto e útil.
+- [x] Manter gráficos/resumos de custos completos ao selecionar categoria; filtrar somente lista, com destaque sutil sem borda branca.
+- [x] Familiares com formulário de largura contida e lista de membros organizada.
+- [x] Notas, abastecimentos e manutenções em visualização tabular responsiva.
+- [x] Máscara monetária em campos de valor, mantendo decimais exatos e precisão de preços unitários.
+- [x] Ações rápidas de abastecimento/manutenção/despesa nos cards da garagem.
+- [x] Navegação por URL com F5, links diretos e histórico Voltar/Avançar.
+- [x] Subir instância local separada com usuário/senha de teste e validar desktop/mobile.
+
+## TODO — imagens opcionais em todos os registros
+
+Pedido em 2026-10-09: permitir imagens opcionais em abastecimentos, manutenções,
+anotações e demais ações/registros do produto. Entrega separada, não implementar
+como parte da revisão de UI.
+
+- [ ] Definir quais registros aceitam anexos e quantidade por registro.
+- [ ] Aprovar formatos, tamanho/dimensões, ordenação/legendas e limites de armazenamento.
+- [ ] Generalizar metadados S3 privados, vínculo com registro e autorização por garagem.
+- [ ] Upload/leitura/substituição/remoção com fila de limpeza e rollback consistente.
+- [ ] Integrar formulário, tabela/detalhes e visualização de imagens em diálogo.
+- [ ] Definir efeitos de editar/excluir registro e eventual exportação com anexos.
+- [ ] Testar persistência, isolamento, validação de conteúdo e falhas banco/S3.
+
+### Ajustes adicionais pedidos durante a revisão
+
+- [x] Card 75/25, ações rápidas com ícones dentro do card, sem botões aninhados.
+- [x] Perfil/ações compactos, editar com lápis, excluir com lixeira, copiar com ícone; margens controladas por grupos.
+- [x] Checkbox com centro alinhado ao texto; controle de período com mesmo tamanho e ícone SVG de calendário.
+- [x] Máscara monetária durante digitação, caret e edição de negativos/decimais; precisão preservada.
+- [x] Compra/venda em grupos independentes, sem embaralhar campos condicionais no grid.
+- [x] Odômetro em tabela; todas as tabelas com 5 itens por página e seleção de quantidade.
+- [x] Cor da tag configurável na edição real do veículo e persistida no banco.
+- [x] Diálogo de anotação com imagem opcional privada (pedido posterior autoriza esta parte agora); demais anexos continuam no TODO separado.
+- [x] Verificar default Original/Claro do perfil e separar preferências deslogadas do perfil autenticado.
+
+Validação da revisão: build Angular sem avisos, go vet, suíte Go/PostgreSQL e
+**62 testes Chromium desktop/mobile aprovados**. Testes novos cobrem rotas/F5/
+Voltar, ações rápidas, máscara ao digitar/cálculo vinculado, cor persistida,
+paginação e imagem privada da anotação. Demais anexos continuam no TODO acima.
+Instância de demonstração em http://127.0.0.1:8080, banco separado, dados
+fictícios; usuário demo e senha de teste fornecidos no chat. Armazenamento S3
+de demonstração local, sem acesso ao homelab.

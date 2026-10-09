@@ -42,6 +42,8 @@ test('prévia anônima não cria sessão; Enter autentica e logout fecha prévia
   expect(session).toBeTruthy();
   await page.getByRole('button', { name: 'Explorar próximas telas' }).click();
   await expect(page.getByText('Prévia do produto', { exact: true })).toBeVisible();
+  if (!(await page.getByRole('button', { name: 'Sair', exact: true }).isVisible()))
+    await page.getByRole('button', { name: /^Perfil de / }).click();
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Entre na sua garagem' })).toBeVisible();
   await expect(page.getByText('Prévia do produto', { exact: true })).not.toBeVisible();
@@ -87,11 +89,15 @@ test('falha no login libera formulário; falha no logout preserva sessão', asyn
   await page.route('**/api/auth/logout', (route) =>
     route.fulfill({ status: 503, json: { error: 'unavailable' } }),
   );
+  if (!(await page.getByRole('button', { name: 'Sair', exact: true }).isVisible()))
+    await page.getByRole('button', { name: /^Perfil de / }).click();
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
   await expect(page.getByRole('alert')).toHaveText('Não foi possível sair. Tente novamente.');
   await expect(page.getByRole('button', { name: 'Sair', exact: true })).toBeEnabled();
   expect((await page.request.get('/api/auth/me')).status()).toBe(200);
   await page.unroute('**/api/auth/logout');
+  if (!(await page.getByRole('button', { name: 'Sair', exact: true }).isVisible()))
+    await page.getByRole('button', { name: /^Perfil de / }).click();
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Entre na sua garagem' })).toBeVisible();
 });

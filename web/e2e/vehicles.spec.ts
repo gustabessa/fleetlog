@@ -31,7 +31,7 @@ test('veículo real persiste, edita identificadores e preserva km inicial', asyn
   await page.unroute('**/api/garages/*/vehicles');
   await dialog.getByRole('button', { name: 'Salvar veículo', exact: true }).click();
   await expect(dialog).not.toBeVisible();
-  const card = page.getByRole('button', { name: new RegExp(name) });
+  const card = page.locator('button.vehicle-open').filter({ hasText: name });
   await expect(card).toBeVisible();
   await page.reload();
   await card.click();
@@ -63,7 +63,7 @@ test('veículo real persiste, edita identificadores e preserva km inicial', asyn
   await expect(edit).not.toBeVisible();
   await expect(page.getByRole('heading', { name: name + ' editado', exact: true })).toBeVisible();
   await page.reload();
-  await page.getByRole('button', { name: new RegExp(name + ' editado') }).click();
+  await expect(page.getByRole('heading', { name: name + ' editado', exact: true })).toBeVisible();
   await expect(page.getByText('000000007', { exact: true })).toBeVisible();
   await expect(page.getByText('12.345,678 km', { exact: true }).first()).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

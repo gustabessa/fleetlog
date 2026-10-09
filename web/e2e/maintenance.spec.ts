@@ -16,22 +16,33 @@ test('manutenção total direto funciona sem itens e sem leitura obrigatória', 
     })
   ).json();
   await page.reload();
-  await page.getByRole('button', { name: new RegExp(v.name) }).click();
+  if (!new URL(page.url()).pathname.endsWith('/vehicles/'+v.id))
+    await page.locator('button.vehicle-open').filter({ hasText: v.name }).click();
   await page.getByRole('button', { name: 'Registrar manutenção' }).click();
   await page.getByLabel('Descrição da manutenção (opcional)').fill('Revisão direta');
   await page.getByLabel('Total da manutenção').fill('150,50');
   await page.getByRole('button', { name: 'Salvar manutenção' }).click();
-  await expect(page.getByText(/Revisão direta · R\$\s*150,50/)).toBeVisible();
+  await expect(
+    page.getByRole('row').filter({ hasText: 'Revisão direta' }).filter({ hasText: '150,50' }),
+  ).toBeVisible();
   await page.reload();
-  await page.getByRole('button', { name: new RegExp(v.name) }).click();
-  await expect(page.getByText(/Revisão direta · R\$\s*150,50/)).toBeVisible();
+  if (!new URL(page.url()).pathname.endsWith('/vehicles/'+v.id))
+    await page.locator('button.vehicle-open').filter({ hasText: v.name }).click();
+  await expect(
+    page.getByRole('row').filter({ hasText: 'Revisão direta' }).filter({ hasText: '150,50' }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Editar manutenção' }).click();
   await page.getByLabel('Total da manutenção').fill('200');
   await page.getByLabel('Odômetro da manutenção (opcional)').fill('250');
   await page.getByRole('button', { name: 'Salvar manutenção' }).click();
-  await expect(page.getByText(/Revisão direta · R\$\s*200,00/)).toBeVisible();
-  page.on('dialog', (d) => d.accept());
+  await expect(
+    page.getByRole('row').filter({ hasText: 'Revisão direta' }).filter({ hasText: '200,00' }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Excluir manutenção' }).click();
+  await page
+    .getByRole('dialog', { name: 'Confirmar ação' })
+    .getByRole('button', { name: 'Confirmar', exact: true })
+    .click();
   await expect(page.getByText('Nenhuma manutenção registrada.')).toBeVisible();
   const actual = await (await page.request.get(`${base}/${v.id}`)).json();
   expect(actual.currentKm).toBe('100.000');

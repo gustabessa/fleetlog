@@ -32,7 +32,6 @@ test('histórico e custos reais separam moedas e filtram dados', async ({ page }
   });
   await page.getByRole('button', { name: 'Histórico', exact: true }).click();
   await page.getByLabel('Filtrar veículo').selectOption(String(v.id));
-  await page.getByLabel('Filtrar moeda').selectOption('');
   await page.getByRole('button', { name: 'Aplicar filtros' }).click();
   await expect(page.getByText(/Total em BRL:/)).toContainText('120,00');
   await expect(page.getByText(/Total em USD:/)).toContainText('30,00');

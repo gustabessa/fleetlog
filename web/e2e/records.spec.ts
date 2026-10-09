@@ -15,11 +15,13 @@ test('notas, despesas e venda preservam histórico e arquivam veículo', async (
     })
   ).json();
   await page.reload();
-  await page.getByRole('button', { name: new RegExp(v.name) }).click();
+  if (!new URL(page.url()).pathname.endsWith('/vehicles/' + v.id))
+    await page.locator('button.vehicle-open').filter({ hasText: v.name }).click();
+  await page.getByRole('button', { name: 'Adicionar anotação', exact: true }).click();
   await page
-    .getByLabel('Anotação', { exact: true })
+    .getByRole('textbox', { name: 'Anotação', exact: true })
     .fill('Dados extras <script> preservados como texto');
-  await page.getByRole('button', { name: 'Adicionar anotação' }).click();
+  await page.getByRole('button', { name: 'Salvar anotação', exact: true }).click();
   await expect(page.getByText('Dados extras <script> preservados como texto')).toBeVisible();
   await page.getByRole('button', { name: 'Registrar despesa' }).click();
   await page.getByLabel('Descrição da despesa').fill('IPVA real');
@@ -33,17 +35,25 @@ test('notas, despesas e venda preservam histórico e arquivam veículo', async (
   await page.getByLabel('Informar venda', { exact: true }).check();
   await page.getByLabel('Data de venda').fill('2026-10-08');
   await page.getByLabel('Valor de venda').fill('22000');
-  page.on('dialog', (d) => d.accept());
   await page.getByRole('button', { name: 'Salvar compra e venda' }).click();
+  await page
+    .getByRole('dialog', { name: 'Confirmar ação' })
+    .getByRole('button', { name: 'Confirmar', exact: true })
+    .click();
   await expect
     .poll(async () => (await (await page.request.get(`${base}/${v.id}`)).json()).archived)
     .toBe(true);
   await page.getByRole('button', { name: 'Excluir veículo', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Confirmar ação' })
+    .getByRole('button', { name: 'Confirmar', exact: true })
+    .click();
   await expect(page.getByRole('alert')).toContainText('histórico');
   await page.getByRole('button', { name: 'Voltar à garagem' }).click();
-  await expect(page.getByRole('button', { name: new RegExp(v.name) })).not.toBeVisible();
+  await expect(page.locator('button.vehicle-open').filter({ hasText: v.name })).not.toBeVisible();
   await page.getByLabel('Incluir veículos vendidos/arquivados').check();
-  await page.getByRole('button', { name: new RegExp(v.name) }).click();
+  if (!new URL(page.url()).pathname.endsWith('/vehicles/' + v.id))
+    await page.locator('button.vehicle-open').filter({ hasText: v.name }).click();
   await expect(page.getByText('Dados extras <script> preservados como texto')).toBeVisible();
   await expect(page.getByText(/IPVA real · R\$\s*300,00/)).toBeVisible();
 });

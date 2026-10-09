@@ -4,16 +4,16 @@ A UI usa componentes Angular standalone em `web/src/app/ui/` e tokens globais em
 
 ## Tipografia
 
-| Papel | Token | Desktop | Celular | Uso |
-|---|---|---|---|---|
-| Título de página | `--text-page` | 36 px | 30 px | h1 / FlPageHeading |
-| Título de card | `--text-title` | 24 px | 24 px | Nome do veículo |
-| Título de seção | `--text-section` | 20 px | 20 px | h2 |
-| Subtítulo | `--text-subtitle` | 18 px | 18 px | Descrição da página |
-| Corpo | `--text-body` | 16 px | 16 px | Texto e inputs |
-| Rótulo | `--text-label` | 14 px | 14 px | Labels e botões |
-| Legenda | `--text-caption` | 12 px | 12 px | Datas, badges e ajuda |
-| Indicador | `--text-metric` | 28 px | 24 px | FlStat |
+| Papel            | Token             | Desktop | Celular | Uso                   |
+| ---------------- | ----------------- | ------- | ------- | --------------------- |
+| Título de página | `--text-page`     | 36 px   | 30 px   | h1 / FlPageHeading    |
+| Título de card   | `--text-title`    | 24 px   | 24 px   | Nome do veículo       |
+| Título de seção  | `--text-section`  | 20 px   | 20 px   | h2                    |
+| Subtítulo        | `--text-subtitle` | 18 px   | 18 px   | Descrição da página   |
+| Corpo            | `--text-body`     | 16 px   | 16 px   | Texto e inputs        |
+| Rótulo           | `--text-label`    | 14 px   | 14 px   | Labels e botões       |
+| Legenda          | `--text-caption`  | 12 px   | 12 px   | Datas, badges e ajuda |
+| Indicador        | `--text-metric`   | 28 px   | 24 px   | FlStat                |
 
 Os valores estão em rem para acompanhar a preferência de tamanho de fonte do navegador. Pesos: 400, 600 e 700. Corpo usa entrelinha 1,6; títulos 1,2–1,3; legenda 1,5. O breakpoint mobile é 700 px.
 
@@ -34,8 +34,14 @@ Espaçamento: 4, 8, 12, 16, 20, 24, 32, 40, 48, 56 e 80 px (`--space-*`). Raios:
 
 ```html
 <fl-field controlId="name" label="Nome" hint="Como você identifica o veículo">
-  <input flInput id="name" name="name" [(ngModel)]="name"
-         aria-describedby="name-message" required />
+  <input
+    flInput
+    id="name"
+    name="name"
+    [(ngModel)]="name"
+    aria-describedby="name-message"
+    required
+  />
 </fl-field>
 <button flButton variant="primary" type="submit" [loading]="saving()">
   {{ saving() ? 'Salvando…' : 'Salvar' }}
@@ -64,3 +70,20 @@ O ciclo de cliques foi substituído por `fl-theme-picker`: janela modal nativa c
 - `fl-dialog`: modal nativo reutilizável com title, corpo projetado rolável e slot `[flDialogFooter]`. Cabeçalho/título/X e rodapé permanecem fixos. Métodos show()/close(), evento closed; mantém foco/modalidade nativos, Escape e fechamento por backdrop. FlThemePicker usa este componente.
 
 - `fl-install-pwa`: ação de instalar no header, oculta quando executado como app; usa prompt nativo capturado ou FlDialog com instruções do navegador. Referência: [beforeinstallprompt no MDN](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeinstallprompt_event).
+
+## Revisão de 2026-10-09
+
+- FlCheckbox mantém input nativo/ngModel/teclado, com visual alinhado e tematizado.
+- FlMoneyInput mantém string decimal exata, símbolo/grupos durante digitação,
+  precisão adicional em preço unitário e negativos apenas quando permitidos.
+- FlIcon padroniza calendário, copiar/editar/excluir e ações rápidas.
+- FlTablePager usa cinco registros por padrão, com 10/25/50 e navegação acessível.
+- FlDialog usa rodapé fixo com grupo fl-dialog-actions (gap 8px, cancelar antes
+  da ação primária), tamanhos sm/md/lg e host sem interferência no layout.
+- Confirmation substitui confirm nativo por diálogo do sistema.
+- Controles compartilham control-hover-bg/control-hover-border; alvos compactos
+  no desktop e ampliados para ponteiro touch. Tab ativa permanece identificada.
+- Cards reais usam imagem/texto 75/25 e ações independentes sobre a imagem,
+  mantendo um único botão principal e evitando botões aninhados.
+- Rotas reais: /garage/:garageId/vehicles, /history, /costs, /members e
+  /garage/:garageId/vehicles/:vehicleId. Recarregar e voltar conservam a tela.

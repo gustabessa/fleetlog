@@ -18,22 +18,31 @@ test('odômetro salva retroativo coerente, rejeita erro e recalcula após exclui
     })
   ).json();
   await page.reload();
-  await page.getByRole('button', { name: new RegExp(vehicle.name) }).click();
+  await page.locator('button.vehicle-open').filter({ hasText: vehicle.name }).click();
   await page.getByLabel('Data da leitura').fill('2026-10-08');
   await page.getByLabel('Quilometragem (km)', { exact: true }).fill('300');
   await page.getByRole('button', { name: 'Adicionar leitura', exact: true }).click();
-  await expect(page.getByText('2026-10-08 · 300 km · Leitura avulsa · e2e')).toBeVisible();
+  await expect(
+    page.getByRole('row').filter({ hasText: '2026-10-08' }).filter({ hasText: '300 km' }),
+  ).toBeVisible();
   await page.getByLabel('Data da leitura').fill('2026-10-01');
   await page.getByLabel('Quilometragem (km)', { exact: true }).fill('200');
   await page.getByRole('button', { name: 'Adicionar leitura', exact: true }).click();
-  await expect(page.getByText('2026-10-01 · 200 km · Leitura avulsa · e2e')).toBeVisible();
+  await expect(
+    page.getByRole('row').filter({ hasText: '2026-10-01' }).filter({ hasText: '200 km' }),
+  ).toBeVisible();
   await page.getByLabel('Data da leitura').fill('2026-10-02');
   await page.getByLabel('Quilometragem (km)', { exact: true }).fill('400');
   await page.getByRole('button', { name: 'Adicionar leitura', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('incoerente');
-  page.on('dialog', (dialog) => dialog.accept());
   await page.getByRole('button', { name: 'Excluir leitura', exact: true }).first().click();
-  await expect(page.getByText('2026-10-08 · 300 km · Leitura avulsa · e2e')).not.toBeVisible();
+  await page
+    .getByRole('dialog', { name: 'Confirmar ação' })
+    .getByRole('button', { name: 'Confirmar', exact: true })
+    .click();
+  await expect(
+    page.getByRole('row').filter({ hasText: '2026-10-08' }).filter({ hasText: '300 km' }),
+  ).not.toBeVisible();
   await page.getByRole('button', { name: 'Ver auditoria de leituras' }).click();
   await expect(page.getByText(/e2e · delete/)).toBeVisible();
   const actual = await (await page.request.get(`${base}/${vehicle.id}`)).json();

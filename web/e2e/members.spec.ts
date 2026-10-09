@@ -30,8 +30,11 @@ test('criador inclui familiar, familiar grava e remoção revoga acesso', async 
     data: { name: 'Shared ' + name, initialKm: 0 },
   });
   expect(response.status()).toBe(201);
-  page.on('dialog', (d) => d.accept());
   await page.getByRole('button', { name: 'Remover ' + name }).click();
+  await page
+    .getByRole('dialog', { name: 'Confirmar ação' })
+    .getByRole('button', { name: 'Confirmar', exact: true })
+    .click();
   await expect(page.getByRole('button', { name: 'Remover ' + name })).not.toBeVisible();
   expect((await family.request.get(`/api/garages/${gs[0].id}/vehicles`)).status()).toBe(404);
   await context.close();

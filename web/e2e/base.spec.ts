@@ -13,6 +13,8 @@ test.beforeEach(async ({ page }) => {
 test('login persiste e logout revoga o acesso', async ({ page }) => {
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Minha garagem' })).toBeVisible();
+  if (!(await page.getByRole('button', { name: 'Sair', exact: true }).isVisible()))
+    await page.getByRole('button', { name: /^Perfil de / }).click();
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Entre na sua garagem' })).toBeVisible();
   await page.reload();
@@ -41,7 +43,7 @@ test('garagem responsiva, tema persistente e rotas sem erros', async ({ page }) 
   await page.getByRole('button', { name: 'Concluir', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await page.goto('/rota-ainda-inexistente');
-  await expect(page).toHaveURL('/');
+  await expect(page).toHaveURL(/\/garage\/\d+\/vehicles$/);
   await expect(page.getByRole('heading', { name: 'Minha garagem' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(errors).toEqual([]);

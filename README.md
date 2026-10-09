@@ -192,3 +192,12 @@ moeda/tipo/mês/veículo no mesmo snapshot; nenhuma conversão cambial automáti
 Distância é observada entre leituras reais do período, com dados insuficientes
 quando não houver duas. Aquisição/venda são dados patrimoniais separados dos
 gastos operacionais. Alterar bucket/endpoint S3 não migra objetos existentes.
+
+### Notas e apresentação
+
+Notas podem incluir uma imagem privada opcional, seguindo limites/formato da
+foto do veículo. GET/PUT/DELETE em `/notes/{noteID}/image` dentro do veículo;
+o servidor verifica garagem e vínculo da nota ao veículo. Alterar/substituir/
+remover usa a mesma fila de limpeza S3; remover nota preserva a limpeza pendente.
+Criação/edição retorna `X-Note-ID`, permitindo associar o upload à nota correta.
+A cor da tag é `tagColor` hexadecimal no veículo, editável e preservada no banco.

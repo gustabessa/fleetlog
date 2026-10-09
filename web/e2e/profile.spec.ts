@@ -31,6 +31,8 @@ test('perfil persiste moeda e tema após recarga e novo login', async ({ page })
   await page.getByRole('button', { name: 'Perfil de e2e' }).click();
   await expect(profile.getByLabel('Moeda padrão')).toHaveValue('USD');
   await profile.getByRole('button', { name: 'Fechar Meu perfil' }).click();
+  if (!(await page.getByRole('button', { name: 'Sair', exact: true }).isVisible()))
+    await page.getByRole('button', { name: /^Perfil de / }).click();
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
   await page.getByLabel('Usuário', { exact: true }).fill('e2e');
   await page.getByLabel('Senha', { exact: true }).fill('e2e-password-12345');

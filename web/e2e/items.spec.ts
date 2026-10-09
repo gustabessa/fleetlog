@@ -15,10 +15,14 @@ test('manutenção detalhada soma itens e consulta preços reais', async ({ page
     })
   ).json();
   await page.reload();
-  await page.getByRole('button', { name: new RegExp(v.name) }).click();
+  if (!new URL(page.url()).pathname.endsWith('/vehicles/'+v.id))
+    await page.locator('button.vehicle-open').filter({ hasText: v.name }).click();
   await page.getByRole('button', { name: 'Registrar manutenção' }).click();
-  page.on('dialog', (d) => d.accept());
   await page.getByLabel('Modo de valor').selectOption('detailed');
+  await page
+    .getByRole('dialog', { name: 'Confirmar ação' })
+    .getByRole('button', { name: 'Confirmar', exact: true })
+    .click();
   await page.getByLabel('Nome do item', { exact: true }).fill('Filtro teste ' + Date.now());
   const item = await page.getByLabel('Nome do item', { exact: true }).inputValue();
   await page.getByLabel('Quantidade', { exact: true }).fill('2');
@@ -26,7 +30,9 @@ test('manutenção detalhada soma itens e consulta preços reais', async ({ page
   await page.getByLabel('Desconto', { exact: true }).fill('5');
   await page.getByLabel('Ajuste', { exact: true }).fill('-1');
   await page.getByRole('button', { name: 'Salvar manutenção' }).click();
-  await expect(page.getByText(/Manutenção · R\$\s*54,00/)).toBeVisible();
+  await expect(
+    page.getByRole('row').filter({ hasText: 'Manutenção' }).filter({ hasText: '54,00' }),
+  ).toBeVisible();
   await page.getByLabel('Pesquisar preços de item').fill(item);
   await page.getByRole('button', { name: 'Buscar itens' }).click();
   await page.getByRole('button', { name: 'Preços de ' + item, exact: true }).click();

@@ -46,16 +46,21 @@ test('foto usa S3 privado, persiste na garagem e remove', async ({ page }) => {
     })
   ).json();
   await page.reload();
-  await page.getByRole('button', { name: new RegExp(v.name) }).click();
+  if (!new URL(page.url()).pathname.endsWith('/vehicles/'+v.id))
+    await page.locator('button.vehicle-open').filter({ hasText: v.name }).click();
   await page
     .getByLabel('Selecionar foto')
     .setInputFiles({ name: 'vehicle.png', mimeType: 'image/png', buffer: png() });
   await page.getByRole('button', { name: 'Salvar foto', exact: true }).click();
   await expect(page.getByRole('img', { name: 'Foto do veículo', exact: true })).toBeVisible();
   await page.reload();
-  await page.getByRole('button', { name: new RegExp(v.name) }).click();
+  if (!new URL(page.url()).pathname.endsWith('/vehicles/'+v.id))
+    await page.locator('button.vehicle-open').filter({ hasText: v.name }).click();
   await expect(page.getByRole('img', { name: 'Foto do veículo', exact: true })).toBeVisible();
-  page.on('dialog', (d) => d.accept());
   await page.getByRole('button', { name: 'Remover foto', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Confirmar ação' })
+    .getByRole('button', { name: 'Confirmar', exact: true })
+    .click();
   await expect(page.getByRole('img', { name: 'Foto do veículo', exact: true })).not.toBeVisible();
 });

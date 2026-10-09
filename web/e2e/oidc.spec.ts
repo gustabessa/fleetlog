@@ -14,9 +14,13 @@ test('OIDC exige vínculo explícito e depois autentica o mesmo usuário', async
   await page.getByLabel('Senha', { exact: true }).fill('e2e-password-12345');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   await page.getByRole('button', { name: 'Perfil de e2e' }).click();
-  await page.getByRole('button', { name: /^Vincular (conta|outra identidade) do provedor$/ }).click();
+  await page
+    .getByRole('button', { name: /^Vincular (conta|outra identidade) do provedor$/ })
+    .click();
   await expect(page.getByText('Conta do provedor vinculada.', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Perfil de e2e' })).toBeVisible();
+  if (!(await page.getByRole('button', { name: 'Sair', exact: true }).isVisible()))
+    await page.getByRole('button', { name: /^Perfil de / }).click();
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
   await page.getByRole('button', { name: 'Entrar com provedor', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Perfil de e2e' })).toBeVisible();
