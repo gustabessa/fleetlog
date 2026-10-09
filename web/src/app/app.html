@@ -125,7 +125,7 @@
       } @else if (!garage()) {
         <p role="status">Você ainda não está vinculado a uma garagem.</p>
       } @else {
-        <fl-vehicle-garage [garageId]="garage()!.id" />
+        <fl-vehicle-garage [garageId]="garage()!.id" [currency]="user()!.currency" />
         <button flButton variant="ghost" type="button" (click)="preview.set(true)">
           Explorar próximas telas
         </button>

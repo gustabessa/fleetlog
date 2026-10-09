@@ -29,7 +29,7 @@ Esta fila organiza os checklists detalhados abaixo em entregas escolhíveis. Ord
 
 ### P2 — registrar o uso cotidiano
 
-- [ ] **T06 — abastecimentos reais.** Formulário no contexto do veículo, data/litros/preço/moeda/km, consulta/edição/exclusão e histórico. Consumo depende de método aprovado; concluir casos de tanque parcial/intervalo incompleto antes de apresentar km/L. Depende de T03–T05.
+- [x] **T06 — abastecimentos reais.** Formulário no contexto do veículo, data/litros/preço/moeda/km, consulta/edição/exclusão e histórico. Consumo depende de método aprovado; concluir casos de tanque parcial/intervalo incompleto antes de apresentar km/L. Depende de T03–T05.
 - [ ] **T07 — manutenção com total direto.** Registro real sem exigir itens, com edição/consulta/exclusão e integração ao histórico/odômetro. Dependências: T03–T05. Detalhamento/reutilização de itens segue em T08.
 - [ ] **T08 — peças, mão de obra e preços históricos.** Segundo modo de manutenção, referências reutilizáveis e pesquisa/comparação por item. Aprovar descontos, unidades/escopo e moedas diferentes; garantir que detalhamento não duplica total. Depende de T07.
 - [ ] **T09 — imagens reais de veículos.** Cliente S3/RustFS, upload/substituição/remoção, metadados e leitura privada autorizada, com limites/validação. Depende de T02/T03; pode avançar em paralelo à sequência de lançamentos sem bloquear formulários.
@@ -364,3 +364,11 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Data civil preenchida com hoje, editável; km inicial preservado; km atual pela última data/id. Leituras abaixo do inicial ou em queda cronológica são recusadas, inclusive retroativos/edições. Exclusão recalcula leitura atual.
 - Transações bloqueiam o veículo para serializar alterações concorrentes; auditoria registra antes/depois e autor da sessão. Tela real permite cadastrar/editar/excluir leitura e consultar auditoria.
 - Go/PostgreSQL aprovados (cronologia, rollback, recálculo, revogação de vínculo), build Angular aprovado e 4 testes de odômetro/veículos desktop/mobile aprovados.
+
+
+## T06 — abastecimentos concluídos — 2026-10-08
+
+- APIs reais por veículo: criar/listar/consultar/editar/excluir; data civil, combustível, litros, total/preço por litro, moeda, km e tanque cheio. Formulário usa contexto do veículo e moeda do perfil; campos decimais enviados como texto.
+- Cálculos com big.Rat; total arredondado half-up à unidade da moeda (JPY inteira, demais duas casas). Total e preço unitário informados juntos precisam corresponder. numeric(18,6) guarda valores e moeda por ocorrência.
+- Consumo cheio a cheio inclui parciais intermediários. Primeiro cheio é referência; parciais/intervalos incompletos/distância zero não exibem km/L. Exclusão marca o próximo intervalo incompleto. Histórico financeiro e odômetro/auditoria alterados atomicamente.
+- Go/PostgreSQL e build Angular aprovados; testes de formulário real desktop/mobile aprovados, incluindo persistência/moeda e integração de km. Sem dados privados no cache.

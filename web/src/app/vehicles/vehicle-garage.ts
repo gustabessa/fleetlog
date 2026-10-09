@@ -1,6 +1,7 @@
 import { Component, input, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FlButton, FlCard, FlField, FlInput, FlVehicleCard } from '../ui';
+import { Fuel } from './fuel';
 import { Readings } from './readings';
 import { FlDialog } from '../ui/dialog';
 import { formatNumber } from '../ui/format';
@@ -29,11 +30,22 @@ const emptyForm = () => ({
 
 @Component({
   selector: 'fl-vehicle-garage',
-  imports: [FormsModule, FlButton, FlCard, FlField, FlInput, FlVehicleCard, FlDialog, Readings],
+  imports: [
+    FormsModule,
+    FlButton,
+    FlCard,
+    FlField,
+    FlInput,
+    FlVehicleCard,
+    FlDialog,
+    Readings,
+    Fuel,
+  ],
   templateUrl: './vehicle-garage.html',
   styleUrl: './vehicle-garage.css',
 })
 export class VehicleGarage {
+  readonly currency = input('BRL');
   readonly garageId = input.required<number>();
   readonly vehicles = signal<Vehicle[]>([]);
   readonly selected = signal<Vehicle | null>(null);
