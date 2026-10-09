@@ -1,0 +1,24 @@
+{
+  "name": "FleetLog",
+  "short_name": "FleetLog",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/icons/pwa-blue-dark-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/pwa-blue-dark-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#1b2638",
+  "background_color": "#111927",
+  "id": "/"
+}

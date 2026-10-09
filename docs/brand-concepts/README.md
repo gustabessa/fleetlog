@@ -11,3 +11,7 @@ para favicon e geração dos PNG/maskable. Para regenerar, execute no diretório
 
 Isso exige o Chromium do Playwright disponível. Os demais conceitos e a galeria
 ficam como material local de exploração, fora do bundle e deste commit.
+
+Para os ícones de cada tema confirmado, execute `node tools/themed-icons.mjs`
+no diretório web. Ele lê os tokens de `src/themes.css` e gera 24 manifests e
+48 PNGs (192/512). A preferência em prévia não altera os assets escolhidos.

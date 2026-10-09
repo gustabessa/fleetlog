@@ -34,13 +34,13 @@ test('garagem responsiva, tema persistente e rotas sem erros', async ({ page }) 
   await expect(page.getByRole('heading', { name: 'Minha garagem' })).toBeVisible();
   await page.getByRole('button', { name: 'Escolher tema', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: '☾ Escuro', exact: true }).click();
-  await page.getByRole('button', { name: 'Concluir', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirmar tema', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.getByRole('button', { name: 'Escolher tema', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: '☀ Claro', exact: true }).click();
-  await page.getByRole('button', { name: 'Concluir', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirmar tema', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await page.goto('/rota-ainda-inexistente');
   await expect(page).toHaveURL(/\/garage\/\d+\/vehicles$/);

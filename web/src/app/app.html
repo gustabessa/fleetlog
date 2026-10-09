@@ -2,7 +2,14 @@
 <header class="topbar">
   <a class="brand" href="/" aria-label="FleetLog início"><fl-logo /></a>
   <fl-install-pwa />
-  <fl-theme-picker [palette]="palette()" [dark]="dark()" (select)="selectTheme($event)" />
+  <fl-theme-picker
+    [palette]="palette()"
+    [dark]="dark()"
+    (select)="selectTheme($event)"
+    [saving]="themeSaving()"
+    [error]="themeError()"
+    (confirm)="confirmTheme($event)"
+  />
   @if (user(); as currentUser) {
     <button
       flButton

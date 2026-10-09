@@ -14,12 +14,13 @@ import { palettes } from './themes';
     >
       <span aria-hidden="true">◐</span>
     </button>
-    <fl-dialog #dialog title="Escolha o tema">
+    <fl-dialog #dialog title="Escolha o tema" [dismissible]="!saving()" (closed)="discard()">
       <div class="modes" aria-label="Aparência">
         <button
           flButton
           [variant]="dark() ? 'secondary' : 'primary'"
           [attr.aria-pressed]="!dark()"
+          [disabled]="saving()"
           (click)="select.emit({ palette: palette(), dark: false })"
         >
           ☀ Claro</button
@@ -58,8 +59,21 @@ import { palettes } from './themes';
           </button>
         }
       </div>
-      <button flDialogFooter flButton class="done" variant="primary" (click)="dialog.close()">
-        Concluir
+      @if (error()) {
+        <p role="alert">{{ error() }}</p>
+      }
+      <button flDialogFooter flButton [disabled]="saving()" (click)="dialog.close()">
+        Cancelar
+      </button>
+      <button
+        flDialogFooter
+        flButton
+        class="done"
+        variant="primary"
+        [loading]="saving()"
+        (click)="confirm.emit({ palette: palette(), dark: dark() })"
+      >
+        Confirmar tema
       </button>
     </fl-dialog>`,
   styles: `
@@ -148,6 +162,20 @@ export class FlThemePicker {
   readonly palette = input.required<string>();
   readonly dark = input.required<boolean>();
   readonly select = output<{ palette: string; dark: boolean }>();
+  readonly confirm = output<{ palette: string; dark: boolean }>();
+  readonly saving = input(false);
+  readonly error = input('');
+  private original: { palette: string; dark: boolean } | null = null;
+  finish() {
+    this.original = null;
+    this.dialog().close(true);
+  }
+  discard() {
+    if (this.original) {
+      this.select.emit(this.original);
+      this.original = null;
+    }
+  }
   readonly palettes = palettes;
   readonly dialog = viewChild.required<FlDialog>('dialog');
   currentName() {
@@ -157,6 +185,7 @@ export class FlThemePicker {
     return `var(--palette-${this.dark() ? 'dark' : 'light'}-${token})`;
   }
   show() {
+    this.original = { palette: this.palette(), dark: this.dark() };
     this.dialog().show();
   }
 }

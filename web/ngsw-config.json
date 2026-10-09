@@ -10,7 +10,6 @@
           "/favicon.ico",
           "/index.csr.html",
           "/index.html",
-          "/manifest.webmanifest",
           "/*.css",
           "/*.js",
           "/startup.css",
@@ -25,7 +24,10 @@
       "installMode": "lazy",
       "updateMode": "prefetch",
       "resources": {
-        "files": ["/icons/*.png"]
+        "files": [
+          "/icons/*.png",
+          "/pwa/*.webmanifest"
+        ]
       }
     }
   ],

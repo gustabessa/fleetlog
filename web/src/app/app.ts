@@ -5,7 +5,7 @@ import { RealHistory } from './vehicles/history';
 import { VehicleGarage } from './vehicles/vehicle-garage';
 import { palettes } from './ui/themes';
 import { formatMoney, formatNumber } from './ui/format';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
@@ -435,8 +435,8 @@ export class App {
   retryPreferences() {
     return this.saveProfile({
       currency: this.currencyDraft,
-      palette: this.palette(),
-      theme: this.dark() ? 'dark' : 'light',
+      palette: this.user()?.palette,
+      theme: this.user()?.theme,
     });
   }
   private saveProfile(change: { currency?: string; palette?: string; theme?: string }) {
@@ -643,12 +643,36 @@ export class App {
   reload() {
     location.reload();
   }
-  selectTheme(theme: { palette: string; dark: boolean }) {
+  readonly themePicker = viewChild.required(FlThemePicker);
+  readonly themeSaving = signal(false);
+  readonly themeError = signal('');
+  async confirmTheme(theme: { palette: string; dark: boolean }) {
+    if (this.themeSaving()) return;
+    const changed =
+      localStorage.getItem('fleetlog.palette') !== theme.palette ||
+      localStorage.getItem('fleetlog.theme') !== (theme.dark ? 'dark' : 'light');
+    this.themeSaving.set(true);
+    this.themeError.set('');
+    const generation = this.accountGeneration;
+    if (this.user()) {
+      await this.saveProfile({ palette: theme.palette, theme: theme.dark ? 'dark' : 'light' });
+      if (this.profileError() || generation !== this.accountGeneration) {
+        this.themeError.set('Não foi possível confirmar o tema. Tente novamente.');
+        this.themeSaving.set(false);
+        return;
+      }
+    }
     this.palette.set(theme.palette);
     this.dark.set(theme.dark);
     this.cacheTheme();
-    if (this.user())
-      void this.saveProfile({ palette: theme.palette, theme: theme.dark ? 'dark' : 'light' });
+    this.themeSaving.set(false);
+    this.themePicker().finish();
+    if (changed) window.dispatchEvent(new Event('fleetlog-pwa-theme-confirmed'));
+  }
+  selectTheme(theme: { palette: string; dark: boolean }) {
+    this.palette.set(theme.palette);
+    this.dark.set(theme.dark);
+    this.applyTheme();
   }
   private restoreGuestTheme() {
     const palette = localStorage.getItem('fleetlog.guest.palette') ?? 'original';
@@ -663,6 +687,12 @@ export class App {
     }
     localStorage.setItem('fleetlog.palette', this.palette());
     localStorage.setItem('fleetlog.theme', this.dark() ? 'dark' : 'light');
+    document.cookie = `fleetlog_pwa_theme=${this.palette()}-${this.dark() ? 'dark' : 'light'}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
+    const manifest = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+    if (manifest)
+      manifest.href = `/manifest.webmanifest?theme=${this.palette()}-${this.dark() ? 'dark' : 'light'}`;
+    const icon = document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]');
+    if (icon) icon.href = `/icons/pwa-${this.palette()}-${this.dark() ? 'dark' : 'light'}-192.png`;
     this.applyTheme();
   }
   private applyTheme() {

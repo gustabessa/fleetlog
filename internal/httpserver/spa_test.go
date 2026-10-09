@@ -40,3 +40,38 @@ func TestSPA(t *testing.T) {
 		})
 	}
 }
+
+func TestThemeManifest(t *testing.T) {
+	handler := SPA(fstest.MapFS{
+		"manifest.webmanifest":        {Data: []byte(`{"id":"/","name":"default"}`)},
+		"pwa/orange-dark.webmanifest": {Data: []byte(`{"id":"/","name":"orange-dark"}`)},
+	})
+	for _, value := range []string{"orange-dark", "../../secret", "unknown-dark", "original-light", ""} {
+		req := httptest.NewRequest("GET", "/manifest.webmanifest", nil)
+		if value != "" {
+			req.Header.Set("Cookie", "fleetlog_pwa_theme="+value)
+		}
+		result := httptest.NewRecorder()
+		handler.ServeHTTP(result, req)
+		expected := `{"id":"/","name":"default"}`
+		if value == "orange-dark" {
+			expected = `{"id":"/","name":"orange-dark"}`
+		}
+		if result.Code != 200 || result.Body.String() != expected {
+			t.Fatalf("theme %q: %d %s", value, result.Code, result.Body.String())
+		}
+		if result.Header().Get("Cache-Control") != "private, no-store" || result.Header().Get("Vary") != "Cookie" {
+			t.Fatal("personal manifest must not share caches")
+		}
+	}
+}
+
+func TestPublicThemeManifestURL(t *testing.T) {
+	handler := SPA(fstest.MapFS{"pwa/blue-light.webmanifest": {Data: []byte(`{"id":"/","icons":[]}`)}})
+	req := httptest.NewRequest("GET", "/manifest.webmanifest?theme=blue-light", nil)
+	result := httptest.NewRecorder()
+	handler.ServeHTTP(result, req)
+	if result.Code != 200 || result.Body.String() != `{"id":"/","icons":[]}` {
+		t.Fatal("installation fetch without cookies must receive selected theme")
+	}
+}

@@ -17,5 +17,9 @@ try {
   ];
   if (valid.includes(palette)) document.documentElement.dataset.palette = palette;
   const theme = localStorage.getItem('fleetlog.theme');
-  if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+  if (theme === 'light' || theme === 'dark') {
+    document.documentElement.dataset.theme = theme;
+    if (valid.includes(palette))
+      document.cookie = `fleetlog_pwa_theme=${palette}-${theme}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
+  }
 } catch {}

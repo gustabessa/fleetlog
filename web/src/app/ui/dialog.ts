@@ -9,6 +9,7 @@ import { FlButton } from './button';
     [attr.data-size]="size()"
     (click)="backdrop($event)"
     (close)="closed.emit()"
+    (cancel)="preventDismiss($event)"
   >
     <header>
       <h2>{{ title() }}</h2>
@@ -84,6 +85,10 @@ import { FlButton } from './button';
   `,
 })
 export class FlDialog {
+  readonly dismissible = input(true);
+  preventDismiss(event: Event) {
+    if (!this.dismissible()) event.preventDefault();
+  }
   readonly size = input<'sm' | 'md' | 'lg'>('md');
   readonly title = input.required<string>();
   readonly closed = output<void>();
@@ -91,7 +96,8 @@ export class FlDialog {
   show() {
     this.native().nativeElement.showModal();
   }
-  close() {
+  close(force = false) {
+    if (!force && !this.dismissible()) return;
     this.native().nativeElement.close();
   }
   backdrop(event: MouseEvent) {

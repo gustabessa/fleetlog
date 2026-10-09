@@ -131,3 +131,32 @@ Referência: https://web.dev/learn/pwa/web-app-manifest
 Validação local: build de produção, 22 verificações gerais de acesso/PWA/
 startup e quatro verificações de movimento após adaptar o teste ao overlay
 fixo (24 cenários únicos desktop/mobile validados).
+
+## Tema confirmado e identidade de instalação
+
+- O seletor agora separa prévia de confirmação. Trocar paleta/modo só altera a
+  tela; Cancelar, fechar, Esc e clicar fora restauram o tema de abertura.
+- Confirmar grava uma única alteração. Falha da API mantém o diálogo aberto,
+  sem mudar preferências locais nem identidade de instalação. Durante a gravação
+  a confirmação e o fechamento ficam bloqueados para evitar resultados ambíguos.
+- Os ícones PNG de 192/512 e manifests das 24 combinações são gerados a partir
+  do símbolo vetorial e tokens compartilhados, por `web/tools/themed-icons.mjs`.
+- `/manifest.webmanifest?theme=paleta-modo` é público e permite a instalação
+  obter as imagens sem depender de cookies de sessão; `id`, scope e start_url
+  continuam `/`. A URL só muda ao aplicar uma preferência já confirmada.
+- Cookie visual auxilia a URL padrão; os valores são validados numa lista
+  fechada. Manifest personalizado usa private/no-store e fica fora do cache
+  estático do worker; as imagens têm URLs próprias e podem ser cacheadas.
+- A prévia não seleciona outros ícones nem solicita atualização/instalação.
+  Após confirmar, o PWA aberto como aplicativo mostra orientação de atualização.
+  O navegador controla a atualização nativa; não há API do site para forçar
+  desinstalação/reinstalação. Reinstalação manual usa o tema confirmado.
+
+O build funciona, mas o bundle inicial está em 501,93 kB, ligeiramente acima
+ do aviso de 500 kB. Dividir a prévia em carregamento sob demanda é uma melhoria
+ futura; o limite não foi aumentado nesta entrega.
+
+Validação desta entrega: 40 testes Chromium desktop/mobile passaram (tema,
+prévia, persistência, erro recuperável, perfil, instalação e atualização PWA),
+além dos testes Go e vet de httpserver. A demo local foi atualizada mantendo
+os dados existentes. Instalação física no celular segue sob revisão do usuário.

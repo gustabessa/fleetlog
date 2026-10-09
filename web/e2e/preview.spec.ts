@@ -231,7 +231,7 @@ test('seletor mostra doze paletas nos dois modos e persiste escolha', async ({ p
   }
   expect(combinations.size).toBe(24);
   await dialog.getByRole('button', { name: 'Grafite e laranja', exact: true }).click();
-  await dialog.getByRole('button', { name: 'Concluir', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Confirmar tema', exact: true }).click();
   await expect(dialog).not.toBeVisible();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-palette', 'orange');
@@ -258,7 +258,7 @@ test('dialog mantém cabeçalho e ações fixos enquanto o conteúdo rola', asyn
   await body.evaluate((el) => (el.scrollTop = el.scrollHeight));
   expect(await dialog.locator('header').boundingBox()).toEqual(header);
   expect(await dialog.locator('footer').boundingBox()).toEqual(footer);
-  await expect(dialog.getByRole('button', { name: 'Concluir', exact: true })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Confirmar tema', exact: true })).toBeVisible();
   await dialog.getByRole('button', { name: 'Fechar Escolha o tema', exact: true }).click();
   await expect(dialog).not.toBeVisible();
 });
