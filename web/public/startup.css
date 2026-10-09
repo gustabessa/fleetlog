@@ -1,0 +1,143 @@
+:root {
+  color-scheme: light;
+}
+.startup-screen {
+  min-height: 55vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px 20px;
+  background: var(--bg, #f6f8fa);
+  color: var(--text, #17232c);
+  text-align: center;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+}
+.startup-screen h1 {
+  margin: 0;
+  font-size: 36px;
+  letter-spacing: -1.5px;
+  line-height: 1.15;
+}
+.startup-screen p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted, #637580);
+}
+.startup-road {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+.startup-road span {
+  display: block;
+  width: 7px;
+  height: 26px;
+  border-radius: 4px;
+  background: var(--accent, #087e83);
+  animation: road 1.4s ease-in-out infinite;
+}
+.startup-road span:nth-child(2) {
+  height: 40px;
+  animation-delay: 0.15s;
+}
+.startup-road span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.startup-progress {
+  height: 3px;
+  width: 100px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent, #087e83) 15%, transparent);
+  position: relative;
+  margin-top: 8px;
+}
+.startup-progress:after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent, #087e83);
+  transform: translateX(-100%);
+  animation: progress 1.5s ease-in-out infinite;
+}
+@keyframes road {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translateY(2px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+@keyframes progress {
+  to {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .startup-road span,
+  .startup-progress:after {
+    animation: none;
+  }
+  .startup-progress:after {
+    transform: none;
+    width: 50%;
+  }
+}
+@media (display-mode: standalone) {
+  .startup-screen {
+    min-height: calc(100dvh - 72px);
+    padding-bottom: env(safe-area-inset-bottom, 24px);
+  }
+}
+html[data-theme='dark'] {
+  color-scheme: dark;
+}
+/* Vector adaptation of concept 04. Ink and accents inherit the active theme. */
+.fleetlog-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: var(--text, #253238);
+  overflow: visible;
+}
+.fleetlog-logo .logo-accent {
+  fill: var(--accent, #087e83);
+}
+fl-logo {
+  display: block;
+  width: 100%;
+}
+.startup-screen > fl-logo,
+.startup-screen > .fleetlog-logo {
+  width: 240px;
+  max-width: 70vw;
+}
+.startup-screen {
+  animation: startup-arrive 350ms ease-out both;
+}
+@keyframes startup-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .startup-screen {
+    animation: none;
+  }
+}

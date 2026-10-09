@@ -402,3 +402,99 @@ fl-table-pager select:hover {
   background: var(--control-hover-bg);
   border-color: var(--control-hover-border);
 }
+
+.success-message {
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line));
+  border-radius: var(--radius-control);
+  background: var(--soft);
+  color: var(--text);
+  font: var(--font-label);
+  margin: 0 0 12px;
+}
+/* Shared, short transitions: no artificial delay on requests or navigation. */
+.content-enter {
+  animation: content-arrive 240ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.loading-enter {
+  animation: loading-arrive 200ms ease-out both;
+}
+.loading-leave {
+  animation: loading-depart 120ms ease-in both;
+}
+fl-vehicle-garage,
+fl-real-history,
+fl-members {
+  display: block;
+}
+.record-table,
+.vehicle-grid,
+.stats,
+.success-message {
+  animation: content-arrive 240ms ease-out both;
+}
+@keyframes content-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes loading-arrive {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes loading-depart {
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .content-enter,
+  .loading-enter,
+  .loading-leave,
+  .record-table,
+  .vehicle-grid,
+  .stats,
+  .success-message {
+    animation: none;
+  }
+}
+fl-real-history[data-view='history'] {
+  animation: history-arrive 240ms ease-out both;
+}
+fl-real-history[data-view='costs'] {
+  animation: costs-arrive 240ms ease-out both;
+}
+@keyframes history-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes costs-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  fl-real-history[data-view] {
+    animation: none;
+  }
+}

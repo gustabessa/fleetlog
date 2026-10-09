@@ -1,3 +1,4 @@
+import { FlLoading } from '../ui/loading';
 import { FlIcon } from '../ui/icon';
 import { Confirmation } from '../ui/confirmation';
 import { Component, inject, input, signal } from '@angular/core';
@@ -5,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { FlCheckbox, FlButton, FlCard, FlField, FlInput } from '../ui';
 @Component({
   selector: 'fl-members',
-  imports: [FlIcon, FlCheckbox, FormsModule, FlButton, FlCard, FlField, FlInput],
+  imports: [FlLoading, FlIcon, FlCheckbox, FormsModule, FlButton, FlCard, FlField, FlInput],
   template: `<section flCard>
     <h2>Familiares da garagem</h2>
     <p>Membros podem cadastrar, editar e excluir dados. Somente o criador administra acessos.</p>
@@ -14,7 +15,9 @@ import { FlCheckbox, FlButton, FlCard, FlField, FlInput } from '../ui';
       <button flButton (click)="load()">Recarregar membros</button>
     }
     @if (loading()) {
-      <p role="status">Carregando membros…</p>
+      <fl-loading animate.enter="loading-enter" animate.leave="loading-leave"
+        >Carregando membros…</fl-loading
+      >
     }
     <div class="members-layout">
       <form ngNativeValidate (ngSubmit)="add()">

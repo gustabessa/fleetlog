@@ -1,0 +1,39 @@
+import { Component } from '@angular/core';
+@Component({
+  selector: 'fl-logo',
+  template: `<svg
+    class="fleetlog-logo"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="145 340 990 620"
+    role="img"
+    aria-label="FleetLog"
+  >
+    <g fill="currentColor">
+      <path
+        d="M198 455 Q206 434 229 435 L277 428 Q296 424 323 410 Q465 342 578 353 Q679 350 775 410 L834 442 Q874 451 950 458 Q1088 470 1110 535 Q1131 590 1113 617 L1093 632 Q1127 562 1082 539 Q1048 537 1000 505 L1086 518 Q1055 480 910 475 L531 468 Q455 468 414 421 L465 421 Q514 420 552 451 L793 451 Q682 372 578 374 Q465 373 336 432 Q296 455 269 455 Z"
+      />
+      <path
+        d="M277 618 H305 Q316 652 353 652 Q389 652 403 618 H431 Q416 676 353 677 Q298 677 277 618 Z M872 619 Q884 543 951 543 Q1021 544 1031 612 Q1035 661 989 678 Q1015 639 994 600 Q980 568 951 568 Q915 568 898 619 Z"
+      />
+      <text
+        x="145"
+        y="899"
+        font-family="Arial, sans-serif"
+        font-weight="700"
+        font-size="220"
+        letter-spacing="-9"
+      >
+        Fleet
+        <tspan class="logo-accent">Log</tspan>
+      </text>
+    </g>
+    <g class="logo-accent">
+      <circle cx="191" cy="511" r="23" />
+      <circle cx="191" cy="581" r="23" />
+      <path
+        d="M253 495 H774 Q786 495 796 511 Q785 528 774 528 H253 Q235 528 235 511 Q235 495 253 495 Z M253 565 H737 Q726 581 737 599 H253 Q235 599 235 582 Q235 565 253 565 Z M762 570 Q775 560 787 575 L805 593 L852 521 Q864 508 877 518 Q891 530 880 543 L820 619 Q808 633 794 620 L758 592 Q747 580 762 570 Z"
+      />
+    </g>
+  </svg>`,
+})
+export class FlLogo {}

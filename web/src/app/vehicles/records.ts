@@ -1,3 +1,4 @@
+import { FlLoading } from '../ui/loading';
 let nextFormId = 0;
 import { FlTablePager, TablePaging } from '../ui/table-pager';
 import { FlIcon } from '../ui/icon';
@@ -21,6 +22,7 @@ const trade = (currency: string): Trade => ({ date: today(), amount: '', currenc
   host: { '[class.quick-editor]': 'autoOpen()' },
   selector: 'fl-vehicle-records',
   imports: [
+    FlLoading,
     FlTablePager,
     FlIcon,
     FlDialog,
@@ -37,7 +39,9 @@ const trade = (currency: string): Trade => ({ date: today(), amount: '', currenc
       <button flButton (click)="load()">Recarregar informações</button>
     }
     @if (loading()) {
-      <p role="status">Carregando informações adicionais…</p>
+      <fl-loading animate.enter="loading-enter" animate.leave="loading-leave"
+        >Carregando informações adicionais…</fl-loading
+      >
     }
     <section flCard>
       <h3>Notas do veículo</h3>

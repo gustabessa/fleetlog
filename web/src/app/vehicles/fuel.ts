@@ -1,3 +1,4 @@
+import { FlLoading } from '../ui/loading';
 let nextFormId = 0;
 import { FlTablePager, TablePaging } from '../ui/table-pager';
 import { FlIcon } from '../ui/icon';
@@ -36,6 +37,7 @@ const empty = (currency: string) => ({
   host: { '[class.quick-editor]': 'autoOpen()' },
   selector: 'fl-fuel',
   imports: [
+    FlLoading,
     FlTablePager,
     FlIcon,
     FlDialog,
@@ -54,7 +56,9 @@ const empty = (currency: string) => ({
         <button flButton (click)="load()">Recarregar abastecimentos</button>
       }
       @if (loading()) {
-        <p role="status">Carregando abastecimentos…</p>
+        <fl-loading animate.enter="loading-enter" animate.leave="loading-leave"
+          >Carregando abastecimentos…</fl-loading
+        >
       }
       <button flButton (click)="start()">Registrar abastecimento</button>
 

@@ -1,3 +1,4 @@
+import { FlLoading, FlStartup, FlLogo } from './ui';
 import { FlConfirmation } from './ui/confirmation';
 import { Members } from './vehicles/members';
 import { RealHistory } from './vehicles/history';
@@ -32,6 +33,9 @@ import { SwUpdate } from '@angular/service-worker';
   selector: 'app-root',
   imports: [
     RouterOutlet,
+    FlLoading,
+    FlStartup,
+    FlLogo,
     FlConfirmation,
     VehicleGarage,
     RealHistory,

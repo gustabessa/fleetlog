@@ -234,3 +234,12 @@ main {
   background: var(--control-hover-bg);
   border-color: var(--accent);
 }
+.brand fl-logo {
+  width: 86px;
+  flex-shrink: 0;
+}
+@media (max-width: 700px) {
+  .brand fl-logo {
+    width: 74px;
+  }
+}

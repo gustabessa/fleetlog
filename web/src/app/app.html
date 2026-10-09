@@ -1,6 +1,6 @@
 <fl-confirmation />
 <header class="topbar">
-  <a class="brand" href="/" aria-label="FleetLog início"><span class="mark">F</span> FleetLog</a>
+  <a class="brand" href="/" aria-label="FleetLog início"><fl-logo /></a>
   <fl-install-pwa />
   <fl-theme-picker [palette]="palette()" [dark]="dark()" (select)="selectTheme($event)" />
   @if (user(); as currentUser) {
@@ -113,7 +113,7 @@
     <p class="error" role="alert">{{ authError() }}</p>
   }
   @if (loading()) {
-    <p role="status">Carregando seu acesso…</p>
+    <fl-startup />
   } @else if (!user() && !preview()) {
     <section flCard class="login" aria-labelledby="login-title">
       <p class="fl-eyebrow">BEM-VINDO AO FLEETLOG</p>
@@ -173,7 +173,9 @@
         >Veículos cadastrados na sua garagem.</fl-page-heading
       >
       @if (garageLoading()) {
-        <p role="status">Carregando sua garagem…</p>
+        <fl-loading animate.enter="loading-enter" animate.leave="loading-leave"
+          >Carregando sua garagem…</fl-loading
+        >
       } @else if (garageError()) {
         <p class="error" role="alert">{{ garageError() }}</p>
         <button flButton type="button" (click)="loadGarage()">Tentar novamente</button>
@@ -232,18 +234,21 @@
         </nav>
         @if (realScreen() === 'garage') {
           <fl-vehicle-garage
+            animate.enter="content-enter"
             [garageId]="garage()!.id"
             [currency]="user()!.currency"
             [vehicleId]="routeVehicleId()"
             (navigate)="navigateVehicle($event)"
           />
         } @else if (realScreen() === 'members') {
-          <fl-members [garageId]="garage()!.id" />
+          <fl-members animate.enter="content-enter" [garageId]="garage()!.id" />
         } @else {
           <fl-real-history
+            animate.enter="content-enter"
             [garageId]="garage()!.id"
             [currency]="user()!.currency"
             [mode]="realScreen() === 'costs' ? 'costs' : 'history'"
+            [attr.data-view]="realScreen()"
           />
         }
         <button
@@ -519,4 +524,4 @@
   }
   <router-outlet />
 </main>
-<footer>FeetLog · Acompanhe cada quilômetro.</footer>
+<footer>FleetLog · Acompanhe cada quilômetro.</footer>

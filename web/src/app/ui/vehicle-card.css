@@ -198,4 +198,9 @@
   }
 }
 
-.vehicle-body{display:flex;flex-direction:column;justify-content:center;gap:2px}
+.vehicle-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}

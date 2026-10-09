@@ -2,7 +2,10 @@ import { Component, input } from '@angular/core';
 
 @Component({
   selector: 'button[flButton]',
-  template: `<ng-content />`,
+  template: `@if (loading()) {
+      <span class="button-spinner" aria-hidden="true"></span>
+    }
+    <ng-content />`,
   styleUrl: './button.css',
   host: {
     '[attr.data-variant]': 'variant()',

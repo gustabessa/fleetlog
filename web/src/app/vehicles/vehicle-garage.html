@@ -1,8 +1,13 @@
+@if (success()) {
+  <p class="success-message" role="status">{{ success() }}</p>
+}
 @if (error()) {
   <p class="error" role="alert">{{ error() }}</p>
 }
 @if (loading()) {
-  <p role="status">Carregando veículos…</p>
+  <fl-loading animate.enter="loading-enter" animate.leave="loading-leave"
+    >Carregando veículos…</fl-loading
+  >
 } @else if (selected(); as vehicle) {
   <div class="actions">
     <button flButton type="button" (click)="navigate.emit(null)">Voltar à garagem</button>

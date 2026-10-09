@@ -9,7 +9,7 @@ test('prévia navega pelos veículos, histórico e custos sem alterar a garagem'
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Entre na sua garagem' })).toBeVisible();
-  await expect(page.getByRole('contentinfo')).toHaveText('FeetLog · Acompanhe cada quilômetro.');
+  await expect(page.getByRole('contentinfo')).toHaveText('FleetLog · Acompanhe cada quilômetro.');
   await page.getByRole('button', { name: 'Explorar prévia da garagem' }).click();
   await expect(page.getByRole('heading', { name: 'Minha garagem' })).toBeVisible();
   await page.getByRole('button', { name: /Volkswagen Polo/ }).click();

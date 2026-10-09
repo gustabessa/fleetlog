@@ -138,9 +138,9 @@ export class FlMoneyInput implements ControlValueAccessor, Validator {
       currency: code,
     }).formatToParts(0);
     const digits = this.precision() ?? (code === 'JPY' ? 0 : 2);
-    const amount = (whole==='-0'?'-':'')+new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(
-      BigInt(whole),
-    );
+    const amount =
+      (whole === '-0' ? '-' : '') +
+      new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(BigInt(whole));
     const symbol = parts.find((p) => p.type === 'currency')?.value ?? code;
     const places = Math.max(digits, fraction.replace(/0+$/, '').length);
     this.element.nativeElement.value =

@@ -121,5 +121,7 @@ dd {
   max-width: 650px;
 }
 @media (max-width: 700px) {
-  .cost-filter { grid-template-columns: 1fr; }
+  .cost-filter {
+    grid-template-columns: 1fr;
+  }
 }

@@ -16,3 +16,8 @@ export { FlInstallPwa } from './install-pwa';
 
 export { FlCheckbox } from './checkbox';
 export { FlMoneyInput } from './money-input';
+
+export { FlLoading } from './loading';
+export { FlStartup } from './startup';
+
+export * from './logo';

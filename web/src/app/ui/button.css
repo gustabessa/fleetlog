@@ -98,3 +98,24 @@
   background: color-mix(in srgb, var(--accent) 92%, var(--text));
   color: var(--on-accent);
 }
+
+.button-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: button-spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .button-spinner {
+    animation: none;
+    opacity: 0.7;
+  }
+}

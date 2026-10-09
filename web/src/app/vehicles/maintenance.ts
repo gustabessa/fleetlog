@@ -1,3 +1,4 @@
+import { FlLoading } from '../ui/loading';
 let nextFormId = 0;
 import { FlTablePager, TablePaging } from '../ui/table-pager';
 import { FlIcon } from '../ui/icon';
@@ -26,6 +27,7 @@ interface Item {
   host: { '[class.quick-editor]': 'autoOpen()' },
   selector: 'fl-maintenance',
   imports: [
+    FlLoading,
     FlTablePager,
     FlIcon,
     FlDialog,
@@ -65,7 +67,9 @@ interface Item {
         <button flButton (click)="load()">Recarregar manutenções</button>
       }
       @if (loading()) {
-        <p role="status">Carregando manutenções…</p>
+        <fl-loading animate.enter="loading-enter" animate.leave="loading-leave"
+          >Carregando manutenções…</fl-loading
+        >
       }
       <button flButton (click)="start()">Registrar manutenção</button>
 

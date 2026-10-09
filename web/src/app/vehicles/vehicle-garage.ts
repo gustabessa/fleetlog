@@ -2,7 +2,7 @@ import { FlIcon } from '../ui/icon';
 import { Confirmation } from '../ui/confirmation';
 import { Component, inject, input, signal, viewChild, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { FlCheckbox, FlButton, FlCard, FlField, FlInput, FlVehicleCard } from '../ui';
+import { FlLoading, FlCheckbox, FlButton, FlCard, FlField, FlInput, FlVehicleCard } from '../ui';
 import { VehicleRecords } from './records';
 import { Photo } from './photo';
 import { Maintenance } from './maintenance';
@@ -45,6 +45,7 @@ const emptyForm = () => ({
     FormsModule,
     FlButton,
     FlCard,
+    FlLoading,
     FlField,
     FlInput,
     FlVehicleCard,
@@ -66,9 +67,11 @@ export class VehicleGarage {
   readonly garageId = input.required<number>();
   readonly quick = signal<{ vehicle: Vehicle; kind: 'fuel' | 'service' | 'expense' } | null>(null);
   quickDone() {
+    this.success.set('Lançamento registrado.');
     this.quick.set(null);
     void this.load();
   }
+  readonly success = signal('');
   readonly dataRevision = signal(0);
   readonly includeArchived = signal(false);
   readonly vehicles = signal<Vehicle[]>([]);
@@ -175,6 +178,7 @@ export class VehicleGarage {
       this.selected.set(await detail.json());
       this.vehicles.set(await list.json());
       this.dataRevision.update((n) => n + 1);
+      this.success.set('Dados do veículo atualizados.');
     } catch {
       if (!this.requestController.signal.aborted)
         this.error.set('Não foi possível atualizar os dados do veículo.');
@@ -238,6 +242,7 @@ export class VehicleGarage {
       );
       if (this.selected()) this.selected.set(vehicle);
       this.copied.set('');
+      this.success.set(editing === null ? 'Veículo adicionado.' : 'Veículo atualizado.');
       this.editor().close();
     } catch {
       if (!this.requestController.signal.aborted)
@@ -262,6 +267,7 @@ export class VehicleGarage {
       });
       if (!response.ok) throw Error();
       await this.refreshSelected();
+      this.success.set(vehicle.archived ? 'Veículo desarquivado.' : 'Veículo arquivado.');
     } catch {
       this.error.set('Não foi possível alterar o arquivamento.');
     } finally {

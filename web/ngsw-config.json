@@ -12,7 +12,10 @@
           "/index.html",
           "/manifest.webmanifest",
           "/*.css",
-          "/*.js"
+          "/*.js",
+          "/startup.css",
+          "/startup-theme.js",
+          "/logo.svg"
         ]
       }
     },

@@ -1,3 +1,4 @@
+import { FlLoading } from '../ui/loading';
 import { FlTablePager, TablePaging } from '../ui/table-pager';
 import { FlIcon } from '../ui/icon';
 import { Confirmation } from '../ui/confirmation';
@@ -18,7 +19,7 @@ interface Reading {
 }
 @Component({
   selector: 'fl-readings',
-  imports: [FlTablePager, FlIcon, FormsModule, FlButton, FlCard, FlField, FlInput],
+  imports: [FlLoading, FlTablePager, FlIcon, FormsModule, FlButton, FlCard, FlField, FlInput],
   template: `<section flCard>
     <h3>Odômetro</h3>
     @if (error()) {
@@ -26,7 +27,9 @@ interface Reading {
       <button flButton (click)="load()">Recarregar leituras</button>
     }
     @if (loading()) {
-      <p role="status">Carregando leituras…</p>
+      <fl-loading animate.enter="loading-enter" animate.leave="loading-leave"
+        >Carregando leituras…</fl-loading
+      >
     }
     <form ngNativeValidate (ngSubmit)="save()">
       <fieldset [disabled]="busy()">

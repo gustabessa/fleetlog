@@ -1,3 +1,4 @@
+import { FlLoading } from '../ui/loading';
 import { FlMoneyInput } from '../ui/money-input';
 import { Component, computed, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -22,6 +23,7 @@ interface Result {
 @Component({
   selector: 'fl-real-history',
   imports: [
+    FlLoading,
     FlMoneyInput,
     FormsModule,
     FlButton,
@@ -97,7 +99,9 @@ interface Result {
       <button flButton (click)="load()">Tentar novamente</button>
     }
     @if (loading()) {
-      <p role="status">Carregando lançamentos…</p>
+      <fl-loading animate.enter="loading-enter" animate.leave="loading-leave"
+        >Carregando lançamentos…</fl-loading
+      >
     }
     @if (data(); as d) {
       @if (d.total === 0 && (mode() !== 'costs' || !chartData()?.total)) {
