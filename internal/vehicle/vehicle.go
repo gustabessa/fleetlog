@@ -45,8 +45,8 @@ func (s *Service) Routes(mux *http.ServeMux) {
 	base := "/api/garages/{garageID}/vehicles"
 	mux.HandleFunc("GET "+base, s.Garage.RequireMember(s.list))
 	mux.HandleFunc("GET "+base+"/{vehicleID}", s.Garage.RequireMember(s.detail))
-	mux.HandleFunc("POST "+base, s.Garage.RequireCreatorWrite(s.create))
-	mux.HandleFunc("PUT "+base+"/{vehicleID}", s.Garage.RequireCreatorWrite(s.update))
+	mux.HandleFunc("POST "+base, s.Garage.RequireMemberWrite(s.create))
+	mux.HandleFunc("PUT "+base+"/{vehicleID}", s.Garage.RequireMemberWrite(s.update))
 }
 
 const columns = `id,garage_id,name,plate,brand,model_year,chassis,renavam,initial_km::text,COALESCE((SELECT km FROM odometer_readings WHERE vehicle_id=vehicles.id ORDER BY reading_date DESC,id DESC LIMIT 1),initial_km)::text,COALESCE((SELECT object_key FROM vehicle_photos WHERE vehicle_id=vehicles.id),''),archived`

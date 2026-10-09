@@ -38,7 +38,7 @@ Esta fila organiza os checklists detalhados abaixo em entregas escolhíveis. Ord
 ### P3 — consolidar histórico, análises e acesso familiar
 
 - [x] **T11 — histórico integrado e gráficos reais.** Busca/filtros/paginação e agregações dos lançamentos existentes; listas/gráficos coerentes, moedas separadas e gastos contabilizados uma vez. Aproveitar componentes da prévia, substituindo mocks e estimativas. Depende dos tipos de lançamento entregues; evoluir junto deles sem esperar todas as categorias.
-- [ ] **T12 — inclusão de familiares e permissões.** Aprovar como incluir/remover usuários e quais ações cada membro pode fazer; gestão de acesso e testes de garagem compartilhada. Depende de T02. Pode ser antecipada se o próximo teste de uso já envolver a família.
+- [x] **T12 — inclusão de familiares e permissões.** Aprovar como incluir/remover usuários e quais ações cada membro pode fazer; gestão de acesso e testes de garagem compartilhada. Depende de T02. Pode ser antecipada se o próximo teste de uso já envolver a família.
 
 ### Entrega a definir e melhorias futuras
 
@@ -414,3 +414,12 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Navegação real Veículos/Histórico/Custos; componentes de lista/pizza aceitam dados reais e rótulos monetários na moeda correta. Formatação de totais decimais usa BigInt para evitar perda de precisão.
 - Distância usa somente diferença entre leituras reais do veículo dentro do período; menos de duas leituras indica dados insuficientes, sem transportar estimativas do mock.
 - Build/go vet e testes PostgreSQL de busca/datas/paginação/moedas/totais/isolamento aprovados; testes Chromium desktop/mobile de lista e gráficos reais aprovados.
+
+
+## T12 — familiares e permissões concluídos — 2026-10-08
+
+- Criador consulta/cria/vincula contas existentes e remove membros; não pode remover a si mesmo. Nova conta usa senha inicial bcrypt e não ganha garagem própria automaticamente; conta existente conserva senha, identidades externas e histórico.
+- Membros podem alterar veículos, fotos, leituras e lançamentos; somente criador administra acesso. Middleware consulta vínculo a cada requisição, inclusive com sessão ativa. Remover vínculo não apaga usuário/autoria/lançamentos.
+- Tela Familiares com carregamento/erro, inclusão e confirmação de remoção. Consulta de garagem informa capacidade de gestão; seleção de garagem ativa aparece quando há mais de uma. Navegação mobile permite quebra de linha.
+- Testes Go/PostgreSQL de acesso compartilhado/revogação/reinclusão e regressões aprovados; build e 10 testes Chromium desktop/mobile de familiares/base/PWA aprovados.
+- Mesmo usuário interno será reutilizado pela vinculação OIDC; não existe associação por e-mail nem recriação de usuário ao autenticar externamente.

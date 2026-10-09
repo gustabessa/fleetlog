@@ -26,12 +26,12 @@ type Ownership struct {
 func (s *Service) recordRoutes(m *http.ServeMux) {
 	base := "/api/garages/{garageID}/vehicles/{vehicleID}"
 	m.HandleFunc("GET "+base+"/notes", s.Garage.RequireMember(s.notes))
-	m.HandleFunc("POST "+base+"/notes", s.Garage.RequireCreatorWrite(s.writeNote))
-	m.HandleFunc("PUT "+base+"/notes/{noteID}", s.Garage.RequireCreatorWrite(s.writeNote))
-	m.HandleFunc("DELETE "+base+"/notes/{noteID}", s.Garage.RequireCreatorWrite(s.writeNote))
+	m.HandleFunc("POST "+base+"/notes", s.Garage.RequireMemberWrite(s.writeNote))
+	m.HandleFunc("PUT "+base+"/notes/{noteID}", s.Garage.RequireMemberWrite(s.writeNote))
+	m.HandleFunc("DELETE "+base+"/notes/{noteID}", s.Garage.RequireMemberWrite(s.writeNote))
 	m.HandleFunc("GET "+base+"/ownership", s.Garage.RequireMember(s.ownership))
-	m.HandleFunc("PUT "+base+"/ownership", s.Garage.RequireCreatorWrite(s.writeOwnership))
-	m.HandleFunc("DELETE "+base, s.Garage.RequireCreatorWrite(s.removeVehicle))
+	m.HandleFunc("PUT "+base+"/ownership", s.Garage.RequireMemberWrite(s.writeOwnership))
+	m.HandleFunc("DELETE "+base, s.Garage.RequireMemberWrite(s.removeVehicle))
 }
 func (s *Service) checkVehicle(r *http.Request) error {
 	g, _ := garage.FromContext(r.Context())

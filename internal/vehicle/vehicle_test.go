@@ -157,8 +157,8 @@ func TestVehiclesIntegration(t *testing.T) {
 	if call("GET", item, "", otherToken, s.Origin).Code != 200 {
 		t.Fatal("shared member cannot read")
 	}
-	if call("PUT", item, update, otherToken, s.Origin).Code != 403 || call("POST", path, body, otherToken, s.Origin).Code != 403 {
-		t.Fatal("member was granted unapproved write access")
+	if call("PUT", item, update, otherToken, s.Origin).Code != 200 || call("POST", path, body, otherToken, s.Origin).Code != 201 {
+		t.Fatal("approved member write access denied")
 	}
 	wrongPath := fmt.Sprintf("/api/garages/%d/vehicles/%d", otherGarage, v.ID)
 	if call("GET", wrongPath, "", otherToken, s.Origin).Code != 404 || call("PUT", wrongPath, update, otherToken, s.Origin).Code != 404 {

@@ -28,9 +28,9 @@ func (s *Service) Routes(m *http.ServeMux) {
 	base := "/api/garages/{garageID}/vehicles/{vehicleID}/readings"
 	m.HandleFunc("GET "+base, s.Garage.RequireMember(s.list))
 	m.HandleFunc("GET "+base+"/audit", s.Garage.RequireMember(s.audit))
-	m.HandleFunc("POST "+base, s.Garage.RequireCreatorWrite(s.write))
-	m.HandleFunc("PUT "+base+"/{readingID}", s.Garage.RequireCreatorWrite(s.write))
-	m.HandleFunc("DELETE "+base+"/{readingID}", s.Garage.RequireCreatorWrite(s.write))
+	m.HandleFunc("POST "+base, s.Garage.RequireMemberWrite(s.write))
+	m.HandleFunc("PUT "+base+"/{readingID}", s.Garage.RequireMemberWrite(s.write))
+	m.HandleFunc("DELETE "+base+"/{readingID}", s.Garage.RequireMemberWrite(s.write))
 }
 
 // Lock serializes every reading/entry mutation for this vehicle, including retroactive edits.

@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fleetlog/internal/apiutil"
-	"fleetlog/internal/auth"
 	"fleetlog/internal/garage"
 	"fleetlog/internal/odometer"
 	_ "golang.org/x/image/webp"
@@ -30,15 +29,13 @@ func (s *Service) Routes(m *http.ServeMux) {
 	base := "/api/garages/{garageID}/vehicles/{vehicleID}/image"
 	m.HandleFunc("GET "+base, s.Garage.RequireMember(s.read))
 	m.HandleFunc("PUT "+base, s.Garage.RequireMember(s.authorizeUpload(s.upload)))
-	m.HandleFunc("DELETE "+base, s.Garage.RequireCreatorWrite(s.remove))
+	m.HandleFunc("DELETE "+base, s.Garage.RequireMemberWrite(s.remove))
 }
 
 // Uploads are raw image bytes, with same-origin protection rather than the JSON write wrapper.
 func (s *Service) authorizeUpload(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		g, _ := garage.FromContext(r.Context())
-		u, _ := auth.UserFromContext(r.Context())
-		if r.Header.Get("Origin") != s.Garage.Auth.Origin || g.CreatedBy != u.ID {
+		if r.Header.Get("Origin") != s.Garage.Auth.Origin {
 			apiutil.Reply(w, 403, map[string]string{"error": "upload not allowed"})
 			return
 		}

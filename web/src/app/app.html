@@ -125,6 +125,20 @@
       } @else if (!garage()) {
         <p role="status">Você ainda não está vinculado a uma garagem.</p>
       } @else {
+        @if (garages().length > 1) {
+          <fl-field controlId="active-garage" label="Garagem ativa"
+            ><select
+              flInput
+              id="active-garage"
+              [ngModel]="garage()!.id"
+              (ngModelChange)="loadGarage(+$event)"
+            >
+              @for (g of garages(); track g.id) {
+                <option [ngValue]="g.id">{{ g.name }}</option>
+              }
+            </select></fl-field
+          >
+        }
         <nav class="tabs" aria-label="Navegação da garagem">
           <button
             flButton
@@ -147,9 +161,20 @@
           >
             Custos
           </button>
+          @if (garage()?.canManage) {
+            <button
+              flButton
+              [attr.aria-current]="realScreen() === 'members' ? 'page' : null"
+              (click)="realScreen.set('members')"
+            >
+              Familiares
+            </button>
+          }
         </nav>
         @if (realScreen() === 'garage') {
           <fl-vehicle-garage [garageId]="garage()!.id" [currency]="user()!.currency" />
+        } @else if (realScreen() === 'members') {
+          <fl-members [garageId]="garage()!.id" />
         } @else {
           <fl-real-history
             [garageId]="garage()!.id"

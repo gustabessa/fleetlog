@@ -12,6 +12,7 @@ import (
 )
 
 type Garage struct {
+	CanManage bool   `json:"canManage"`
 	ID        int64  `json:"id"`
 	Name      string `json:"name"`
 	CreatedBy int64  `json:"-"`
@@ -26,6 +27,7 @@ func FromContext(ctx context.Context) (Garage, bool) {
 type Service struct{ Auth *auth.Service }
 
 func (s *Service) Routes(mux *http.ServeMux) {
+	s.memberRoutes(mux)
 	mux.HandleFunc("GET /api/garages", s.Auth.RequireUser(s.list))
 	mux.HandleFunc("GET /api/garages/{garageID}", s.RequireMember(s.detail))
 }
@@ -50,12 +52,13 @@ func (s *Service) RequireMember(next http.HandlerFunc) http.HandlerFunc {
 			}
 			return
 		}
+		g.CanManage = g.CreatedBy == user.ID
 		next(w, r.WithContext(context.WithValue(r.Context(), garageKey{}, g)))
 	})
 }
 func (s *Service) list(w http.ResponseWriter, r *http.Request) {
 	user, _ := auth.UserFromContext(r.Context())
-	rows, err := s.Auth.DB.Query(r.Context(), `SELECT g.id,g.name FROM garages g JOIN garage_members m ON m.garage_id=g.id WHERE m.user_id=$1 ORDER BY g.id`, user.ID)
+	rows, err := s.Auth.DB.Query(r.Context(), `SELECT g.id,g.name,g.created_by FROM garages g JOIN garage_members m ON m.garage_id=g.id WHERE m.user_id=$1 ORDER BY g.id`, user.ID)
 	if err != nil {
 		reply(w, 503, map[string]string{"error": "garage unavailable"})
 		return
@@ -64,10 +67,11 @@ func (s *Service) list(w http.ResponseWriter, r *http.Request) {
 	garages := []Garage{}
 	for rows.Next() {
 		var g Garage
-		if rows.Scan(&g.ID, &g.Name) != nil {
+		if rows.Scan(&g.ID, &g.Name, &g.CreatedBy) != nil {
 			reply(w, 503, map[string]string{"error": "garage unavailable"})
 			return
 		}
+		g.CanManage = g.CreatedBy == user.ID
 		garages = append(garages, g)
 	}
 	if rows.Err() != nil {
@@ -87,15 +91,7 @@ func reply(w http.ResponseWriter, status int, value any) {
 	json.NewEncoder(w).Encode(value)
 }
 
-// RequireCreatorWrite limits mutations to the garage creator while family roles are undefined.
+// RequireCreatorWrite protects administration; product writes use RequireMemberWrite.
 func (s *Service) RequireCreatorWrite(next http.HandlerFunc) http.HandlerFunc {
-	return s.RequireMember(s.Auth.RequireJSON(func(w http.ResponseWriter, r *http.Request) {
-		user, _ := auth.UserFromContext(r.Context())
-		g, _ := FromContext(r.Context())
-		if g.CreatedBy != user.ID {
-			reply(w, http.StatusForbidden, map[string]string{"error": "write access not granted"})
-			return
-		}
-		next(w, r)
-	}))
+	return s.RequireCreator(s.Auth.RequireJSON(next))
 }

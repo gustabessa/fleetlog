@@ -170,3 +170,8 @@ footer {
     flex-shrink: 0;
   }
 }
+
+nav.tabs {
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

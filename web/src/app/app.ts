@@ -1,3 +1,4 @@
+import { Members } from './vehicles/members';
 import { RealHistory } from './vehicles/history';
 import { VehicleGarage } from './vehicles/vehicle-garage';
 import { palettes } from './ui/themes';
@@ -32,6 +33,7 @@ import { SwUpdate } from '@angular/service-worker';
     RouterOutlet,
     VehicleGarage,
     RealHistory,
+    Members,
     FormsModule,
     FlButton,
     FlInput,
@@ -53,7 +55,7 @@ import { SwUpdate } from '@angular/service-worker';
   styleUrls: ['./app.css', './preview.css'],
 })
 export class App {
-  readonly realScreen = signal<'garage' | 'history' | 'costs'>('garage');
+  readonly realScreen = signal<'garage' | 'history' | 'costs' | 'members'>('garage');
   readonly preview = signal(false);
   readonly screen = signal<'garage' | 'vehicle' | 'history' | 'costs'>('garage');
   readonly selected = signal(0);
@@ -322,10 +324,11 @@ export class App {
     this.screen.set('garage');
   }
 
-  readonly garage = signal<{ id: number; name: string } | null>(null);
+  readonly garages = signal<{ id: number; name: string; canManage: boolean }[]>([]);
+  readonly garage = signal<{ id: number; name: string; canManage?: boolean } | null>(null);
   readonly garageLoading = signal(false);
   readonly garageError = signal('');
-  async loadGarage() {
+  async loadGarage(preferredId?: number) {
     this.garageLoading.set(true);
     this.garageError.set('');
     this.garage.set(null);
@@ -339,8 +342,10 @@ export class App {
         this.garageError.set('Não foi possível carregar sua garagem.');
         return;
       }
-      const garages: { id: number; name: string }[] = await response.json();
-      this.garage.set(garages[0] ?? null);
+      const garages: { id: number; name: string; canManage: boolean }[] = await response.json();
+      this.garages.set(garages);
+      this.garage.set(garages.find((g) => g.id === preferredId) ?? garages[0] ?? null);
+      this.realScreen.set('garage');
     } catch {
       this.garageError.set('Não foi possível carregar sua garagem.');
     } finally {
@@ -471,6 +476,8 @@ export class App {
         this.user.set(null);
         this.profileError.set('');
         this.garage.set(null);
+        this.garages.set([]);
+        this.realScreen.set('garage');
         this.garageError.set('');
         this.closePreview();
       } else this.authError.set('Não foi possível sair. Tente novamente.');

@@ -72,7 +72,7 @@ func (s *Service) routesKind(m *http.ServeMux, kind string) {
 		if method != "POST" {
 			path += "/{entryID}"
 		}
-		m.HandleFunc(method+" "+path, s.Garage.RequireCreatorWrite(func(w http.ResponseWriter, r *http.Request) { s.write(w, r, kind) }))
+		m.HandleFunc(method+" "+path, s.Garage.RequireMemberWrite(func(w http.ResponseWriter, r *http.Request) { s.write(w, r, kind) }))
 	}
 }
 func validText(s string, max int) bool {
