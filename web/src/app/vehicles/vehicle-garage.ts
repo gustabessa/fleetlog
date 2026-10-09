@@ -55,6 +55,7 @@ const emptyForm = () => ({
 export class VehicleGarage {
   readonly currency = input('BRL');
   readonly garageId = input.required<number>();
+  readonly dataRevision = signal(0);
   readonly includeArchived = signal(false);
   readonly vehicles = signal<Vehicle[]>([]);
   readonly selected = signal<Vehicle | null>(null);
@@ -152,6 +153,7 @@ export class VehicleGarage {
       if (!detail.ok || !list.ok) throw Error();
       this.selected.set(await detail.json());
       this.vehicles.set(await list.json());
+      this.dataRevision.update((n) => n + 1);
     } catch {
       if (!this.requestController.signal.aborted)
         this.error.set('Não foi possível atualizar os dados do veículo.');

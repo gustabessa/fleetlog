@@ -21,15 +21,15 @@ test('manutenção total direto funciona sem itens e sem leitura obrigatória', 
   await page.getByLabel('Descrição da manutenção (opcional)').fill('Revisão direta');
   await page.getByLabel('Total da manutenção').fill('150,50');
   await page.getByRole('button', { name: 'Salvar manutenção' }).click();
-  await expect(page.getByText(/Revisão direta · 150.500000 BRL/)).toBeVisible();
+  await expect(page.getByText(/Revisão direta · R\$\s*150,50/)).toBeVisible();
   await page.reload();
   await page.getByRole('button', { name: new RegExp(v.name) }).click();
-  await expect(page.getByText(/Revisão direta · 150.500000 BRL/)).toBeVisible();
+  await expect(page.getByText(/Revisão direta · R\$\s*150,50/)).toBeVisible();
   await page.getByRole('button', { name: 'Editar manutenção' }).click();
   await page.getByLabel('Total da manutenção').fill('200');
   await page.getByLabel('Odômetro da manutenção (opcional)').fill('250');
   await page.getByRole('button', { name: 'Salvar manutenção' }).click();
-  await expect(page.getByText(/Revisão direta · 200.000000 BRL/)).toBeVisible();
+  await expect(page.getByText(/Revisão direta · R\$\s*200,00/)).toBeVisible();
   page.on('dialog', (d) => d.accept());
   await page.getByRole('button', { name: 'Excluir manutenção' }).click();
   await expect(page.getByText('Nenhuma manutenção registrada.')).toBeVisible();

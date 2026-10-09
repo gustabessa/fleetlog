@@ -1,6 +1,6 @@
 # FleetLog — plano vivo
 
-Atualizado em 2026-10-07. Status: implementação incremental iniciada; andamento em `../TODO.md`.
+Atualizado em 2026-10-08. Status: núcleo do produto e OIDC entregues/validados localmente; andamento em `../TODO.md`.
 
 ## Objetivo confirmado
 
@@ -33,7 +33,7 @@ A tela inicial é uma listagem visual dos veículos da garagem, com imagem de ca
 - Oferecer ação de copiar em um clique os valores, como chassi e RENAVAM.
 - Iniciar o lançamento de abastecimento dentro da tela do veículo, com o veículo definido pelo contexto, sem exigir seleção adicional no formulário.
 
-### Proposta de apresentação — ainda não aprovada
+### Apresentação: identificadores/notas aprovados; campos personalizados pendentes
 
 Uma seção de informações com campos rotulados (ex.: Chassi, RENAVAM e campos personalizados), valores e botão de copiar com confirmação visual. Guardar identificadores como texto para preservar zeros iniciais. Complementar com notas de texto livre; formato e quantidade de notas ainda em aberto. “Notas” neste requisito significa informações/anotações, não implica anexos de notas fiscais.
 
@@ -44,7 +44,7 @@ Uma seção de informações com campos rotulados (ex.: Chassi, RENAVAM e campos
 - Informar quilometragem inicial no cadastro.
 - Atualizar quilometragem atual a partir das entradas de km no sistema, preservando histórico de leituras.
 
-### Regras propostas — ainda não aprovadas
+### Regras aprovadas na continuação de 2026-10-08
 
 - Histórico de odômetro com data da leitura, valor em km, origem (cadastro, abastecimento, manutenção ou outro lançamento) e autor.
 - Determinar o km atual pela leitura válida mais recente na cronologia do veículo, não pela ordem de digitação. Lançamento retroativo entra no histórico sem reduzir automaticamente o valor atual.
@@ -61,7 +61,7 @@ Uma seção de informações com campos rotulados (ex.: Chassi, RENAVAM e campos
 - Reutilizar a referência de um item de revisão anterior em uma nova revisão.
 - Comparar preços entre revisões e pesquisar um item para consultar seu histórico de preço.
 
-### Proposta de modelo — ainda não aprovada
+### Modelo aprovado na continuação de 2026-10-08
 
 Separar o cadastro reutilizável de item (nome, marca, código) de cada ocorrência na manutenção (quantidade, preço e moeda). Reaproveitar significa preencher uma nova ocorrência, preservando preços históricos. Criar ou selecionar itens dentro do formulário, sem cadastro prévio obrigatório ou controle de estoque inicial.
 
@@ -72,7 +72,7 @@ Proposta de campos: veículo, data, odômetro e descrição. Os dois modos de va
 - Registrar preço, litros e odômetro em um fluxo simples de lançamento de abastecimentos.
 - Métricas em km/L entre abastecimentos e histórico de consumo do veículo.
 
-### Proposta de cálculo — ainda não aprovada
+### Cálculo aprovado na continuação de 2026-10-08
 
 Registrar também data, combustível e indicação de tanque cheio. Permitir informar valor total e preço por litro, derivando valores quando possível.
 
@@ -84,7 +84,7 @@ Consumo pelo método tanque cheio a tanque cheio: distância entre registros de 
 - Identificar os custos por tipo para gerar gráficos e análises de gastos.
 - Incluir manutenção e abastecimento nas análises de custos, contando cada gasto uma única vez.
 
-### Propostas — ainda não aprovadas
+### Regras de custos aprovadas na continuação de 2026-10-08
 
 - Categorias iniciais: abastecimento, manutenção, documentação, seguro e outros. Subtipos de documentação podem incluir IPVA, licenciamento, transferência e outras taxas; definir personalização.
 - Lançamento de custo com veículo, data, descrição, tipo, valor e moeda selecionável conforme regra do perfil.
@@ -122,6 +122,7 @@ A matriz oficial documenta um subconjunto testado de S3, incluindo operações b
 Proposta: bucket privado, arquivos no S3, metadados no PostgreSQL; acesso pela aplicação ou URL temporária após autorização. Usar apenas os recursos necessários, sem pilha completa de observabilidade inicialmente.
 
 Fontes consultadas em 2026-10-07:
+
 - https://docs.rustfs.com/en/reference/s3-compatibility
 - https://docs.rustfs.com/en/installation/container
 - https://go.dev/doc/database/
@@ -174,3 +175,31 @@ Separar decisões confirmadas, propostas e questões em aberto. Não transformar
 - 2026-10-07: implementação autorizada; Go servindo Angular SPA/PWA aprovado após avaliação de viabilidade. PostgreSQL e cliente S3 com opção RustFS mantidos. Criado TODO.md para acompanhamento e retomada; detalhes de domínio pendentes continuam como propostas.
 
 - 2026-10-08: aprovado cadastro básico T03 com nome/modelo e km inicial obrigatórios; placa, marca, ano, chassi e RENAVAM opcionais. Compra/venda, notas, fotos e alteração de odômetro seguem nas tarefas posteriores.
+
+## Decisões e entrega de 2026-10-08
+
+O usuário autorizou todas as entregas de código do núcleo, com um commit por
+tarefa e sem push. Regras antes propostas de odômetro/consumo/manutenção/itens,
+compra/venda, despesas, filtros/gráficos e familiares foram aprovadas no chat e
+implementadas em T04–T12. As seções históricas de questões em aberto acima são
+substituídas por estas decisões e pelo estado atual no TODO.
+
+- Data civil preenchida com hoje, editável; autor da sessão e origem do contexto.
+- Km inicial preservado; leituras coerentes na cronologia, com auditoria e recálculo. Data de cadastro não inventa data civil para quilometragem passada.
+- Consumo cheio a cheio inclui parciais; intervalos abertos/incompletos/sem distância válida não mostram km/L.
+- Manutenção: total direto ou soma de peças/mão de obra, mesma moeda, desconto/ajuste explícitos e confirmação ao trocar modo.
+- Itens de garagem por nome/marca/código/unidade; ocorrência preserva preços/identificadores históricos.
+- Notas múltiplas de texto livre; compra/venda opcionais; venda arquiva, histórico permanece. Exclusão somente sem histórico.
+- Despesas: documentação (IPVA/licenciamento/transferência/taxas/outros), seguro e outros; sem categorias customizadas nesta entrega.
+- Histórico: datas inclusivas, busca/filtros/paginação, preço ±10% por moeda; gráficos por tipo/mês/veículo e distância observada entre leituras reais.
+- Família: criador administra membros; membros alteram dados; remoção não apaga autoria/histórico. Contas existentes preservam identidades.
+- Fotos JPEG/PNG/WebP, 10 MB/20 megapixels, uma por veículo, via S3 privado configurável.
+- OIDC agora junto de login local temporário; vinculação explícita iniciada por sessão válida, sem cadastro público/associação por e-mail. Login local pode ser desligado por configuração após vincular contas necessárias.
+
+Troca de senha local retirada pelo usuário; infraestrutura/deploy/CI fora desta
+rodada. Exportação/campos personalizados/anexos adicionais/importação/offline
+permanecem sem entrega aprovada. Lembretes de manutenção receberam proposta de
+painel e TODO próprio em [maintenance-reminders.md](maintenance-reminders.md),
+com Web Push/canais self-hosted a definir em uma tarefa separada.
+
+- Exportação e extras: usuário confirmou em 2026-10-08 que devem ficar para outra tarefa.

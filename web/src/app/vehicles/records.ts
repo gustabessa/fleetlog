@@ -1,3 +1,4 @@
+import { formatMoneyDecimal, formatDecimal, decimalInput } from '../ui/format';
 import { Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FlButton, FlCard, FlField, FlInput } from '../ui';
@@ -74,7 +75,7 @@ const trade = (currency: string): Trade => ({ date: today(), amount: '', currenc
                 [(ngModel)]="purchase.amount"
                 required
                 inputmode="decimal"
-                pattern="[0-9]+([.,][0-9]{1,6})?" /></fl-field
+                pattern="(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?" /></fl-field
             ><fl-field controlId="purchase-currency" label="Moeda da compra"
               ><select
                 flInput
@@ -116,7 +117,7 @@ const trade = (currency: string): Trade => ({ date: today(), amount: '', currenc
                 [(ngModel)]="sale.amount"
                 required
                 inputmode="decimal"
-                pattern="[0-9]+([.,][0-9]{1,6})?" /></fl-field
+                pattern="(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?" /></fl-field
             ><fl-field controlId="sale-currency" label="Moeda da venda"
               ><select flInput id="sale-currency" name="saleCurrency" [(ngModel)]="sale.currency">
                 @for (c of currencies; track c) {
@@ -194,7 +195,7 @@ const trade = (currency: string): Trade => ({ date: today(), amount: '', currenc
                 [(ngModel)]="expense.amount"
                 inputmode="decimal"
                 required
-                pattern="[0-9]+([.,][0-9]{1,6})?"
+                pattern="(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?"
             /></fl-field>
             <fl-field controlId="expense-currency" label="Moeda da despesa"
               ><select
@@ -215,7 +216,7 @@ const trade = (currency: string): Trade => ({ date: today(), amount: '', currenc
       }
       @for (e of expenses(); track e.id) {
         <article>
-          <p>{{ e.date }} · {{ e.title }} · {{ e.amount }} {{ e.currency }} · {{ e.author }}</p>
+          <p>{{ e.date }} · {{ e.title }} · {{ money(e.amount, e.currency) }} · {{ e.author }}</p>
           <button flButton (click)="editExpense(e)">Editar despesa</button
           ><button flButton (click)="deleteExpense(e)">Excluir despesa</button>
         </article>
@@ -248,6 +249,8 @@ const trade = (currency: string): Trade => ({ date: today(), amount: '', currenc
   `,
 })
 export class VehicleRecords {
+  readonly decimal = formatDecimal;
+  readonly money = formatMoneyDecimal;
   readonly endpoint = input.required<string>();
   readonly currency = input('BRL');
   readonly changed = output<void>();
@@ -292,8 +295,8 @@ export class VehicleRecords {
       const o = await b.json();
       this.purchaseEnabled = !!o.purchase;
       this.saleEnabled = !!o.sale;
-      if (o.purchase) this.purchase = o.purchase;
-      if (o.sale) this.sale = o.sale;
+      if (o.purchase) this.purchase = { ...o.purchase, amount: decimalInput(o.purchase.amount) };
+      if (o.sale) this.sale = { ...o.sale, amount: decimalInput(o.sale.amount) };
       this.expenses.set(await c.json());
     } catch {
       this.error.set('Não foi possível carregar informações do veículo.');
@@ -337,7 +340,7 @@ export class VehicleRecords {
     this.expense = {
       date: e.date,
       title: e.title,
-      amount: e.amount,
+      amount: decimalInput(e.amount),
       currency: e.currency,
       ...e.details,
     };

@@ -1,3 +1,4 @@
+import { formatDecimal, decimalInput } from '../ui/format';
 import { Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FlButton, FlCard, FlField, FlInput } from '../ui';
@@ -37,7 +38,7 @@ interface Reading {
             inputmode="decimal"
             [(ngModel)]="km"
             required
-            pattern="[0-9]+([.,][0-9]{1,3})?"
+            pattern="(0|[1-9][0-9]{0,8})([.,][0-9]{1,3})?"
         /></fl-field>
         <button flButton type="submit" [loading]="busy()">
           {{ editing ? 'Salvar leitura' : 'Adicionar leitura' }}
@@ -49,7 +50,7 @@ interface Reading {
     </form>
     @for (reading of readings(); track reading.id) {
       <p>
-        {{ reading.date }} · {{ reading.km }} km · {{ origin(reading.origin) }} ·
+        {{ dateLabel(reading) }} · {{ decimal(reading.km) }} km · {{ origin(reading.origin) }} ·
         {{ reading.author }}
       </p>
       @if (reading.origin === 'manual') {
@@ -57,7 +58,7 @@ interface Reading {
         ><button flButton (click)="remove(reading)" [disabled]="busy()">Excluir leitura</button>
       }
     }
-    @if (!loading() && !readings().length) {
+    @if (!loading() && readings().length <= 1) {
       <p>Nenhuma leitura adicional. A quilometragem inicial está preservada.</p>
     }
     <button flButton (click)="loadAudit()">Ver auditoria de leituras</button>
@@ -65,7 +66,8 @@ interface Reading {
       @for (event of events; track event.id) {
         <p>
           {{ event.changedAt }} · {{ event.author }} · {{ event.action }} ·
-          {{ event.before?.km ?? '—' }} → {{ event.after?.km ?? '—' }} km
+          {{ event.before ? decimal(event.before.km) : '—' }} →
+          {{ event.after ? decimal(event.after.km) : '—' }} km
         </p>
       }
     }
@@ -86,6 +88,8 @@ interface Reading {
   `,
 })
 export class Readings {
+  readonly decimal = formatDecimal;
+  readonly revision = input(0);
   readonly endpoint = input.required<string>();
   readonly changed = output<void>();
   readonly readings = signal<Reading[]>([]);
@@ -106,18 +110,26 @@ export class Readings {
   date = today();
   km = '';
   editing: number | null = null;
-  ngOnInit() {
+  ngOnChanges() {
     void this.load();
+    if (this.audit()) void this.loadAudit();
   }
   origin(value: string) {
     return (
       (
-        { manual: 'Leitura avulsa', fuel: 'Abastecimento', service: 'Manutenção' } as Record<
-          string,
-          string
-        >
+        {
+          registration: 'Cadastro · km inicial',
+          manual: 'Leitura avulsa',
+          fuel: 'Abastecimento',
+          service: 'Manutenção',
+        } as Record<string, string>
       )[value] ?? value
     );
+  }
+  dateLabel(reading: Reading) {
+    return reading.origin === 'registration'
+      ? 'Cadastrado em ' + new Date(reading.date).toLocaleDateString('pt-BR')
+      : reading.date;
   }
   reset() {
     this.date = today();
@@ -126,7 +138,7 @@ export class Readings {
   }
   edit(reading: Reading) {
     this.date = reading.date;
-    this.km = reading.km;
+    this.km = decimalInput(reading.km);
     this.editing = reading.id;
   }
   async load() {

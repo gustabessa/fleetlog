@@ -122,6 +122,14 @@ func (s *Service) list(w http.ResponseWriter, r *http.Request) {
 		Failure(w, rows.Err())
 		return
 	}
+	// The immutable baseline already belongs to the vehicle registration record.
+	// Its timestamp is the registration time, not an invented civil date for old mileage.
+	baseline := Reading{Origin: "registration", SourceID: apiutil.ID(r, "vehicleID")}
+	if err = s.Garage.Auth.DB.QueryRow(r.Context(), `SELECT to_char(v.created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS"Z"'),v.initial_km::text,u.username FROM vehicles v JOIN users u ON u.id=v.created_by WHERE v.id=$1`, baseline.SourceID).Scan(&baseline.Date, &baseline.KM, &baseline.Author); err != nil {
+		Failure(w, err)
+		return
+	}
+	list = append(list, baseline)
 	apiutil.Reply(w, 200, list)
 }
 func (s *Service) audit(w http.ResponseWriter, r *http.Request) {

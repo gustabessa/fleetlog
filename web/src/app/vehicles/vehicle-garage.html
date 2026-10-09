@@ -18,7 +18,14 @@
     <dl>
       <div>
         <dt>Placa</dt>
-        <dd>{{ vehicle.plate || 'Não informada' }}</dd>
+        <dd>
+          {{ vehicle.plate || 'Não informada' }}
+          @if (vehicle.plate) {
+            <button flButton size="sm" type="button" (click)="copy('plate', vehicle.plate)">
+              Copiar placa
+            </button>
+          }
+        </dd>
       </div>
       <div>
         <dt>Marca</dt>
@@ -60,7 +67,10 @@
       </div>
     </dl>
     @if (copied()) {
-      <p role="status">{{ copied() === 'chassis' ? 'Chassi' : 'RENAVAM' }} copiado.</p>
+      <p role="status">
+        {{ copied() === 'chassis' ? 'Chassi' : copied() === 'plate' ? 'Placa' : 'RENAVAM' }}
+        copiado.
+      </p>
     }
   </section>
   <fl-vehicle-records
@@ -84,6 +94,7 @@
     (changed)="refreshSelected()"
   />
   <fl-readings
+    [revision]="dataRevision()"
     [endpoint]="endpoint + '/' + vehicle.id + '/readings'"
     (changed)="refreshSelected()"
   />

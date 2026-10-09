@@ -204,6 +204,11 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		reply(w, 503, map[string]string{"error": "login unavailable"})
 		return
 	}
+	s.mu.Lock()
+	if s.attempts > 0 {
+		s.attempts--
+	}
+	s.mu.Unlock()
 	s.cookie(w, raw, 86400)
 	s.RequireUser(s.me)(w, requestWithCookie(r, raw))
 }

@@ -41,6 +41,9 @@ func TestChronologyIntegration(t *testing.T) {
 	w = a.Request("GET", readings, "")
 	var rs []odometer.Reading
 	json.Unmarshal(w.Body.Bytes(), &rs)
+	if len(rs) != 3 || rs[2].Origin != "registration" || rs[2].Author != "tester" || rs[2].KM != "100.000" {
+		t.Fatal("registration trace missing", w.Body.String())
+	}
 	if w = a.Request("PUT", fmt.Sprintf("%s/%d", readings, rs[0].ID), `{"date":"2026-10-08","km":"150"}`); w.Code != 409 {
 		t.Fatal("bad edit accepted", w.Code)
 	}

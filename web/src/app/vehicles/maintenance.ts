@@ -1,3 +1,4 @@
+import { formatMoneyDecimal, formatDecimal, decimalInput } from '../ui/format';
 import { Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FlButton, FlCard, FlField, FlInput } from '../ui';
@@ -33,8 +34,8 @@ interface Item {
     @if (prices(); as list) {
       @for (price of list; track $index) {
         <p>
-          {{ price.date }} · {{ price.vehicle }} · {{ price.name }} · {{ price.unitPrice }}
-          {{ price.currency }} / {{ price.unit }} · {{ price.quantity }}
+          {{ price.date }} · {{ price.vehicle }} · {{ price.name }} · {{ decimal(price.unitPrice) }}
+          {{ price.currency }} / {{ unitLabel(price.unit) }} · {{ decimal(price.quantity) }}
         </p>
       }
       @if (!list.length) {
@@ -76,7 +77,7 @@ interface Item {
               name="km"
               [(ngModel)]="form.km"
               inputmode="decimal"
-              pattern="[0-9]+([.,][0-9]{1,3})?"
+              pattern="(0|[1-9][0-9]{0,8})([.,][0-9]{1,3})?"
           /></fl-field>
           <fl-field controlId="service-currency" label="Moeda da manutenção"
             ><select flInput id="service-currency" name="currency" [(ngModel)]="form.currency">
@@ -106,7 +107,7 @@ interface Item {
                 [(ngModel)]="form.amount"
                 inputmode="decimal"
                 required
-                pattern="[0-9]+([.,][0-9]{1,6})?"
+                pattern="(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?"
             /></fl-field>
           } @else {
             @for (item of items; track $index; let i = $index) {
@@ -188,7 +189,7 @@ interface Item {
                     [(ngModel)]="item.quantity"
                     required
                     inputmode="decimal"
-                    pattern="[0-9]+([.,][0-9]{1,6})?"
+                    pattern="(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?"
                 /></fl-field>
                 <fl-field [controlId]="'item-price-' + i" label="Preço unitário"
                   ><input
@@ -198,7 +199,7 @@ interface Item {
                     [(ngModel)]="item.unitPrice"
                     required
                     inputmode="decimal"
-                    pattern="[0-9]+([.,][0-9]{1,6})?"
+                    pattern="(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?"
                 /></fl-field>
                 <fl-field [controlId]="'item-currency-' + i" label="Moeda do item"
                   ><select
@@ -225,7 +226,7 @@ interface Item {
                 name="discount"
                 [(ngModel)]="discount"
                 inputmode="decimal"
-                pattern="[0-9]+([.,][0-9]{1,6})?"
+                pattern="(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?"
             /></fl-field>
             <fl-field
               controlId="service-adjustment"
@@ -237,7 +238,7 @@ interface Item {
                 name="adjustment"
                 [(ngModel)]="adjustment"
                 inputmode="decimal"
-                pattern="-?[0-9]+([.,][0-9]{1,6})?"
+                pattern="-?(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?"
             /></fl-field>
             <p>
               Todos os preços, desconto e ajuste usam a moeda da manutenção. O total é calculado ao
@@ -252,9 +253,9 @@ interface Item {
     @for (e of entries(); track e.id) {
       <article>
         <p>
-          {{ e.date }} · {{ e.title }} · {{ e.amount }} {{ e.currency }}
+          {{ e.date }} · {{ e.title }} · {{ money(e.amount, e.currency) }}
           @if (e.km) {
-            · {{ e.km }} km
+            · {{ decimal(e.km ?? '0') }} km
           }
         </p>
         <p>{{ e.author }}</p>
@@ -286,6 +287,8 @@ interface Item {
   `,
 })
 export class Maintenance {
+  readonly decimal = formatDecimal;
+  readonly money = formatMoneyDecimal;
   readonly endpoint = input.required<string>();
   readonly currency = input('BRL');
   readonly changed = output<void>();
@@ -378,6 +381,11 @@ export class Maintenance {
     }
   }
 
+  unitLabel(unit: string) {
+    return (
+      ({ unit: 'unidade', liter: 'litro', hour: 'hora' } as Record<string, string>)[unit] ?? unit
+    );
+  }
   ngOnInit() {
     void this.load();
   }
@@ -395,14 +403,18 @@ export class Maintenance {
     this.form = {
       date: e.date,
       title: e.title,
-      amount: e.amount,
+      amount: decimalInput(e.amount),
       currency: e.currency,
-      km: e.km ?? '',
+      km: e.km ? decimalInput(e.km) : '',
     };
     this.mode = e.details.mode ?? 'direct';
-    this.items = structuredClone(e.details.items ?? []);
-    this.discount = e.details.discount ?? '0';
-    this.adjustment = e.details.adjustment ?? '0';
+    this.items = structuredClone(e.details.items ?? []).map((i: Item) => ({
+      ...i,
+      quantity: decimalInput(i.quantity),
+      unitPrice: decimalInput(i.unitPrice),
+    }));
+    this.discount = decimalInput(e.details.discount ?? '0');
+    this.adjustment = decimalInput(e.details.adjustment ?? '0');
     void this.loadReferences();
     this.editing = e.id;
     this.error.set('');

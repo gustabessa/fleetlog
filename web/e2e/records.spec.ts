@@ -26,7 +26,7 @@ test('notas, despesas e venda preservam histórico e arquivam veículo', async (
   await page.getByLabel('Tipo de documentação').selectOption('ipva');
   await page.getByLabel('Valor da despesa').fill('300');
   await page.getByRole('button', { name: 'Salvar despesa' }).click();
-  await expect(page.getByText(/IPVA real · 300.000000 BRL/)).toBeVisible();
+  await expect(page.getByText(/IPVA real · R\$\s*300,00/)).toBeVisible();
   await page.getByLabel('Informar compra', { exact: true }).check();
   await page.getByLabel('Data de compra').fill('2026-01-01');
   await page.getByLabel('Valor de compra').fill('20000');
@@ -45,5 +45,5 @@ test('notas, despesas e venda preservam histórico e arquivam veículo', async (
   await page.getByLabel('Incluir veículos vendidos/arquivados').check();
   await page.getByRole('button', { name: new RegExp(v.name) }).click();
   await expect(page.getByText('Dados extras <script> preservados como texto')).toBeVisible();
-  await expect(page.getByText(/IPVA real · 300.000000 BRL/)).toBeVisible();
+  await expect(page.getByText(/IPVA real · R\$\s*300,00/)).toBeVisible();
 });

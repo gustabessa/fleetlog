@@ -31,3 +31,18 @@ export function formatMoneyDecimal(value: string, code: string): string {
     prefix + integer + (scale ? ',' + fraction.padEnd(scale, '0').slice(0, scale) : '') + suffix
   );
 }
+
+/** Exact locale display for odometer, liters, quantities and historical unit prices. */
+export function formatDecimal(value: string | number): string {
+  const [whole, fraction = ''] = String(value).split('.');
+  if (!/^-?\d+$/.test(whole)) return '—';
+  let integer = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(BigInt(whole));
+  if (whole === '-0') integer = '-' + integer;
+  const trimmed = fraction.replace(/0+$/, '');
+  return integer + (trimmed ? ',' + trimmed : '');
+}
+export function decimalInput(value: string): string {
+  const [whole, fraction = ''] = value.split('.');
+  const trimmed = fraction.replace(/0+$/, '');
+  return whole + (trimmed ? ',' + trimmed : '');
+}

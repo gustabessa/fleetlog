@@ -1,3 +1,4 @@
+import { formatMoneyDecimal, formatDecimal, decimalInput } from '../ui/format';
 import { Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FlButton, FlCard, FlField, FlInput } from '../ui';
@@ -61,7 +62,7 @@ const empty = (currency: string) => ({
               inputmode="decimal"
               [(ngModel)]="form.liters"
               required
-              pattern="[0-9]+([.,][0-9]{1,6})?"
+              pattern="(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?"
           /></fl-field>
           <fl-field controlId="fuel-km" label="Odômetro do abastecimento (km)"
             ><input
@@ -71,7 +72,7 @@ const empty = (currency: string) => ({
               inputmode="decimal"
               [(ngModel)]="form.km"
               required
-              pattern="[0-9]+([.,][0-9]{1,3})?"
+              pattern="(0|[1-9][0-9]{0,8})([.,][0-9]{1,3})?"
           /></fl-field>
           <fl-field controlId="fuel-currency" label="Moeda do abastecimento"
             ><select flInput id="fuel-currency" name="currency" [(ngModel)]="form.currency">
@@ -90,7 +91,7 @@ const empty = (currency: string) => ({
               name="amount"
               inputmode="decimal"
               [(ngModel)]="form.amount"
-              pattern="[0-9]+([.,][0-9]{1,6})?"
+              pattern="(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?"
           /></fl-field>
           <fl-field controlId="fuel-unit" label="Preço por litro"
             ><input
@@ -99,7 +100,7 @@ const empty = (currency: string) => ({
               name="unitPrice"
               inputmode="decimal"
               [(ngModel)]="form.unitPrice"
-              pattern="[0-9]+([.,][0-9]{1,6})?"
+              pattern="(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?"
           /></fl-field>
           <label><input name="full" type="checkbox" [(ngModel)]="form.full" /> Tanque cheio</label>
           <label
@@ -114,8 +115,8 @@ const empty = (currency: string) => ({
     @for (entry of entries(); track entry.id) {
       <article>
         <p>
-          {{ entry.date }} · {{ entry.details.fuel }} · {{ entry.details.liters }} L ·
-          {{ entry.amount }} {{ entry.currency }} · {{ entry.km }} km
+          {{ entry.date }} · {{ entry.details.fuel }} · {{ decimal(entry.details.liters) }} L ·
+          {{ money(entry.amount, entry.currency) }} · {{ decimal(entry.km ?? '0') }} km
         </p>
         <p>{{ entry.details.full ? 'Tanque cheio' : 'Tanque parcial' }} · {{ entry.author }}</p>
         @if (consumption(entry.id); as c) {
@@ -154,6 +155,8 @@ const empty = (currency: string) => ({
   `,
 })
 export class Fuel {
+  readonly decimal = formatDecimal;
+  readonly money = formatMoneyDecimal;
   readonly endpoint = input.required<string>();
   readonly currency = input('BRL');
   readonly changed = output<void>();
@@ -180,10 +183,11 @@ export class Fuel {
   edit(e: RealEntry) {
     this.form = {
       date: e.date,
-      amount: e.amount,
+      amount: decimalInput(e.amount),
       currency: e.currency,
-      km: e.km ?? '',
+      km: e.km ? decimalInput(e.km) : '',
       ...e.details,
+      liters: decimalInput(e.details.liters),
       unitPrice: '',
     };
     this.editing = e.id;

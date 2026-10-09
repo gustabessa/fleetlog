@@ -1,6 +1,6 @@
 # FleetLog — andamento
 
-Atualizado em 2026-10-08. Plano de produto: [docs/FleetLog-plan.md](docs/FleetLog-plan.md).
+Atualizado em 2026-10-08. Produto T01–T12 e OIDC implementados/validados localmente. Plano de produto: [docs/FleetLog-plan.md](docs/FleetLog-plan.md).
 
 ## Decisões de implementação
 
@@ -14,7 +14,7 @@ Atualizado em 2026-10-08. Plano de produto: [docs/FleetLog-plan.md](docs/FleetLo
 
 ## Próximas tarefas por prioridade
 
-Esta fila organiza os checklists detalhados abaixo em entregas escolhíveis. Ordem proposta por dependência e uso real, sem alterar decisões de produto pendentes. As prévias e componentes de UI estão disponíveis; backend de veículos/lançamentos ainda não existe. Login, sessões e PostgreSQL já têm implementação funcional.
+Núcleo do produto entregue: T01–T12 e OIDC com código integrado e validação local. Esta fila preserva a sequência das entregas; infraestrutura e melhorias sem escopo aprovado permanecem separadas. Commits locais por tarefa, sem push nesta rodada.
 
 ### P0 — confirmar a base antes de integrar dados reais
 
@@ -85,7 +85,7 @@ Direção escolhida pelo usuário: Woodpecker self-hosted faz testes/build e pub
 - [ ] Configurar credenciais de pull no Dokploy se imagem privada.
 - [ ] Implantar Compose com SHA publicado e validar HTTPS/PWA.
 - [ ] Validar promoção/rollback entre versões.
-- [ ] Adicionar testes Playwright ao CI.
+- [ ] Adicionar testes Playwright ao CI — infraestrutura/CI fora desta rodada; testes locais entregues.
 - [ ] Avaliar deploy automático via webhook após build e builds multiarch.
 
 Pipeline: [.woodpecker/build.yaml](.woodpecker/build.yaml). Produção: [compose.registry.yaml](compose.registry.yaml).
@@ -105,101 +105,101 @@ Cada área passa por três estados: **prévia visual → API/persistência integ
 - [x] Testes de integração de autenticação e testes de navegador antes da refatoração visual.
 - [x] Reexecutar suíte completa com PostgreSQL após as mudanças de UI/mock/design system (T01: 34 testes Chromium desktop/mobile aprovados).
 - [x] Criar modelo/migração de garagem e vínculo dos membros com usuários internos; bootstrap e upgrade preservam contas/sessões.
-- [ ] Definir permissões e forma de inclusão de familiares antes de entregar gestão de membros.
-- [ ] Implementar inclusão/remoção de membros conforme a regra aprovada, com login individual.
+- [x] Definir permissões e forma de inclusão de familiares antes de entregar gestão de membros.
+- [x] Implementar inclusão/remoção de membros conforme a regra aprovada, com login individual.
 - [x] Criar proteção reutilizável de sessão/vínculo e aplicá-la às APIs de consulta de garagem.
-- [ ] Aplicar proteção de garagem às futuras APIs de veículos/lançamentos e ao acesso S3.
+- [x] Aplicar proteção de garagem às futuras APIs de veículos/lançamentos e ao acesso S3.
 - [x] Testar que membros da mesma garagem consultam os mesmos dados e outras garagens não têm acesso, incluindo revogação do vínculo com sessão ativa.
 - [x] Implementar perfil com moeda padrão inicial BRL e alteração da preferência.
-- [ ] Fazer seleção de moeda em toda entrada de preço, preenchida pelo perfil.
-- [ ] Guardar moeda e valor decimal no registro; mudar perfil não altera histórico.
-- [ ] Integrar telas de acesso/perfil/garagem ao design system e validar estados de erro/carregamento.
+- [x] Fazer seleção de moeda em toda entrada de preço, preenchida pelo perfil.
+- [x] Guardar moeda e valor decimal no registro; mudar perfil não altera histórico.
+- [x] Integrar telas de acesso/perfil/garagem ao design system e validar estados de erro/carregamento.
 
 ## Etapa 3 — veículos, informações e odômetro
 
 - [x] Definir cadastro básico T03: nome/modelo e km inicial obrigatórios; placa, marca, ano, chassi e RENAVAM opcionais (aprovado pelo usuário em 2026-10-08).
 - Compra/venda, notas livres, fotos e alteração do odômetro ficam nas tarefas seguintes (T10/T09/T05); recursos mantidos no escopo, fora desta entrega.
-- [ ] Definir obrigatoriedade de compra/venda na T10.
+- [x] Definir obrigatoriedade de compra/venda na T10.
 - [x] Criar migração 003 e API de cadastro, listagem, consulta e edição de veículo vinculado à garagem.
 - [x] Persistir quilometragem inicial decimal e preservá-la na edição básica.
-- [ ] Implementar histórico e quilometragem atual na T05, separados do km inicial.
-- [ ] Registrar data/valor/moeda de compra e venda; proprietários anterior/novo opcionais.
+- [x] Implementar histórico e quilometragem atual na T05, separados do km inicial.
+- [x] Registrar data/valor/moeda de compra e venda; proprietários anterior/novo opcionais.
 - [x] Implementar chassi e RENAVAM como campos próprios nas informações/cadastro do veículo, separados das notas; persistir como texto para preservar zeros iniciais.
-- [ ] Manter notas/anotações do veículo como recurso separado; definir formato e quantidade antes da implementação.
+- [x] Manter notas/anotações do veículo como recurso separado; definir formato e quantidade antes da implementação.
 - [x] Copiar chassi e RENAVAM com um clique e confirmação visual.
-- [ ] Estender cópia a outros identificadores conforme forem necessários.
+- [x] Estender cópia a outros identificadores conforme forem necessários.
 - [x] Integrar home com veículos reais, nome/modelo e badge de km inicial no canto superior esquerdo.
-- [ ] Substituir ilustração placeholder por fotos reais na T09.
+- [x] Substituir ilustração placeholder por fotos reais na T09.
 - [x] Integrar consulta/edição de detalhes reais ao veículo selecionado.
-- [ ] Manter contexto ao iniciar lançamentos na T06/T07.
-- [ ] Definir arquivamento/venda e política de exclusão de veículo com histórico antes dessas ações.
-- [ ] Definir regra cronológica de odômetro e tratamento de inconsistências/leituras retroativas.
-- [ ] Persistir leituras e suas origens; definir autoria/rastreabilidade de correções conforme decisão aprovada.
-- [ ] Recalcular km atual ao editar/excluir lançamento conforme regras aprovadas, preservando km inicial.
-- [ ] Validar edição, retroatividade, venda e identificadores com zeros iniciais em testes de integração.
+- [x] Manter contexto ao iniciar lançamentos na T06/T07.
+- [x] Definir arquivamento/venda e política de exclusão de veículo com histórico antes dessas ações.
+- [x] Definir regra cronológica de odômetro e tratamento de inconsistências/leituras retroativas.
+- [x] Persistir leituras e suas origens; definir autoria/rastreabilidade de correções conforme decisão aprovada.
+- [x] Recalcular km atual ao editar/excluir lançamento conforme regras aprovadas, preservando km inicial.
+- [x] Validar edição, retroatividade, venda e identificadores com zeros iniciais em testes de integração.
 
 ## Etapa 3 — imagens dos veículos
 
-- [ ] Implementar cliente S3 configurável (endpoint, região, bucket, credenciais e path-style).
-- [ ] Persistir metadados no PostgreSQL e objetos em bucket privado.
-- [ ] Definir formatos/tamanho máximo e validar conteúdo de upload.
-- [ ] Implementar upload, leitura autorizada, substituição e remoção de imagem de veículo.
-- [ ] Tratar falhas entre banco e S3 sem referências quebradas ou objetos abandonados.
-- [ ] Mostrar placeholder quando veículo não tem imagem.
+- [x] Implementar cliente S3 configurável (endpoint, região, bucket, credenciais e path-style).
+- [x] Persistir metadados no PostgreSQL e objetos em bucket privado.
+- [x] Definir formatos/tamanho máximo e validar conteúdo de upload.
+- [x] Implementar upload, leitura autorizada, substituição e remoção de imagem de veículo.
+- [x] Tratar falhas entre banco e S3 sem referências quebradas ou objetos abandonados.
+- [x] Mostrar placeholder quando veículo não tem imagem.
 - [ ] Validar operações necessárias em uma versão fixada do RustFS.
-- [ ] Documentar variáveis reais do cliente e configuração separada do servidor S3.
+- [x] Documentar variáveis reais do cliente e configuração separada do servidor S3.
 - [ ] Definir outros anexos (itens/manutenção/comprovantes) separadamente; só imagens de veículo entram nesta etapa.
 
 ## Etapa 4 — abastecimentos e consumo
 
-- [ ] Aprovar campos complementares e cálculo de consumo antes de implementar métricas.
-- [ ] Criar modelo/API para data, litros, preço/moeda e odômetro do abastecimento.
-- [ ] Abrir formulário na tela do veículo com veículo já definido, sem nova seleção.
-- [ ] Definir relação entre total e preço por litro, precisão e arredondamento.
-- [ ] Implementar cadastro, consulta, edição e exclusão com atualização coerente de odômetro/custos.
-- [ ] Integrar formulário e histórico de abastecimentos com dados reais.
-- [ ] Implementar km/L e histórico somente para intervalos válidos conforme método aprovado.
-- [ ] Se aprovado tanque cheio a tanque cheio: considerar parciais intermediários e primeiro registro como referência.
-- [ ] Definir como indicar dados insuficientes, abastecimentos ausentes e leituras inválidas.
-- [ ] Testar retroatividade/edição/exclusão e evitar métricas enganosas ou dupla contabilização.
+- [x] Aprovar campos complementares e cálculo de consumo antes de implementar métricas.
+- [x] Criar modelo/API para data, litros, preço/moeda e odômetro do abastecimento.
+- [x] Abrir formulário na tela do veículo com veículo já definido, sem nova seleção.
+- [x] Definir relação entre total e preço por litro, precisão e arredondamento.
+- [x] Implementar cadastro, consulta, edição e exclusão com atualização coerente de odômetro/custos.
+- [x] Integrar formulário e histórico de abastecimentos com dados reais.
+- [x] Implementar km/L e histórico somente para intervalos válidos conforme método aprovado.
+- [x] Se aprovado tanque cheio a tanque cheio: considerar parciais intermediários e primeiro registro como referência.
+- [x] Definir como indicar dados insuficientes, abastecimentos ausentes e leituras inválidas.
+- [x] Testar retroatividade/edição/exclusão e evitar métricas enganosas ou dupla contabilização.
 
 ## Etapa 5 — manutenção, itens e preços
 
-- [ ] Aprovar composição de moedas diferentes, descontos e ajustes.
-- [ ] Criar modelo/API de manutenção com veículo, data e campos aprovados de descrição/odômetro.
-- [ ] Implementar modo total direto, sem exigir cadastro de itens/suprimentos.
-- [ ] Implementar modo detalhado com peças e mão de obra somadas pelo sistema.
-- [ ] Tornar itens opcionais; definir troca entre modos sem contabilizar os dois totais.
-- [ ] Definir identificação/unidade/escopo do item reutilizável antes da migração de catálogo.
-- [ ] Implementar referência reutilizável separada da ocorrência e seu preço histórico, se aprovado esse modelo.
-- [ ] Reaproveitar item de revisão anterior em nova revisão sem modificar registros passados.
-- [ ] Selecionar moeda em cada preço de peça, mão de obra e total, conforme regras aprovadas.
-- [ ] Implementar cadastro, consulta, edição/exclusão e integração com odômetro/custos.
-- [ ] Buscar item e consultar/comparar preços entre revisões com data, veículo e moeda.
-- [ ] Integrar formulários e histórico real; testar composição do total e preservação de preços históricos.
+- [x] Aprovar composição de moedas diferentes, descontos e ajustes.
+- [x] Criar modelo/API de manutenção com veículo, data e campos aprovados de descrição/odômetro.
+- [x] Implementar modo total direto, sem exigir cadastro de itens/suprimentos.
+- [x] Implementar modo detalhado com peças e mão de obra somadas pelo sistema.
+- [x] Tornar itens opcionais; definir troca entre modos sem contabilizar os dois totais.
+- [x] Definir identificação/unidade/escopo do item reutilizável antes da migração de catálogo.
+- [x] Implementar referência reutilizável separada da ocorrência e seu preço histórico, se aprovado esse modelo.
+- [x] Reaproveitar item de revisão anterior em nova revisão sem modificar registros passados.
+- [x] Selecionar moeda em cada preço de peça, mão de obra e total, conforme regras aprovadas.
+- [x] Implementar cadastro, consulta, edição/exclusão e integração com odômetro/custos.
+- [x] Buscar item e consultar/comparar preços entre revisões com data, veículo e moeda.
+- [x] Integrar formulários e histórico real; testar composição do total e preservação de preços históricos.
 
 ## Etapa 6 — documentação e outras despesas
 
-- [ ] Definir tipos/subtipos iniciais e necessidade de personalização.
-- [ ] Criar modelo/API para data, veículo, descrição, tipo e valor/moeda de despesa.
-- [ ] Permitir lançar impostos, licenciamento e outras taxas de documentação.
-- [ ] Implementar cadastro, consulta, edição e exclusão, com autorização por garagem.
-- [ ] Integrar lançamentos de documentação ao histórico e às análises.
-- [ ] Fazer manutenção e abastecimento alimentarem gastos automaticamente, sem despesa duplicada.
-- [ ] Testar que itens/mão de obra são detalhamento, não somados novamente ao total da manutenção.
+- [x] Definir tipos/subtipos iniciais e necessidade de personalização.
+- [x] Criar modelo/API para data, veículo, descrição, tipo e valor/moeda de despesa.
+- [x] Permitir lançar impostos, licenciamento e outras taxas de documentação.
+- [x] Implementar cadastro, consulta, edição e exclusão, com autorização por garagem.
+- [x] Integrar lançamentos de documentação ao histórico e às análises.
+- [x] Fazer manutenção e abastecimento alimentarem gastos automaticamente, sem despesa duplicada.
+- [x] Testar que itens/mão de obra são detalhamento, não somados novamente ao total da manutenção.
 
 ## Etapa 7 — histórico e análises
 
-- [ ] Confirmar critérios de filtros/gráficos a partir da prévia antes do contrato de API.
-- [ ] Integrar histórico unificado de abastecimentos, manutenções e despesas com dados persistidos.
-- [ ] Implementar busca, filtros aprovados por veículo/tipo/período, ordenação e paginação.
-- [ ] Definir inclusão de dias-limite, fuso/data dos registros e comportamento de intervalo inválido.
-- [ ] Confirmar se filtro por preço da prévia usa tolerância de ±10%; considerar moeda no filtro real.
-- [ ] Entregar gráficos por tipos de gasto e demais análises aprovadas, com filtros coerentes com a lista.
-- [ ] Separar totais/comparações por moeda; sem conversão cambial automática.
-- [ ] Calcular indicadores a partir de registros reais; não transportar distâncias estimadas do mock para métricas reais.
-- [ ] Validar atualização de listas/gráficos após criação, edição e exclusão de registros.
-- [ ] Testar períodos vazios, diferentes moedas, duplicação de gastos e autorização dos agregados.
+- [x] Confirmar critérios de filtros/gráficos a partir da prévia antes do contrato de API.
+- [x] Integrar histórico unificado de abastecimentos, manutenções e despesas com dados persistidos.
+- [x] Implementar busca, filtros aprovados por veículo/tipo/período, ordenação e paginação.
+- [x] Definir inclusão de dias-limite, fuso/data dos registros e comportamento de intervalo inválido.
+- [x] Confirmar se filtro por preço da prévia usa tolerância de ±10%; considerar moeda no filtro real.
+- [x] Entregar gráficos por tipos de gasto e demais análises aprovadas, com filtros coerentes com a lista.
+- [x] Separar totais/comparações por moeda; sem conversão cambial automática.
+- [x] Calcular indicadores a partir de registros reais; não transportar distâncias estimadas do mock para métricas reais.
+- [x] Validar atualização de listas/gráficos após criação, edição e exclusão de registros.
+- [x] Testar períodos vazios, diferentes moedas, duplicação de gastos e autorização dos agregados.
 
 ## OIDC — entregue e validado
 
@@ -212,34 +212,35 @@ Cada área passa por três estados: **prévia visual → API/persistência integ
 
 ## Validação de cada entrega
 
-- [ ] Formularios com seleção de moeda, validação e mensagens coerentes entre frontend/backend.
-- [ ] Estados de carregamento, vazio, erro e sucesso; impedir envios duplicados.
-- [ ] Confirmar persistência após recarga e autorização também em chamadas diretas à API.
-- [ ] Validar navegação responsiva, labels, teclado, temas e operações online da PWA.
-- [ ] Testes relevantes de regras de negócio e integração PostgreSQL/S3 quando envolvidos.
-- [ ] Atualizar .env.example/README/TODO conforme novos contratos e parâmetros reais.
+- [x] Formularios com seleção de moeda, validação e mensagens coerentes entre frontend/backend.
+- [x] Estados de carregamento, vazio, erro e sucesso; impedir envios duplicados.
+- [x] Confirmar persistência após recarga e autorização também em chamadas diretas à API.
+- [x] Validar navegação responsiva, labels, teclado, temas e operações online da PWA.
+- [x] Testes relevantes de regras de negócio e integração PostgreSQL/S3 quando envolvidos.
+- [x] Atualizar .env.example/README/TODO conforme novos contratos e parâmetros reais.
 
-## Decisões de produto pendentes
+## Decisões de produto — aprovadas e pendências separadas
 
-- [ ] Permissões dos familiares, inclusão/remoção e propriedade da garagem.
-- [ ] Campos básicos do veículo; obrigatoriedade de compra/venda e arquivamento/exclusão com histórico.
-- [ ] Formato/quantidade de notas e suporte a campos personalizados.
-- [ ] Regras cronológicas de odômetro, correção e exclusão de lançamentos.
-- [ ] Método de consumo, campos de combustível/tanque cheio e intervalos inválidos.
-- [ ] Manutenção: descontos, ajustes, moedas diferentes e troca entre modos.
-- [ ] Itens: identificação, unidade e compartilhamento entre veículos/garagem.
-- [ ] Tipos/subtipos de custos e personalização.
-- [ ] Filtros/gráficos finais, inclusive filtro de preço e métricas de distância da prévia.
-- [ ] Momento de entrega OIDC, idioma e escopo de anexos além de imagens do veículo.
+- [x] Familiares: criador administra acesso; membros alteram dados; contas/autoria preservadas na remoção.
+- [x] Veículo básico T03; compra/venda opcionais; venda arquiva; exclusão somente sem histórico.
+- [x] Notas: múltiplas anotações de texto livre, separadas de identificadores.
+- [x] Odômetro: cronologia, retroativos coerentes, imutabilidade de km inicial e auditoria; autoria da sessão/origem automática.
+- [x] Consumo cheio a cheio, parciais, sinalização de intervalo incompleto e métricas somente válidas.
+- [x] Manutenção direta/detalhada, mesma moeda, desconto/ajuste e confirmação de troca de modo.
+- [x] Itens por garagem, referência separada da ocorrência e preços históricos preservados.
+- [x] Tipos/subtipos fixos nesta entrega; sem categorias personalizadas.
+- [x] Filtros/gráficos reais e preço ±10% por moeda; distância observada, sem mock.
+- [x] OIDC entregue junto do login local temporário com vinculação explícita.
+- [ ] Campos personalizados, idioma adicional e anexos além de fotos do veículo: escopo não aprovado, fora do núcleo desta rodada.
 
 ## Complementos propostos — prioridade/escopo a aprovar
 
 Estas tarefas registram lacunas operacionais identificadas na revisão; não alteram os requisitos confirmados do plano.
 
-- [ ] Definir troca de senha local e recuperação administrativa de acesso.
+- Troca de senha local retirada desta rodada pelo usuário; recuperação administrativa sem fluxo aprovado, fora da entrega.
 - [ ] Planejar backup/restauração de PostgreSQL e S3 e executar restauração de teste.
-- [ ] Definir exportação portátil de dados, formato e inclusão de anexos.
-- [ ] Avaliar lembretes por data/km e recorrência; entrega e notificações ainda a definir.
+- [ ] Exportação JSON/CSV e extras: usuário decidiu deixá-los para outra tarefa em 2026-10-08; não implementar nesta rodada.
+- [ ] Implementar lembretes por veículo após aprovação de recorrência/canais. Proposta e TODO detalhado: [docs/maintenance-reminders.md](docs/maintenance-reminders.md), conforme pedido de tarefa separada.
 
 ## Backlog — depois do núcleo do produto
 
@@ -290,8 +291,8 @@ Revisão de componentização: seletor de veículo extraído e compartilhado por
 
 Temas: dez paletas claro/escuro (20 combinações) com tokens compartilhados em themes.css e catálogo em ui/themes.ts. Botão de tema percorre combinações; nome no tooltip, preferência persistida. Gráficos seguem tokens da paleta e tags de veículo preservam configuração própria. Build aprovado; teste de ciclo completo/persistência aprovado em desktop/mobile.
 
-- [ ] Persistir paleta e modo claro/escuro no perfil do usuário no banco, com API de preferências. Por enquanto a seleção salva imediatamente em localStorage (`fleetlog.palette` e `fleetlog.theme`) e restaura após recarga.
-Seletor de tema em janela modal reutilizável FlThemePicker: dez amostras visuais com cores derivadas dos tokens de cada paleta, seleção direta, claro/escuro e fechamento via Concluir/Escape/clique no backdrop. Testes de todas as combinações e persistência aprovados em desktop/mobile.
+- [x] Persistir paleta e modo claro/escuro no perfil (T04); localStorage mantém cache visual/seleção anônima, perfil autenticado prevalece.
+      Seletor de tema em janela modal reutilizável FlThemePicker: dez amostras visuais com cores derivadas dos tokens de cada paleta, seleção direta, claro/escuro e fechamento via Concluir/Escape/clique no backdrop. Testes de todas as combinações e persistência aprovados em desktop/mobile.
 
 Paletas adicionais: Preto e cinza (mono) e Petróleo e cobre (copper), com versões clara/escura. Total: 12 paletas / 24 combinações; build e seleção/persistência desktop/mobile aprovados.
 
@@ -336,7 +337,6 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Compra/venda, notas, fotos, alterações do odômetro e exclusão/arquivamento continuam nas tarefas posteriores. Não há nova env; deploy aplica migração 003 preservando volume existente.
 - Próxima tarefa recomendada: T04 (perfil e moeda/preferências), depois T05 (odômetro) e T06 (abastecimentos).
 
-
 ## T04 — perfil, moeda e preferências — 2026-10-08
 
 - Migração 004 adiciona paleta/modo ao usuário com defaults original/light; moeda existente mantém BRL inicial. Login e consulta de sessão retornam as preferências.
@@ -344,9 +344,8 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Perfil acessível no cabeçalho permite salvar moeda padrão. Tema autenticado grava no banco; login/recarga restaura o perfil acima do cache local. Gravações de tema são ordenadas; falha mostra opção de nova tentativa. Seleção anônima permanece local.
 - Contrato decimal/moeda para futuras APIs documentado em [docs/money.md](docs/money.md): string decimal, numeric(18,6), moeda própria por registro, sem conversão automática nem alteração de histórico. Os formulários reais de preço serão integrados em T06/T07/T10; prévia mantém BRL fictício.
 - Build Angular de produção aprovado e git diff --check aprovado. Testes de integração Go ampliados para perfil, valores inválidos, atualizações parciais, isolamento e proteção de origem. Teste Playwright adicionado para falha/nova tentativa, moeda/tema após recarga e novo login.
-- Validação Go/PostgreSQL e Playwright **não executada** nesta rodada: Go/PostgreSQL indisponíveis no ambiente e resolução de rede falhou ao tentar obter Go. T04 permanece desmarcada até validar persistência/autorização com banco real; nenhum deploy realizado.
+- Validação Go/PostgreSQL e Playwright **não executada** nesta rodada: Go/PostgreSQL indisponíveis no ambiente e resolução de rede falhou ao tentar obter Go. Naquele ponto a T04 ficou desmarcada; a validação foi concluída na continuação abaixo. Nenhum deploy realizado.
 - Próximo passo: executar testes integrados da T04; depois definir cronologia, correções e efeitos de edição/exclusão para T05.
-
 
 ## Continuação de produto — 2026-10-08
 
@@ -357,14 +356,12 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - **TODO — lembretes de manutenção por veículo:** definir painel com serviço, último km/data, intervalo km/meses e antecedência; investigar Web Push gratuito e alternativas e-mail/ferramentas self-hosted. Nova tarefa separada: não configurar homelab nesta rodada. Propostas de valores de intervalos dependem do manual do veículo, sem intervalos universais automáticos.
 - T04: testes Go com PostgreSQL 18.6 e go vet aprovados; teste de perfil desktop/mobile aprovado. Suíte de navegador encontrou overflow no novo botão de perfil mobile; layout corrigido para permitir quebra e limitar nome. Ferramentas apenas em /tmp, sem instalação de serviços.
 
-
 ## T05 — odômetro concluído — 2026-10-08
 
 - Migração 005: leituras e auditoria com autor/origem; APIs de leituras avulsas e consulta de auditoria. Origens financeiras são modificadas pelo lançamento correspondente.
 - Data civil preenchida com hoje, editável; km inicial preservado; km atual pela última data/id. Leituras abaixo do inicial ou em queda cronológica são recusadas, inclusive retroativos/edições. Exclusão recalcula leitura atual.
 - Transações bloqueiam o veículo para serializar alterações concorrentes; auditoria registra antes/depois e autor da sessão. Tela real permite cadastrar/editar/excluir leitura e consultar auditoria.
 - Go/PostgreSQL aprovados (cronologia, rollback, recálculo, revogação de vínculo), build Angular aprovado e 4 testes de odômetro/veículos desktop/mobile aprovados.
-
 
 ## T06 — abastecimentos concluídos — 2026-10-08
 
@@ -373,13 +370,11 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Consumo cheio a cheio inclui parciais intermediários. Primeiro cheio é referência; parciais/intervalos incompletos/distância zero não exibem km/L. Exclusão marca o próximo intervalo incompleto. Histórico financeiro e odômetro/auditoria alterados atomicamente.
 - Go/PostgreSQL e build Angular aprovados; testes de formulário real desktop/mobile aprovados, incluindo persistência/moeda e integração de km. Sem dados privados no cache.
 
-
 ## T07 — manutenção com total direto concluída — 2026-10-08
 
 - Migração 007 e API real de manutenções com data preenchida automaticamente, descrição/km opcionais, total e moeda. Itens não são exigidos.
 - Consulta/cadastro/edição/exclusão integrados à tela do veículo. Histórico de gastos mantém moeda própria; remover km opcional remove somente a leitura vinculada, com recálculo e auditoria atômicos.
 - Testes PostgreSQL de criação/arredondamento/edição/remoção de leitura/exclusão aprovados; build Angular e testes Chromium desktop/mobile reais aprovados.
-
 
 ## T08 — itens e preços históricos concluídos — 2026-10-08
 
@@ -387,7 +382,6 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Modo detalhado soma quantidade × preço com decimal exato, desconto e ajuste explícitos; mesma moeda exigida. Modo direto rejeita detalhes ativos. Troca de modo confirma descarte na interface; somente um total é contabilizado.
 - Pesquisa de referências e histórico de preços por item mostram data, veículo, unidade, quantidade e moeda. Reutilização não altera preços anteriores; isolamento por garagem inclui referências e consultas de preços.
 - Build Angular, go vet, testes Go/PostgreSQL de composição/modos/preços/isolamento e 4 testes Chromium desktop/mobile de manutenção direta/detalhada aprovados.
-
 
 ## T09 — fotos reais concluídas — 2026-10-08
 
@@ -397,7 +391,6 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Build Angular/go vet/suíte Go com PostgreSQL aprovados. Testes do SDK com servidor S3 de protocolo exercitam upload/leitura/substituição/falhas/limpeza/isolamento; testes Chromium desktop/mobile de fotos reais pela API/banco aprovados.
 - Validação de versão concreta RustFS/homelab permanece externa e fora do escopo pedido. O servidor S3 de navegador é fixture descartável, não prova de compatibilidade de versão RustFS.
 
-
 ## T10 — informações e despesas concluídas — 2026-10-08
 
 - Migração 010 e APIs de múltiplas anotações textuais (até 20 mil caracteres), consulta/edição/exclusão com autoria e isolamento; identificadores permanecem campos separados.
@@ -405,7 +398,6 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Veículo sem histórico pode ser excluído; existência de notas, lançamentos, leituras/auditoria ou compra/venda bloqueia exclusão. Foto removida passa pela fila persistida de limpeza.
 - Despesas de documentação (IPVA/licenciamento/transferência/taxas/outros), seguro e outros: cadastro/consulta/edição/exclusão reais com moeda própria. Compra/venda ficam como informações patrimoniais; gráficos operacionais usam lançamentos de gastos, sem somar novamente detalhamento de manutenção.
 - Atualização de dados após salvar não desmonta os demais formulários do veículo. Build Angular e suíte Go/PostgreSQL aprovados; 6 testes Chromium desktop/mobile de notas/venda/despesas/fotos/odômetro aprovados.
-
 
 ## T11 — histórico e gráficos reais concluídos — 2026-10-08
 
@@ -415,7 +407,6 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Distância usa somente diferença entre leituras reais do veículo dentro do período; menos de duas leituras indica dados insuficientes, sem transportar estimativas do mock.
 - Build/go vet e testes PostgreSQL de busca/datas/paginação/moedas/totais/isolamento aprovados; testes Chromium desktop/mobile de lista e gráficos reais aprovados.
 
-
 ## T12 — familiares e permissões concluídos — 2026-10-08
 
 - Criador consulta/cria/vincula contas existentes e remove membros; não pode remover a si mesmo. Nova conta usa senha inicial bcrypt e não ganha garagem própria automaticamente; conta existente conserva senha, identidades externas e histórico.
@@ -424,7 +415,6 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Testes Go/PostgreSQL de acesso compartilhado/revogação/reinclusão e regressões aprovados; build e 10 testes Chromium desktop/mobile de familiares/base/PWA aprovados.
 - Mesmo usuário interno será reutilizado pela vinculação OIDC; não existe associação por e-mail nem recriação de usuário ao autenticar externamente.
 
-
 ## OIDC — concluído — 2026-10-08
 
 - Migração 011 persiste fluxos de curta duração. Discovery/issuer/client ID/secret/scopes/callback configuráveis; token verifica assinatura, issuer, audience/azp, validade, nonce e at_hash quando informado. Código usa PKCE S256 e state ligado a cookie HttpOnly/Lax do navegador; replay/expiração são recusados.
@@ -432,3 +422,14 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Login externo emite/rotaciona sessão FleetLog; tokens do provedor não persistem. AUTH_LOCAL_ENABLED permite manter/desligar login local após vincular contas necessárias; configuração sem OIDC não pode desabilitar todos os métodos.
 - UI de login/perfil com fluxo externo e mensagens de vínculo/erro. README/.env.example documentam configuração real e efeitos de trocar issuer; nenhum provedor do homelab configurado.
 - Testes Go/PostgreSQL com provedor assinado substituível aprovados: PKCE/nonce/audience/assinatura/expiração, cookies/state/replay, identidade não vinculada, conflito, logout, troca de issuer e login local desabilitado. Build/go vet e fluxo Chromium desktop/mobile aprovados.
+
+## Validação final do produto — 2026-10-08
+
+- Build Angular sem avisos de orçamento; suíte Go sem cache com PostgreSQL 18.6 e go vet aprovados.
+- Suíte completa com **58 testes Chromium desktop/mobile aprovada**: acesso real, veículos, odômetro, abastecimentos, manutenção direta/detalhada, histórico de preços, notas/venda/despesas, fotos, familiares, OIDC, temas e PWA.
+- Revisão final: dinheiro/km/litros apresentados em pt-BR sem exposição da escala interna; valores decimais mantidos exatos. Leituras atualizam após lançamentos sem desmontar formulários vizinhos; cadastro inicial aparece com origem/autoria. Cópia de placa acrescentada ao padrão de identificadores.
+- Logins locais bem-sucedidos não consomem orçamento de tentativas malsucedidas/concorrentes; campos de outro tipo de lançamento são recusados e falhas de exclusão não são mascaradas.
+- S3/OIDC validados com fixtures locais de protocolo/provedor assinado e banco real; não configuram nem validam serviços do homelab. Compose, pipeline, deploy, push e infraestrutura não alterados.
+- Exportação e extras explicitamente adiados pelo usuário para outra tarefa. Campos personalizados/outros anexos e importação/offline seguem separados do núcleo. Lembretes têm proposta/TODO próprio a pedido do usuário; troca de senha local não foi implementada por sua decisão.
+
+- Após os ajustes finais de apresentação/atualização, **14 testes dos formulários/histórico/veículos em desktop/mobile reexecutados e aprovados**; rastreabilidade do cadastro verificada em PostgreSQL.

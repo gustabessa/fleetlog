@@ -23,7 +23,7 @@ interface Result {
   imports: [FormsModule, FlButton, FlCard, FlField, FlInput, FlDateRange, FlPieChart, FlEntryList],
   template: ` <section flCard>
     <h2>{{ mode() === 'costs' ? 'Custos reais' : 'Histórico da garagem' }}</h2>
-    <form (ngSubmit)="apply()">
+    <form ngNativeValidate (ngSubmit)="apply()">
       <div class="filters">
         <fl-field controlId="real-query" label="Buscar lançamentos"
           ><input flInput id="real-query" name="query" [(ngModel)]="query" maxlength="200"
@@ -64,7 +64,7 @@ interface Result {
             name="price"
             inputmode="decimal"
             [(ngModel)]="price"
-            pattern="[0-9]+([.,][0-9]{1,6})?"
+            pattern="(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?"
         /></fl-field>
         <fl-date-range
           id="real-range"

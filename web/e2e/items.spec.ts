@@ -26,7 +26,7 @@ test('manutenção detalhada soma itens e consulta preços reais', async ({ page
   await page.getByLabel('Desconto', { exact: true }).fill('5');
   await page.getByLabel('Ajuste', { exact: true }).fill('-1');
   await page.getByRole('button', { name: 'Salvar manutenção' }).click();
-  await expect(page.getByText(/Manutenção · 54.000000 BRL/)).toBeVisible();
+  await expect(page.getByText(/Manutenção · R\$\s*54,00/)).toBeVisible();
   await page.getByLabel('Pesquisar preços de item').fill(item);
   await page.getByRole('button', { name: 'Buscar itens' }).click();
   await page.getByRole('button', { name: 'Preços de ' + item, exact: true }).click();

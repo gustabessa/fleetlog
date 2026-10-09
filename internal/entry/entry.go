@@ -84,6 +84,9 @@ func validate(input *Input, kind string) (json.RawMessage, error) {
 		return nil, errors.New("invalid date, currency, description or odometer")
 	}
 	if kind == "fuel" {
+		if input.Service != nil || input.Expense != nil {
+			return nil, errors.New("invalid fuel fields")
+		}
 		f := input.Fuel
 		if f == nil || input.KM == nil || !validText(f.Fuel, 100) || strings.TrimSpace(f.Fuel) == "" {
 			return nil, errors.New("fuel and odometer required")
@@ -127,8 +130,8 @@ func validate(input *Input, kind string) (json.RawMessage, error) {
 		return json.Marshal(f)
 	}
 	if kind == "service" {
-		if input.Fuel != nil {
-			return nil, errors.New("fuel fields not valid for service")
+		if input.Fuel != nil || input.Expense != nil {
+			return nil, errors.New("unrelated fields not valid for service")
 		}
 		return maintenanceDetails(input)
 	}
@@ -256,7 +259,7 @@ func (s *Service) write(w http.ResponseWriter, r *http.Request, kind string) {
 	if r.Method == "DELETE" {
 		action = "delete"
 		_, err = tx.Exec(r.Context(), `DELETE FROM entries WHERE id=$1`, id)
-		if kind == "fuel" { // A removed fill makes the next interval incomplete rather than inflating consumption.
+		if err == nil && kind == "fuel" { // A removed fill makes the next interval incomplete rather than inflating consumption.
 			_, err = tx.Exec(r.Context(), `UPDATE entries SET details=jsonb_set(details,'{incomplete}','true') WHERE id=(SELECT id FROM entries WHERE vehicle_id=$1 AND kind='fuel' AND (entry_date,id)>((($2::jsonb)->>'entry_date')::date,$3) ORDER BY entry_date,id LIMIT 1)`, vid, before, id)
 		}
 	} else if r.Method == "POST" {
