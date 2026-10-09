@@ -31,7 +31,7 @@ Esta fila organiza os checklists detalhados abaixo em entregas escolhíveis. Ord
 
 - [x] **T06 — abastecimentos reais.** Formulário no contexto do veículo, data/litros/preço/moeda/km, consulta/edição/exclusão e histórico. Consumo depende de método aprovado; concluir casos de tanque parcial/intervalo incompleto antes de apresentar km/L. Depende de T03–T05.
 - [x] **T07 — manutenção com total direto.** Registro real sem exigir itens, com edição/consulta/exclusão e integração ao histórico/odômetro. Dependências: T03–T05. Detalhamento/reutilização de itens segue em T08.
-- [ ] **T08 — peças, mão de obra e preços históricos.** Segundo modo de manutenção, referências reutilizáveis e pesquisa/comparação por item. Aprovar descontos, unidades/escopo e moedas diferentes; garantir que detalhamento não duplica total. Depende de T07.
+- [x] **T08 — peças, mão de obra e preços históricos.** Segundo modo de manutenção, referências reutilizáveis e pesquisa/comparação por item. Aprovar descontos, unidades/escopo e moedas diferentes; garantir que detalhamento não duplica total. Depende de T07.
 - [ ] **T09 — imagens reais de veículos.** Cliente S3/RustFS, upload/substituição/remoção, metadados e leitura privada autorizada, com limites/validação. Depende de T02/T03; pode avançar em paralelo à sequência de lançamentos sem bloquear formulários.
 - [ ] **T10 — notas, compra/venda e documentação.** Entregas separáveis: notas livres; dados de aquisição/venda após definição de obrigatoriedade/arquivamento; despesas de impostos/licenciamento/taxas com tipo/moeda. Notas não substituem chassi/RENAVAM. Dados financeiros dependem de T04.
 
@@ -379,3 +379,11 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Migração 007 e API real de manutenções com data preenchida automaticamente, descrição/km opcionais, total e moeda. Itens não são exigidos.
 - Consulta/cadastro/edição/exclusão integrados à tela do veículo. Histórico de gastos mantém moeda própria; remover km opcional remove somente a leitura vinculada, com recálculo e auditoria atômicos.
 - Testes PostgreSQL de criação/arredondamento/edição/remoção de leitura/exclusão aprovados; build Angular e testes Chromium desktop/mobile reais aprovados.
+
+
+## T08 — itens e preços históricos concluídos — 2026-10-08
+
+- Migração 008 cria referências de itens por garagem (nome/marca/código/unidade). Formulário cria/reutiliza referências sem cadastro prévio; peças e mão de obra são ocorrências com quantidade/preço/moeda e snapshot dos identificadores.
+- Modo detalhado soma quantidade × preço com decimal exato, desconto e ajuste explícitos; mesma moeda exigida. Modo direto rejeita detalhes ativos. Troca de modo confirma descarte na interface; somente um total é contabilizado.
+- Pesquisa de referências e histórico de preços por item mostram data, veículo, unidade, quantidade e moeda. Reutilização não altera preços anteriores; isolamento por garagem inclui referências e consultas de preços.
+- Build Angular, go vet, testes Go/PostgreSQL de composição/modos/preços/isolamento e 4 testes Chromium desktop/mobile de manutenção direta/detalhada aprovados.
