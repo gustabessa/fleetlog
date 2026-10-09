@@ -24,7 +24,7 @@ Esta fila organiza os checklists detalhados abaixo em entregas escolhíveis. Ord
 
 - [x] **T02 — garagem base e autorização (2026-10-07).** Migração de garagem/vínculo com usuário; associar primeiro usuário à garagem; disponibilizar consulta de contexto e proteção reutilizável para APIs. Testar isolamento entre garagens. Gestão de familiares permanece separada e exige aprovação das permissões.
 - [x] **T03 — veículos básicos ponta a ponta (2026-10-08).** Campos aprovados: nome/modelo e km inicial obrigatórios; placa, marca, ano, chassi e RENAVAM opcionais; cadastro, listagem, detalhes e edição reais com identificadores próprios (chassi/RENAVAM), km inicial preservado e integração das telas. Placeholder de imagem até T09. Depende de T02; ações de exclusão/arquivamento dependem de definição própria.
-- [ ] **T04 — perfil, moeda e preferências (implementada; validação integrada pendente).** Persistir moeda padrão e preferências de tema já previstas; integrar API/UI. Estabelecer representação decimal e moeda por registro para os formulários de preço. Não alterar moedas históricas. Necessário antes dos lançamentos financeiros.
+- [x] **T04 — perfil, moeda e preferências (2026-10-08).** Persistir moeda padrão e preferências de tema já previstas; integrar API/UI. Estabelecer representação decimal e moeda por registro para os formulários de preço. Não alterar moedas históricas. Necessário antes dos lançamentos financeiros.
 - [ ] **T05 — odômetro e regras de alteração.** Aprovar cronologia, retroatividade/correção e efeitos de editar/excluir registros; implementar histórico, autoria/origem e leitura atual. Depende de T03; abastecimentos/manutenções usam esta base.
 
 ### P2 — registrar o uso cotidiano
@@ -110,7 +110,7 @@ Cada área passa por três estados: **prévia visual → API/persistência integ
 - [x] Criar proteção reutilizável de sessão/vínculo e aplicá-la às APIs de consulta de garagem.
 - [ ] Aplicar proteção de garagem às futuras APIs de veículos/lançamentos e ao acesso S3.
 - [x] Testar que membros da mesma garagem consultam os mesmos dados e outras garagens não têm acesso, incluindo revogação do vínculo com sessão ativa.
-- [ ] Implementar perfil com moeda padrão inicial BRL e alteração da preferência.
+- [x] Implementar perfil com moeda padrão inicial BRL e alteração da preferência.
 - [ ] Fazer seleção de moeda em toda entrada de preço, preenchida pelo perfil.
 - [ ] Guardar moeda e valor decimal no registro; mudar perfil não altera histórico.
 - [ ] Integrar telas de acesso/perfil/garagem ao design system e validar estados de erro/carregamento.
@@ -346,3 +346,13 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Build Angular de produção aprovado e git diff --check aprovado. Testes de integração Go ampliados para perfil, valores inválidos, atualizações parciais, isolamento e proteção de origem. Teste Playwright adicionado para falha/nova tentativa, moeda/tema após recarga e novo login.
 - Validação Go/PostgreSQL e Playwright **não executada** nesta rodada: Go/PostgreSQL indisponíveis no ambiente e resolução de rede falhou ao tentar obter Go. T04 permanece desmarcada até validar persistência/autorização com banco real; nenhum deploy realizado.
 - Próximo passo: executar testes integrados da T04; depois definir cronologia, correções e efeitos de edição/exclusão para T05.
+
+
+## Continuação de produto — 2026-10-08
+
+- Autorizado implementar todas as entregas de código/produto, um commit por tarefa, sem push. Deploy e infraestrutura fora desta rodada.
+- Aprovadas regras propostas de T05–T12 no chat: cronologia/retroatividade coerente e auditoria de odômetro; consumo cheio a cheio com parciais e intervalo incompleto; dois modos de manutenção; itens por garagem, mesma moeda por manutenção, desconto/ajuste; múltiplas notas; compra/venda opcionais e arquivamento; exclusão sem histórico; despesas e filtros/gráficos; criador administra membros, membros escrevem dados. Data preenchida com hoje e editável; autor obtido da sessão.
+- Aprovadas imagens JPEG/PNG/WebP, 10 MB, 20 megapixels e uma foto por veículo. OIDC aprovado agora com vinculação explícita e login local temporário; contas externas não são criadas por e-mail.
+- Troca de senha retirada desta entrega pelo usuário; recuperação administrativa não implementada.
+- **TODO — lembretes de manutenção por veículo:** definir painel com serviço, último km/data, intervalo km/meses e antecedência; investigar Web Push gratuito e alternativas e-mail/ferramentas self-hosted. Nova tarefa separada: não configurar homelab nesta rodada. Propostas de valores de intervalos dependem do manual do veículo, sem intervalos universais automáticos.
+- T04: testes Go com PostgreSQL 18.6 e go vet aprovados; teste de perfil desktop/mobile aprovado. Suíte de navegador encontrou overflow no novo botão de perfil mobile; layout corrigido para permitir quebra e limitar nome. Ferramentas apenas em /tmp, sem instalação de serviços.

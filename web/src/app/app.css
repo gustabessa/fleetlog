@@ -145,3 +145,28 @@ footer {
 .topbar fl-theme-picker {
   margin-left: 0;
 }
+
+.account > button:first-child {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 700px) {
+  .topbar {
+    height: auto;
+    min-height: 4.25rem;
+    flex-wrap: wrap;
+    padding-block: var(--space-2);
+  }
+  .account {
+    margin-left: auto;
+    min-width: 0;
+  }
+  .account > button:first-child {
+    max-width: 120px;
+  }
+  .topbar fl-theme-picker {
+    flex-shrink: 0;
+  }
+}

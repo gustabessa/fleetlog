@@ -385,6 +385,7 @@ export class App {
       this.profileError.set('');
       try {
         const response = await fetch('/api/profile', {
+          keepalive: true,
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(change),

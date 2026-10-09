@@ -24,8 +24,8 @@ func TestOriginProtection(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		s.write(func(http.ResponseWriter, *http.Request) {
-		t.Fatal("cross-origin request accepted")
-	})(w, req)
+			t.Fatal("cross-origin request accepted")
+		})(w, req)
 		if w.Code != 403 {
 			t.Fatalf("status %d", w.Code)
 		}
