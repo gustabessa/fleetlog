@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { FlBadge } from './badge';
 export interface VehicleSummary {
   name: string;
@@ -6,6 +6,7 @@ export interface VehicleSummary {
   plate: string;
   km: string;
   color: string;
+  imageUrl?: string;
 }
 @Component({
   selector: 'fl-vehicle-card',
@@ -15,6 +16,10 @@ export interface VehicleSummary {
 })
 export class FlVehicleCard {
   readonly vehicle = input.required<VehicleSummary>();
+  readonly imageFailed = signal(false);
+  ngOnChanges() {
+    this.imageFailed.set(false);
+  }
   readonly showMileage = input(false);
   readonly activate = output<void>();
 }

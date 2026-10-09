@@ -32,7 +32,7 @@ Esta fila organiza os checklists detalhados abaixo em entregas escolhíveis. Ord
 - [x] **T06 — abastecimentos reais.** Formulário no contexto do veículo, data/litros/preço/moeda/km, consulta/edição/exclusão e histórico. Consumo depende de método aprovado; concluir casos de tanque parcial/intervalo incompleto antes de apresentar km/L. Depende de T03–T05.
 - [x] **T07 — manutenção com total direto.** Registro real sem exigir itens, com edição/consulta/exclusão e integração ao histórico/odômetro. Dependências: T03–T05. Detalhamento/reutilização de itens segue em T08.
 - [x] **T08 — peças, mão de obra e preços históricos.** Segundo modo de manutenção, referências reutilizáveis e pesquisa/comparação por item. Aprovar descontos, unidades/escopo e moedas diferentes; garantir que detalhamento não duplica total. Depende de T07.
-- [ ] **T09 — imagens reais de veículos.** Cliente S3/RustFS, upload/substituição/remoção, metadados e leitura privada autorizada, com limites/validação. Depende de T02/T03; pode avançar em paralelo à sequência de lançamentos sem bloquear formulários.
+- [x] **T09 — imagens reais de veículos.** Cliente S3/RustFS, upload/substituição/remoção, metadados e leitura privada autorizada, com limites/validação. Depende de T02/T03; pode avançar em paralelo à sequência de lançamentos sem bloquear formulários.
 - [ ] **T10 — notas, compra/venda e documentação.** Entregas separáveis: notas livres; dados de aquisição/venda após definição de obrigatoriedade/arquivamento; despesas de impostos/licenciamento/taxas com tipo/moeda. Notas não substituem chassi/RENAVAM. Dados financeiros dependem de T04.
 
 ### P3 — consolidar histórico, análises e acesso familiar
@@ -387,3 +387,12 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Modo detalhado soma quantidade × preço com decimal exato, desconto e ajuste explícitos; mesma moeda exigida. Modo direto rejeita detalhes ativos. Troca de modo confirma descarte na interface; somente um total é contabilizado.
 - Pesquisa de referências e histórico de preços por item mostram data, veículo, unidade, quantidade e moeda. Reutilização não altera preços anteriores; isolamento por garagem inclui referências e consultas de preços.
 - Build Angular, go vet, testes Go/PostgreSQL de composição/modos/preços/isolamento e 4 testes Chromium desktop/mobile de manutenção direta/detalhada aprovados.
+
+
+## T09 — fotos reais concluídas — 2026-10-08
+
+- SDK S3 oficial com endpoint/região/bucket/credenciais/path-style configuráveis; sem bucket/configuração a aplicação funciona, uploads retornam indisponibilidade. Documentação/env representam apenas o cliente, sem alterações em Compose/infra.
+- Migração 009 guarda metadados/reservas/fila de limpeza. Upload/substituição/remoção e leitura privada exigem vínculo/origem; imagem válida JPEG/PNG/WebP até 10 MB/20 megapixels. Cards/detalhes usam foto real e placeholder quando ausente ou leitura falha.
+- Reserva persistida antes de upload evita objetos sem rastreabilidade. Falhas mantêm foto anterior e fila para nova tentativa; reservas antigas são limpas após uma hora, remoções a cada minuto/reinício. Nenhuma URL pública/cache de imagem privada.
+- Build Angular/go vet/suíte Go com PostgreSQL aprovados. Testes do SDK com servidor S3 de protocolo exercitam upload/leitura/substituição/falhas/limpeza/isolamento; testes Chromium desktop/mobile de fotos reais pela API/banco aprovados.
+- Validação de versão concreta RustFS/homelab permanece externa e fora do escopo pedido. O servidor S3 de navegador é fixture descartável, não prova de compatibilidade de versão RustFS.

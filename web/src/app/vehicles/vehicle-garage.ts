@@ -1,6 +1,7 @@
 import { Component, input, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FlButton, FlCard, FlField, FlInput, FlVehicleCard } from '../ui';
+import { Photo } from './photo';
 import { Maintenance } from './maintenance';
 import { Fuel } from './fuel';
 import { Readings } from './readings';
@@ -18,6 +19,7 @@ interface Vehicle {
   renavam: string;
   initialKm: string;
   currentKm: string;
+  imageVersion: string;
 }
 const emptyForm = () => ({
   name: '',
@@ -42,6 +44,7 @@ const emptyForm = () => ({
     Readings,
     Fuel,
     Maintenance,
+    Photo,
   ],
   templateUrl: './vehicle-garage.html',
   styleUrl: './vehicle-garage.css',
@@ -100,6 +103,9 @@ export class VehicleGarage {
       plate: vehicle.plate || 'Sem placa informada',
       km: formatNumber(Number(vehicle.currentKm ?? vehicle.initialKm)),
       color: 'teal',
+      imageUrl: vehicle.imageVersion
+        ? `${this.endpoint}/${vehicle.id}/image?v=${encodeURIComponent(vehicle.imageVersion)}`
+        : '',
     };
   }
   async open(vehicle: Vehicle) {

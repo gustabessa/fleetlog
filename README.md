@@ -122,3 +122,19 @@ O service worker guarda apenas arquivos do aplicativo e ícones. APIs e imagens 
 Quando uma nova versão está pronta, a interface oferece **Atualizar agora**; a página só recarrega após o clique. Um estado irrecuperável do service worker oferece **Recarregar**. Rotas que ainda não existem voltam para a garagem.
 
 Service worker e atualização validados em Chromium automatizado desktop/mobile, via localhost. Execução Docker, HTTPS no Dokploy e instalação pelo sistema operacional ainda pendentes; ver [checklist de implantação](docs/deployment-checklist.md).
+
+
+### Imagens privadas de veículos
+
+Configure `S3_BUCKET`, `S3_ACCESS_KEY_ID` e `S3_SECRET_ACCESS_KEY` para habilitar uploads.
+`S3_ENDPOINT` é opcional (sem ele usa AWS); `S3_REGION` padrão `us-east-1`;
+`S3_PATH_STYLE` padrão `false` (normalmente `true` com RustFS). Reinicie a aplicação
+após mudar essas variáveis. O bucket já deve existir e permanecer privado; a
+aplicação usa apenas PutObject/GetObject/DeleteObject. Credenciais precisam de
+acesso somente ao prefixo `vehicles/`. As imagens são lidas pela API autenticada,
+sem links públicos nem cache privado. JPEG/PNG/WebP: até 10 MB e 20 megapixels.
+
+Reservas/remoções são persistidas no banco. Limpezas pendentes são repetidas a
+cada minuto e após reinício; uploads interrompidos são removidos após uma hora.
+Configurar o servidor RustFS, criar bucket e validar a versão no homelab são
+ações externas a esta entrega de código; o cliente segue o contrato S3.

@@ -17,6 +17,7 @@ import (
 	"fleetlog/internal/garage"
 	"fleetlog/internal/httpserver"
 	"fleetlog/internal/odometer"
+	"fleetlog/internal/photo"
 	"fleetlog/internal/vehicle"
 )
 
@@ -50,6 +51,11 @@ func main() {
 		os.Exit(1)
 	}
 	defer authentication.DB.Close()
+	store, err := photo.FromEnv()
+	if err != nil {
+		slog.Error("image configuration failed", "error", err)
+		os.Exit(1)
+	}
 	mux := http.NewServeMux()
 	authentication.Routes(mux)
 	garages := &garage.Service{Auth: authentication}
@@ -57,6 +63,8 @@ func main() {
 	(&vehicle.Service{Garage: garages}).Routes(mux)
 	(&odometer.Service{Garage: garages}).Routes(mux)
 	(&entry.Service{Garage: garages}).Routes(mux)
+	photos := &photo.Service{Garage: garages, Store: store}
+	photos.Routes(mux)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Cache-Control", "no-store")
@@ -77,6 +85,7 @@ func main() {
 		WriteTimeout: 30 * time.Second, IdleTimeout: 60 * time.Second}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+	go photos.Run(ctx)
 	go func() {
 		<-ctx.Done()
 		shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
