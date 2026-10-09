@@ -1,6 +1,8 @@
-import { Component, input, signal, viewChild } from '@angular/core';
+import { FlIcon } from '../ui/icon';
+import { Confirmation } from '../ui/confirmation';
+import { Component, inject, input, signal, viewChild, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { FlButton, FlCard, FlField, FlInput, FlVehicleCard } from '../ui';
+import { FlCheckbox, FlButton, FlCard, FlField, FlInput, FlVehicleCard } from '../ui';
 import { VehicleRecords } from './records';
 import { Photo } from './photo';
 import { Maintenance } from './maintenance';
@@ -12,6 +14,7 @@ import { formatNumber } from '../ui/format';
 interface Vehicle {
   id: number;
   garageId: number;
+  tagColor: string;
   name: string;
   plate: string;
   brand: string;
@@ -24,6 +27,7 @@ interface Vehicle {
   archived: boolean;
 }
 const emptyForm = () => ({
+  tagColor: '#087e83',
   name: '',
   plate: '',
   brand: '',
@@ -36,6 +40,8 @@ const emptyForm = () => ({
 @Component({
   selector: 'fl-vehicle-garage',
   imports: [
+    FlIcon,
+    FlCheckbox,
     FormsModule,
     FlButton,
     FlCard,
@@ -53,8 +59,16 @@ const emptyForm = () => ({
   styleUrl: './vehicle-garage.css',
 })
 export class VehicleGarage {
+  readonly confirmation = inject(Confirmation);
+  readonly vehicleId = input<number | null>(null);
+  readonly navigate = output<number | null>();
   readonly currency = input('BRL');
   readonly garageId = input.required<number>();
+  readonly quick = signal<{ vehicle: Vehicle; kind: 'fuel' | 'service' | 'expense' } | null>(null);
+  quickDone() {
+    this.quick.set(null);
+    void this.load();
+  }
   readonly dataRevision = signal(0);
   readonly includeArchived = signal(false);
   readonly vehicles = signal<Vehicle[]>([]);
@@ -68,6 +82,11 @@ export class VehicleGarage {
   form = emptyForm();
   editing: number | null = null;
   private readonly requestController = new AbortController();
+  ngOnChanges() {
+    const id = this.vehicleId();
+    if (id) void this.open({ id } as Vehicle, false);
+    else this.selected.set(null);
+  }
   ngOnInit() {
     void this.load();
   }
@@ -112,13 +131,14 @@ export class VehicleGarage {
           .join(' · ') || 'Informações do veículo',
       plate: vehicle.plate || 'Sem placa informada',
       km: formatNumber(Number(vehicle.currentKm ?? vehicle.initialKm)),
+      tagColor: vehicle.tagColor,
       color: 'teal',
       imageUrl: vehicle.imageVersion
         ? `${this.endpoint}/${vehicle.id}/image?v=${encodeURIComponent(vehicle.imageVersion)}`
         : '',
     };
   }
-  async open(vehicle: Vehicle) {
+  async open(vehicle: Vehicle, updateURL = true) {
     this.error.set('');
     this.copied.set('');
     try {
@@ -131,6 +151,7 @@ export class VehicleGarage {
         return;
       }
       this.selected.set(await response.json());
+      if (updateURL) this.navigate.emit(vehicle.id);
     } catch {
       if (!this.requestController.signal.aborted)
         this.error.set('Não foi possível abrir o veículo.');
@@ -170,6 +191,7 @@ export class VehicleGarage {
     if (this.busy()) return;
     this.editing = vehicle.id;
     this.form = {
+      tagColor: vehicle.tagColor,
       name: vehicle.name,
       plate: vehicle.plate,
       brand: vehicle.brand,
@@ -225,7 +247,8 @@ export class VehicleGarage {
     }
   }
   async removeVehicle(vehicle: Vehicle) {
-    if (this.busy() || !confirm('Excluir este veículo sem histórico?')) return;
+    if (this.busy() || !(await this.confirmation.ask('Excluir este veículo sem histórico?')))
+      return;
     this.busy.set(true);
     try {
       const r = await fetch(`${this.endpoint}/${vehicle.id}`, {
@@ -242,6 +265,7 @@ export class VehicleGarage {
         return;
       }
       this.selected.set(null);
+      this.navigate.emit(null);
       await this.load();
     } catch {
       this.error.set('Não foi possível excluir veículo.');

@@ -1,3 +1,4 @@
+import { FlConfirmation } from './ui/confirmation';
 import { Members } from './vehicles/members';
 import { RealHistory } from './vehicles/history';
 import { VehicleGarage } from './vehicles/vehicle-garage';
@@ -6,7 +7,7 @@ import { formatMoney, formatNumber } from './ui/format';
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import {
   FlButton,
   FlInput,
@@ -31,6 +32,7 @@ import { SwUpdate } from '@angular/service-worker';
   selector: 'app-root',
   imports: [
     RouterOutlet,
+    FlConfirmation,
     VehicleGarage,
     RealHistory,
     Members,
@@ -55,6 +57,47 @@ import { SwUpdate } from '@angular/service-worker';
   styleUrls: ['./app.css', './preview.css'],
 })
 export class App {
+  private readonly router = inject(Router);
+  readonly routeVehicleId = signal<number | null>(null);
+  private routeState() {
+    const path = this.router.url.split('?')[0].split('/').filter(Boolean);
+    return {
+      garageId: path[0] === 'garage' ? Number(path[1]) : 0,
+      section: path[2] ?? 'vehicles',
+      vehicleId: path[2] === 'vehicles' && path[3] ? Number(path[3]) : null,
+    };
+  }
+  navigateScreen(screen: 'garage' | 'history' | 'costs' | 'members') {
+    const garage = this.garage();
+    if (garage)
+      void this.router.navigate(['/garage', garage.id, screen === 'garage' ? 'vehicles' : screen]);
+  }
+  navigateVehicle(id: number | null) {
+    const garage = this.garage();
+    if (garage)
+      void this.router.navigate(
+        id ? ['/garage', garage.id, 'vehicles', id] : ['/garage', garage.id, 'vehicles'],
+      );
+  }
+  private syncRoute() {
+    const route = this.routeState();
+    const garage = this.garage();
+    if (!this.user() || !garage) return;
+    if (route.garageId && route.garageId !== garage.id) {
+      void this.loadGarage(route.garageId);
+      return;
+    }
+    this.realScreen.set(
+      route.section === 'history'
+        ? 'history'
+        : route.section === 'costs'
+          ? 'costs'
+          : route.section === 'members' && garage.canManage
+            ? 'members'
+            : 'garage',
+    );
+    this.routeVehicleId.set(route.vehicleId);
+  }
   readonly realScreen = signal<'garage' | 'history' | 'costs' | 'members'>('garage');
   readonly preview = signal(false);
   readonly screen = signal<'garage' | 'vehicle' | 'history' | 'costs'>('garage');
@@ -344,8 +387,15 @@ export class App {
       }
       const garages: { id: number; name: string; canManage: boolean }[] = await response.json();
       this.garages.set(garages);
-      this.garage.set(garages.find((g) => g.id === preferredId) ?? garages[0] ?? null);
-      this.realScreen.set('garage');
+      const desired = preferredId ?? this.routeState().garageId;
+      const active = garages.find((g) => g.id === desired) ?? garages[0] ?? null;
+      this.garage.set(active);
+      if (active && (!this.routeState().garageId || active.id !== this.routeState().garageId)) {
+        await this.router.navigate(['/garage', active.id, 'vehicles'], {
+          replaceUrl: preferredId === undefined,
+        });
+      }
+      this.syncRoute();
     } catch {
       this.garageError.set('Não foi possível carregar sua garagem.');
     } finally {
@@ -460,6 +510,7 @@ export class App {
         await this.loadGarage();
       } else if (response.status !== 401)
         this.authError.set('Não foi possível conectar ao FleetLog.');
+      else this.restoreGuestTheme();
     } catch {
       this.authError.set('Não foi possível conectar ao FleetLog.');
     } finally {
@@ -495,6 +546,17 @@ export class App {
       this.busy.set(false);
     }
   }
+  readonly profileVisible = signal(false);
+  openProfile(dialog: FlDialog) {
+    this.currencyDraft = this.user()?.currency ?? 'BRL';
+    this.profileSaved.set(false);
+    this.profileVisible.set(true);
+    dialog.show();
+  }
+  async logoutFromProfile(dialog: FlDialog) {
+    await this.logout();
+    if (!this.user()) dialog.close();
+  }
   async logout() {
     if (this.busy()) return;
     this.busy.set(true);
@@ -508,11 +570,14 @@ export class App {
       if (response.ok) {
         this.accountGeneration++;
         this.user.set(null);
+        this.restoreGuestTheme();
         this.profileError.set('');
         this.oidcNotice.set('');
         this.garage.set(null);
         this.garages.set([]);
         this.realScreen.set('garage');
+        this.routeVehicleId.set(null);
+        void this.router.navigate(['/'], { replaceUrl: true });
         this.garageError.set('');
         this.closePreview();
       } else this.authError.set('Não foi possível sair. Tente novamente.');
@@ -557,6 +622,9 @@ export class App {
       else if (messages[result]) this.authError.set(messages[result]);
       history.replaceState(null, '', location.pathname);
     }
+    this.router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
+      if (event instanceof NavigationEnd) this.syncRoute();
+    });
     void this.loadAuthOptions();
     void this.loadUser();
     if (this.updates.isEnabled) {
@@ -578,7 +646,17 @@ export class App {
     if (this.user())
       void this.saveProfile({ palette: theme.palette, theme: theme.dark ? 'dark' : 'light' });
   }
+  private restoreGuestTheme() {
+    const palette = localStorage.getItem('fleetlog.guest.palette') ?? 'original';
+    this.palette.set(palettes.some((p) => p.id === palette) ? palette : 'original');
+    this.dark.set(localStorage.getItem('fleetlog.guest.theme') === 'dark');
+    this.applyTheme();
+  }
   private cacheTheme() {
+    if (!this.user()) {
+      localStorage.setItem('fleetlog.guest.palette', this.palette());
+      localStorage.setItem('fleetlog.guest.theme', this.dark() ? 'dark' : 'light');
+    }
     localStorage.setItem('fleetlog.palette', this.palette());
     localStorage.setItem('fleetlog.theme', this.dark() ? 'dark' : 'light');
     this.applyTheme();

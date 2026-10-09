@@ -1,25 +1,39 @@
+<fl-confirmation />
 <header class="topbar">
   <a class="brand" href="/" aria-label="FleetLog início"><span class="mark">F</span> FleetLog</a>
-  @if (user(); as currentUser) {
-    <div class="account">
-      <button
-        flButton
-        variant="ghost"
-        type="button"
-        (click)="
-          currencyDraft = currentUser.currency; profileSaved.set(false); profileDialog.show()
-        "
-      >
-        Perfil de {{ currentUser.username }}</button
-      ><button flButton variant="secondary" type="button" (click)="logout()" [loading]="busy()">
-        Sair
-      </button>
-    </div>
-  }
   <fl-install-pwa />
   <fl-theme-picker [palette]="palette()" [dark]="dark()" (select)="selectTheme($event)" />
+  @if (user(); as currentUser) {
+    <button
+      flButton
+      class="profile-trigger"
+      size="icon"
+      variant="ghost"
+      type="button"
+      [attr.aria-label]="'Perfil de ' + currentUser.username"
+      [attr.title]="currentUser.username"
+      (click)="openProfile(profileDialog)"
+    >
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="8" r="3.5" />
+        <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
+      </svg>
+    </button>
+  }
 </header>
-<fl-dialog #profileDialog title="Meu perfil">
+<fl-dialog #profileDialog title="Meu perfil" (closed)="profileVisible.set(false)">
+  <p class="profile-identity">{{ user()?.username }}</p>
+  @if (user() && authError()) {
+    <p class="error" role="alert">{{ authError() }}</p>
+  }
   @if (oidcStatus().enabled) {
     <p>
       {{
@@ -50,9 +64,20 @@
   @if (profileSaved()) {
     <p role="status">Preferências salvas.</p>
   }
-  <button flDialogFooter flButton type="submit" form="profile-form" [loading]="profileBusy()">
-    Salvar perfil
-  </button>
+  <div flDialogFooter class="profile-actions">
+    <button
+      flButton
+      variant="ghost"
+      type="button"
+      (click)="logoutFromProfile(profileDialog)"
+      [loading]="busy()"
+    >
+      Sair
+    </button>
+    <button flButton variant="primary" type="submit" form="profile-form" [loading]="profileBusy()">
+      Salvar perfil
+    </button>
+  </div>
 </fl-dialog>
 <main>
   @if (oidcNotice()) {
@@ -84,7 +109,7 @@
       </button>
     </aside>
   }
-  @if (authError()) {
+  @if (authError() && !profileVisible()) {
     <p class="error" role="alert">{{ authError() }}</p>
   }
   @if (loading()) {
@@ -172,37 +197,46 @@
         <nav class="tabs" aria-label="Navegação da garagem">
           <button
             flButton
+            variant="tab"
             [attr.aria-current]="realScreen() === 'garage' ? 'page' : null"
-            (click)="realScreen.set('garage')"
+            (click)="navigateScreen('garage')"
           >
             Veículos
           </button>
           <button
             flButton
+            variant="tab"
             [attr.aria-current]="realScreen() === 'history' ? 'page' : null"
-            (click)="realScreen.set('history')"
+            (click)="navigateScreen('history')"
           >
             Histórico
           </button>
           <button
             flButton
+            variant="tab"
             [attr.aria-current]="realScreen() === 'costs' ? 'page' : null"
-            (click)="realScreen.set('costs')"
+            (click)="navigateScreen('costs')"
           >
             Custos
           </button>
           @if (garage()?.canManage) {
             <button
               flButton
+              variant="tab"
               [attr.aria-current]="realScreen() === 'members' ? 'page' : null"
-              (click)="realScreen.set('members')"
+              (click)="navigateScreen('members')"
             >
               Familiares
             </button>
           }
         </nav>
         @if (realScreen() === 'garage') {
-          <fl-vehicle-garage [garageId]="garage()!.id" [currency]="user()!.currency" />
+          <fl-vehicle-garage
+            [garageId]="garage()!.id"
+            [currency]="user()!.currency"
+            [vehicleId]="routeVehicleId()"
+            (navigate)="navigateVehicle($event)"
+          />
         } @else if (realScreen() === 'members') {
           <fl-members [garageId]="garage()!.id" />
         } @else {
@@ -212,7 +246,13 @@
             [mode]="realScreen() === 'costs' ? 'costs' : 'history'"
           />
         }
-        <button flButton variant="ghost" type="button" (click)="preview.set(true)">
+        <button
+          flButton
+          class="preview-secondary"
+          variant="ghost"
+          type="button"
+          (click)="preview.set(true)"
+        >
           Explorar próximas telas
         </button>
       }

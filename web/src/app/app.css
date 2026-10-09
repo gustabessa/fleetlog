@@ -175,3 +175,62 @@ nav.tabs {
   flex-wrap: wrap;
   gap: var(--space-2);
 }
+
+.topbar {
+  gap: var(--space-3);
+  height: 72px;
+}
+.profile-trigger {
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--text);
+}
+.profile-identity {
+  margin-top: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-3);
+}
+nav.tabs {
+  gap: var(--space-2);
+  padding: var(--space-2) 0 var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.preview-secondary {
+  margin-top: var(--space-5);
+}
+main {
+  padding-top: var(--space-8);
+}
+@media (max-width: 700px) {
+  .topbar {
+    padding-inline: var(--space-4);
+    gap: var(--space-2);
+  }
+  main {
+    padding: var(--space-5) var(--space-4);
+  }
+  nav.tabs {
+    gap: 2px;
+  }
+}
+
+.topbar fl-install-pwa {
+  margin-left: 0;
+}
+
+.topbar {
+  gap: 8px;
+}
+.topbar button.profile-trigger[data-variant='ghost'] {
+  border-radius: var(--radius-control);
+}
+.topbar button.profile-trigger[data-variant='ghost']:hover {
+  background: var(--control-hover-bg);
+  border-color: var(--accent);
+}

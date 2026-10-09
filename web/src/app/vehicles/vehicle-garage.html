@@ -5,12 +5,28 @@
   <p role="status">Carregando veículos…</p>
 } @else if (selected(); as vehicle) {
   <div class="actions">
-    <button flButton type="button" (click)="selected.set(null)">Voltar à garagem</button>
-    <button flButton type="button" (click)="removeVehicle(vehicle)" [disabled]="busy()">
-      Excluir veículo
+    <button flButton type="button" (click)="navigate.emit(null)">Voltar à garagem</button>
+    <button
+      size="icon"
+      aria-label="Excluir veículo"
+      title="Excluir veículo"
+      flButton
+      type="button"
+      (click)="removeVehicle(vehicle)"
+      [disabled]="busy()"
+    >
+      <fl-icon name="delete" />
     </button>
-    <button flButton type="button" variant="primary" (click)="startEdit(vehicle)">
-      Editar veículo
+    <button
+      size="icon"
+      aria-label="Editar veículo"
+      title="Editar veículo"
+      flButton
+      type="button"
+      variant="primary"
+      (click)="startEdit(vehicle)"
+    >
+      <fl-icon name="edit" />
     </button>
   </div>
   <section flCard>
@@ -21,8 +37,26 @@
         <dd>
           {{ vehicle.plate || 'Não informada' }}
           @if (vehicle.plate) {
-            <button flButton size="sm" type="button" (click)="copy('plate', vehicle.plate)">
-              Copiar placa
+            <button
+              aria-label="Copiar placa"
+              title="Copiar placa"
+              flButton
+              size="icon"
+              type="button"
+              (click)="copy('plate', vehicle.plate)"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                aria-hidden="true"
+              >
+                <rect x="8" y="8" width="12" height="12" rx="2" />
+                <path d="M16 8V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h4" />
+              </svg>
             </button>
           }
         </dd>
@@ -48,8 +82,26 @@
         <dd>
           <span>{{ vehicle.chassis || 'Não informado' }}</span>
           @if (vehicle.chassis) {
-            <button flButton size="sm" type="button" (click)="copy('chassis', vehicle.chassis)">
-              Copiar chassi
+            <button
+              aria-label="Copiar chassi"
+              title="Copiar chassi"
+              flButton
+              size="icon"
+              type="button"
+              (click)="copy('chassis', vehicle.chassis)"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                aria-hidden="true"
+              >
+                <rect x="8" y="8" width="12" height="12" rx="2" />
+                <path d="M16 8V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h4" />
+              </svg>
             </button>
           }
         </dd>
@@ -59,8 +111,26 @@
         <dd>
           <span>{{ vehicle.renavam || 'Não informado' }}</span>
           @if (vehicle.renavam) {
-            <button flButton size="sm" type="button" (click)="copy('renavam', vehicle.renavam)">
-              Copiar RENAVAM
+            <button
+              aria-label="Copiar RENAVAM"
+              title="Copiar RENAVAM"
+              flButton
+              size="icon"
+              type="button"
+              (click)="copy('renavam', vehicle.renavam)"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                aria-hidden="true"
+              >
+                <rect x="8" y="8" width="12" height="12" rx="2" />
+                <path d="M16 8V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h4" />
+              </svg>
             </button>
           }
         </dd>
@@ -113,21 +183,25 @@
       <p>Adicione o primeiro veículo para começar seu histórico.</p>
     </section>
   }
-  <label
+  <fl-checkbox
     ><input
       type="checkbox"
       [ngModel]="includeArchived()"
       (ngModelChange)="includeArchived.set($event); load()"
     />
-    Incluir veículos vendidos/arquivados</label
+    Incluir veículos vendidos/arquivados</fl-checkbox
   >
   <div class="vehicle-grid">
     @for (vehicle of vehicles(); track vehicle.id) {
-      <fl-vehicle-card
-        [vehicle]="summary(vehicle)"
-        [showMileage]="true"
-        (activate)="open(vehicle)"
-      />
+      <div class="vehicle-tile">
+        <fl-vehicle-card
+          [vehicle]="summary(vehicle)"
+          [showMileage]="true"
+          [showActions]="true"
+          (quick)="quick.set({ vehicle, kind: $event })"
+          (activate)="open(vehicle)"
+        />
+      </div>
     }
   </div>
 }
@@ -145,6 +219,9 @@
           [(ngModel)]="form.name"
           required
           maxlength="120"
+      /></fl-field>
+      <fl-field controlId="vehicle-tag" label="Cor da tag"
+        ><input flInput type="color" id="vehicle-tag" name="tagColor" [(ngModel)]="form.tagColor"
       /></fl-field>
       <fl-field controlId="vehicle-plate" label="Placa (opcional)"
         ><input flInput id="vehicle-plate" name="plate" [(ngModel)]="form.plate" maxlength="32"
@@ -200,10 +277,40 @@
       }
     </fieldset>
   </form>
-  <div flDialogFooter class="actions">
+  <div flDialogFooter class="fl-dialog-actions">
     <button flButton type="button" (click)="editor.close()" [disabled]="busy()">Cancelar</button>
     <button flButton type="submit" form="vehicle-form" variant="primary" [loading]="busy()">
       Salvar veículo
     </button>
   </div>
 </fl-dialog>
+
+@if (quick(); as action) {
+  @if (action.kind === 'fuel') {
+    <fl-fuel
+      [endpoint]="endpoint + '/' + action.vehicle.id"
+      [currency]="currency()"
+      [autoOpen]="true"
+      (changed)="quickDone()"
+      (closed)="quick.set(null)"
+    />
+  }
+  @if (action.kind === 'service') {
+    <fl-maintenance
+      [endpoint]="endpoint + '/' + action.vehicle.id"
+      [currency]="currency()"
+      [autoOpen]="true"
+      (changed)="quickDone()"
+      (closed)="quick.set(null)"
+    />
+  }
+  @if (action.kind === 'expense') {
+    <fl-vehicle-records
+      [endpoint]="endpoint + '/' + action.vehicle.id"
+      [currency]="currency()"
+      [autoOpen]="true"
+      (changed)="quickDone()"
+      (closed)="quick.set(null)"
+    />
+  }
+}

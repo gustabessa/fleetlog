@@ -52,3 +52,51 @@ fieldset {
     grid-template-columns: 1fr;
   }
 }
+
+.actions {
+  justify-content: flex-start;
+  align-items: center;
+  margin: 0 0 var(--space-4);
+}
+.vehicle-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  margin-top: var(--space-5);
+}
+
+dl {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-6);
+}
+dt {
+  margin-bottom: 4px;
+}
+dd {
+  line-height: 1.4;
+  gap: var(--space-2);
+}
+@media (max-width: 700px) {
+  dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 420px) {
+  dl {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vehicle-tile {
+  min-width: 0;
+}
+.quick-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+.quick-actions button {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  padding-inline: 8px;
+}
