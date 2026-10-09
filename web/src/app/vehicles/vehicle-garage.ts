@@ -1,6 +1,7 @@
 import { Component, input, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FlButton, FlCard, FlField, FlInput, FlVehicleCard } from '../ui';
+import { Maintenance } from './maintenance';
 import { Fuel } from './fuel';
 import { Readings } from './readings';
 import { FlDialog } from '../ui/dialog';
@@ -40,6 +41,7 @@ const emptyForm = () => ({
     FlDialog,
     Readings,
     Fuel,
+    Maintenance,
   ],
   templateUrl: './vehicle-garage.html',
   styleUrl: './vehicle-garage.css',

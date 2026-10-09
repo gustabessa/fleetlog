@@ -49,6 +49,7 @@ const columns = `e.id,e.vehicle_id,e.kind,e.entry_date::text,e.title,e.amount::t
 
 func (s *Service) Routes(m *http.ServeMux) {
 	s.routesKind(m, "fuel")
+	s.routesKind(m, "service")
 	base := "/api/garages/{garageID}/vehicles/{vehicleID}/consumption"
 	m.HandleFunc("GET "+base, s.Garage.RequireMember(s.consumption))
 }
@@ -114,6 +115,23 @@ func validate(input *Input, kind string) (json.RawMessage, error) {
 		}
 		input.Title = "Abastecimento"
 		return json.Marshal(f)
+	}
+	if kind == "service" {
+		if input.Fuel != nil {
+			return nil, errors.New("fuel fields not valid for service")
+		}
+		amount, err := money.Parse(input.Amount)
+		if err != nil {
+			return nil, err
+		}
+		input.Amount = money.Round(amount, money.Scale(input.Currency))
+		if _, err = money.Parse(input.Amount); err != nil {
+			return nil, err
+		}
+		if input.Title == "" {
+			input.Title = "Manutenção"
+		}
+		return json.RawMessage(`{"mode":"direct"}`), nil
 	}
 	return nil, errors.New("unsupported entry")
 }

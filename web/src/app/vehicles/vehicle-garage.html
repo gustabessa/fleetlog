@@ -60,6 +60,11 @@
       <p role="status">{{ copied() === 'chassis' ? 'Chassi' : 'RENAVAM' }} copiado.</p>
     }
   </section>
+  <fl-maintenance
+    [endpoint]="endpoint + '/' + vehicle.id"
+    [currency]="currency()"
+    (changed)="open(vehicle); load()"
+  />
   <fl-fuel
     [endpoint]="endpoint + '/' + vehicle.id"
     [currency]="currency()"

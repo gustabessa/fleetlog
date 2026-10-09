@@ -30,7 +30,7 @@ Esta fila organiza os checklists detalhados abaixo em entregas escolhíveis. Ord
 ### P2 — registrar o uso cotidiano
 
 - [x] **T06 — abastecimentos reais.** Formulário no contexto do veículo, data/litros/preço/moeda/km, consulta/edição/exclusão e histórico. Consumo depende de método aprovado; concluir casos de tanque parcial/intervalo incompleto antes de apresentar km/L. Depende de T03–T05.
-- [ ] **T07 — manutenção com total direto.** Registro real sem exigir itens, com edição/consulta/exclusão e integração ao histórico/odômetro. Dependências: T03–T05. Detalhamento/reutilização de itens segue em T08.
+- [x] **T07 — manutenção com total direto.** Registro real sem exigir itens, com edição/consulta/exclusão e integração ao histórico/odômetro. Dependências: T03–T05. Detalhamento/reutilização de itens segue em T08.
 - [ ] **T08 — peças, mão de obra e preços históricos.** Segundo modo de manutenção, referências reutilizáveis e pesquisa/comparação por item. Aprovar descontos, unidades/escopo e moedas diferentes; garantir que detalhamento não duplica total. Depende de T07.
 - [ ] **T09 — imagens reais de veículos.** Cliente S3/RustFS, upload/substituição/remoção, metadados e leitura privada autorizada, com limites/validação. Depende de T02/T03; pode avançar em paralelo à sequência de lançamentos sem bloquear formulários.
 - [ ] **T10 — notas, compra/venda e documentação.** Entregas separáveis: notas livres; dados de aquisição/venda após definição de obrigatoriedade/arquivamento; despesas de impostos/licenciamento/taxas com tipo/moeda. Notas não substituem chassi/RENAVAM. Dados financeiros dependem de T04.
@@ -372,3 +372,10 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Cálculos com big.Rat; total arredondado half-up à unidade da moeda (JPY inteira, demais duas casas). Total e preço unitário informados juntos precisam corresponder. numeric(18,6) guarda valores e moeda por ocorrência.
 - Consumo cheio a cheio inclui parciais intermediários. Primeiro cheio é referência; parciais/intervalos incompletos/distância zero não exibem km/L. Exclusão marca o próximo intervalo incompleto. Histórico financeiro e odômetro/auditoria alterados atomicamente.
 - Go/PostgreSQL e build Angular aprovados; testes de formulário real desktop/mobile aprovados, incluindo persistência/moeda e integração de km. Sem dados privados no cache.
+
+
+## T07 — manutenção com total direto concluída — 2026-10-08
+
+- Migração 007 e API real de manutenções com data preenchida automaticamente, descrição/km opcionais, total e moeda. Itens não são exigidos.
+- Consulta/cadastro/edição/exclusão integrados à tela do veículo. Histórico de gastos mantém moeda própria; remover km opcional remove somente a leitura vinculada, com recálculo e auditoria atômicos.
+- Testes PostgreSQL de criação/arredondamento/edição/remoção de leitura/exclusão aprovados; build Angular e testes Chromium desktop/mobile reais aprovados.
