@@ -27,6 +27,10 @@
       </div>
       <div>
         <dt>Quilometragem inicial</dt>
+        <dd>{{ number(vehicle.initialKm) }} km</dd>
+      </div>
+      <div>
+        <dt>Quilometragem atual</dt>
         <dd>{{ summary(vehicle).km }} km</dd>
       </div>
       <div>
@@ -56,6 +60,10 @@
       <p role="status">{{ copied() === 'chassis' ? 'Chassi' : 'RENAVAM' }} copiado.</p>
     }
   </section>
+  <fl-readings
+    [endpoint]="endpoint + '/' + vehicle.id + '/readings'"
+    (changed)="open(vehicle); load()"
+  />
 } @else {
   <div class="actions">
     <button flButton type="button" variant="primary" (click)="startCreate()">

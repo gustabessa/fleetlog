@@ -38,7 +38,7 @@ test('veículo real persiste, edita identificadores e preserva km inicial', asyn
   await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
   await expect(page.getByText('000CHASSIS', { exact: true })).toBeVisible();
   await expect(page.getByText('000001234', { exact: true })).toBeVisible();
-  await expect(page.getByText('12.345,678 km', { exact: true })).toBeVisible();
+  await expect(page.getByText('12.345,678 km', { exact: true }).first()).toBeVisible();
   await page.evaluate(() =>
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
@@ -65,6 +65,6 @@ test('veículo real persiste, edita identificadores e preserva km inicial', asyn
   await page.reload();
   await page.getByRole('button', { name: new RegExp(name + ' editado') }).click();
   await expect(page.getByText('000000007', { exact: true })).toBeVisible();
-  await expect(page.getByText('12.345,678 km', { exact: true })).toBeVisible();
+  await expect(page.getByText('12.345,678 km', { exact: true }).first()).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

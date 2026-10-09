@@ -25,7 +25,7 @@ Esta fila organiza os checklists detalhados abaixo em entregas escolhíveis. Ord
 - [x] **T02 — garagem base e autorização (2026-10-07).** Migração de garagem/vínculo com usuário; associar primeiro usuário à garagem; disponibilizar consulta de contexto e proteção reutilizável para APIs. Testar isolamento entre garagens. Gestão de familiares permanece separada e exige aprovação das permissões.
 - [x] **T03 — veículos básicos ponta a ponta (2026-10-08).** Campos aprovados: nome/modelo e km inicial obrigatórios; placa, marca, ano, chassi e RENAVAM opcionais; cadastro, listagem, detalhes e edição reais com identificadores próprios (chassi/RENAVAM), km inicial preservado e integração das telas. Placeholder de imagem até T09. Depende de T02; ações de exclusão/arquivamento dependem de definição própria.
 - [x] **T04 — perfil, moeda e preferências (2026-10-08).** Persistir moeda padrão e preferências de tema já previstas; integrar API/UI. Estabelecer representação decimal e moeda por registro para os formulários de preço. Não alterar moedas históricas. Necessário antes dos lançamentos financeiros.
-- [ ] **T05 — odômetro e regras de alteração.** Aprovar cronologia, retroatividade/correção e efeitos de editar/excluir registros; implementar histórico, autoria/origem e leitura atual. Depende de T03; abastecimentos/manutenções usam esta base.
+- [x] **T05 — odômetro e regras de alteração.** Aprovar cronologia, retroatividade/correção e efeitos de editar/excluir registros; implementar histórico, autoria/origem e leitura atual. Depende de T03; abastecimentos/manutenções usam esta base.
 
 ### P2 — registrar o uso cotidiano
 
@@ -356,3 +356,11 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Troca de senha retirada desta entrega pelo usuário; recuperação administrativa não implementada.
 - **TODO — lembretes de manutenção por veículo:** definir painel com serviço, último km/data, intervalo km/meses e antecedência; investigar Web Push gratuito e alternativas e-mail/ferramentas self-hosted. Nova tarefa separada: não configurar homelab nesta rodada. Propostas de valores de intervalos dependem do manual do veículo, sem intervalos universais automáticos.
 - T04: testes Go com PostgreSQL 18.6 e go vet aprovados; teste de perfil desktop/mobile aprovado. Suíte de navegador encontrou overflow no novo botão de perfil mobile; layout corrigido para permitir quebra e limitar nome. Ferramentas apenas em /tmp, sem instalação de serviços.
+
+
+## T05 — odômetro concluído — 2026-10-08
+
+- Migração 005: leituras e auditoria com autor/origem; APIs de leituras avulsas e consulta de auditoria. Origens financeiras são modificadas pelo lançamento correspondente.
+- Data civil preenchida com hoje, editável; km inicial preservado; km atual pela última data/id. Leituras abaixo do inicial ou em queda cronológica são recusadas, inclusive retroativos/edições. Exclusão recalcula leitura atual.
+- Transações bloqueiam o veículo para serializar alterações concorrentes; auditoria registra antes/depois e autor da sessão. Tela real permite cadastrar/editar/excluir leitura e consultar auditoria.
+- Go/PostgreSQL aprovados (cronologia, rollback, recálculo, revogação de vínculo), build Angular aprovado e 4 testes de odômetro/veículos desktop/mobile aprovados.

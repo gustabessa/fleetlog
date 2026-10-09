@@ -1,6 +1,7 @@
 import { Component, input, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FlButton, FlCard, FlField, FlInput, FlVehicleCard } from '../ui';
+import { Readings } from './readings';
 import { FlDialog } from '../ui/dialog';
 import { formatNumber } from '../ui/format';
 
@@ -14,6 +15,7 @@ interface Vehicle {
   chassis: string;
   renavam: string;
   initialKm: string;
+  currentKm: string;
 }
 const emptyForm = () => ({
   name: '',
@@ -27,7 +29,7 @@ const emptyForm = () => ({
 
 @Component({
   selector: 'fl-vehicle-garage',
-  imports: [FormsModule, FlButton, FlCard, FlField, FlInput, FlVehicleCard, FlDialog],
+  imports: [FormsModule, FlButton, FlCard, FlField, FlInput, FlVehicleCard, FlDialog, Readings],
   templateUrl: './vehicle-garage.html',
   styleUrl: './vehicle-garage.css',
 })
@@ -50,7 +52,7 @@ export class VehicleGarage {
   ngOnDestroy() {
     this.requestController.abort();
   }
-  private get endpoint() {
+  get endpoint() {
     return `/api/garages/${this.garageId()}/vehicles`;
   }
   async load() {
@@ -73,13 +75,16 @@ export class VehicleGarage {
       this.loading.set(false);
     }
   }
+  number(value: string) {
+    return formatNumber(Number(value));
+  }
   summary(vehicle: Vehicle) {
     return {
       name: vehicle.name,
       version:
         [vehicle.brand, vehicle.year].filter(Boolean).join(' · ') || 'Informações do veículo',
       plate: vehicle.plate || 'Sem placa informada',
-      km: formatNumber(Number(vehicle.initialKm)),
+      km: formatNumber(Number(vehicle.currentKm ?? vehicle.initialKm)),
       color: 'teal',
     };
   }

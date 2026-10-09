@@ -15,6 +15,7 @@ import (
 	"fleetlog/internal/auth"
 	"fleetlog/internal/garage"
 	"fleetlog/internal/httpserver"
+	"fleetlog/internal/odometer"
 	"fleetlog/internal/vehicle"
 )
 
@@ -53,6 +54,7 @@ func main() {
 	garages := &garage.Service{Auth: authentication}
 	garages.Routes(mux)
 	(&vehicle.Service{Garage: garages}).Routes(mux)
+	(&odometer.Service{Garage: garages}).Routes(mux)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Cache-Control", "no-store")

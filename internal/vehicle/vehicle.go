@@ -25,6 +25,7 @@ type Vehicle struct {
 	Chassis   string `json:"chassis"`
 	Renavam   string `json:"renavam"`
 	InitialKM string `json:"initialKm"`
+	CurrentKM string `json:"currentKm"`
 }
 type Input struct {
 	Name      string       `json:"name"`
@@ -45,7 +46,7 @@ func (s *Service) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT "+base+"/{vehicleID}", s.Garage.RequireCreatorWrite(s.update))
 }
 
-const columns = `id,garage_id,name,plate,brand,model_year,chassis,renavam,initial_km::text`
+const columns = `id,garage_id,name,plate,brand,model_year,chassis,renavam,initial_km::text,COALESCE((SELECT km FROM odometer_readings WHERE vehicle_id=vehicles.id ORDER BY reading_date DESC,id DESC LIMIT 1),initial_km)::text`
 
 var kmPattern = regexp.MustCompile(`^(0|[1-9][0-9]{0,8})(\.[0-9]{1,3})?$`)
 
@@ -91,7 +92,7 @@ func invalid(w http.ResponseWriter, fields map[string]string) {
 }
 func scan(row pgx.Row) (Vehicle, error) {
 	var v Vehicle
-	err := row.Scan(&v.ID, &v.GarageID, &v.Name, &v.Plate, &v.Brand, &v.Year, &v.Chassis, &v.Renavam, &v.InitialKM)
+	err := row.Scan(&v.ID, &v.GarageID, &v.Name, &v.Plate, &v.Brand, &v.Year, &v.Chassis, &v.Renavam, &v.InitialKM, &v.CurrentKM)
 	return v, err
 }
 func vehicleID(w http.ResponseWriter, r *http.Request) (int64, bool) {
