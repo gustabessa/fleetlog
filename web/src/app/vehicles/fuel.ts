@@ -1,7 +1,13 @@
+let nextFormId = 0;
+import { FlTablePager, TablePaging } from '../ui/table-pager';
+import { FlIcon } from '../ui/icon';
+import { FlDialog } from '../ui/dialog';
+import { Confirmation } from '../ui/confirmation';
+import { FlMoneyInput } from '../ui/money-input';
 import { formatMoneyDecimal, formatDecimal, decimalInput } from '../ui/format';
-import { Component, input, output, signal } from '@angular/core';
+import { Component, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { FlButton, FlCard, FlField, FlInput } from '../ui';
+import { FlCheckbox, FlButton, FlCard, FlField, FlInput } from '../ui';
 import { today } from './readings';
 export interface RealEntry {
   id: number;
@@ -27,20 +33,108 @@ const empty = (currency: string) => ({
   incomplete: false,
 });
 @Component({
+  host: { '[class.quick-editor]': 'autoOpen()' },
   selector: 'fl-fuel',
-  imports: [FormsModule, FlButton, FlCard, FlField, FlInput],
+  imports: [
+    FlTablePager,
+    FlIcon,
+    FlDialog,
+    FlMoneyInput,
+    FlCheckbox,
+    FormsModule,
+    FlButton,
+    FlCard,
+    FlField,
+    FlInput,
+  ],
   template: ` <section flCard>
-    <h3>Abastecimentos</h3>
-    @if (error()) {
-      <p role="alert">{{ error() }}</p>
-      <button flButton (click)="load()">Recarregar abastecimentos</button>
-    }
-    @if (loading()) {
-      <p role="status">Carregando abastecimentos…</p>
-    }
-    <button flButton (click)="start()">Registrar abastecimento</button>
-    @if (open()) {
-      <form ngNativeValidate (ngSubmit)="save()">
+      <h3>Abastecimentos</h3>
+      @if (error()) {
+        <p role="alert">{{ error() }}</p>
+        <button flButton (click)="load()">Recarregar abastecimentos</button>
+      }
+      @if (loading()) {
+        <p role="status">Carregando abastecimentos…</p>
+      }
+      <button flButton (click)="start()">Registrar abastecimento</button>
+
+      @if (entries().length) {
+        <div class="record-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Data / combustível</th>
+                <th>Volume / km</th>
+                <th>Valor</th>
+                <th>Consumo</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of pager.slice(entries()); track entry.id) {
+                <tr>
+                  <td>
+                    {{ entry.date
+                    }}<small
+                      >{{ entry.details.fuel }} ·
+                      {{ entry.details.full ? 'Tanque cheio' : 'Parcial' }}</small
+                    ><small>{{ entry.author }}</small>
+                  </td>
+                  <td>
+                    {{ decimal(entry.details.liters) }} L<small
+                      >{{ decimal(entry.km ?? '0') }} km</small
+                    >
+                  </td>
+                  <td class="amount">{{ money(entry.amount, entry.currency) }}</td>
+                  <td>
+                    @if (consumption(entry.id); as c) {
+                      <span>{{ c.kmPerLiter ? c.kmPerLiter + ' km/L' : status(c.status) }}</span>
+                    }
+                  </td>
+                  <td>
+                    <div class="row-actions">
+                      <button
+                        flButton
+                        size="icon"
+                        (click)="edit(entry)"
+                        [disabled]="busy()"
+                        aria-label="Editar abastecimento"
+                        title="Editar abastecimento"
+                      >
+                        <fl-icon name="edit" /></button
+                      ><button
+                        flButton
+                        size="icon"
+                        variant="ghost"
+                        (click)="remove(entry)"
+                        [disabled]="busy()"
+                        aria-label="Excluir abastecimento"
+                        title="Excluir abastecimento"
+                      >
+                        <fl-icon name="delete" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      <fl-table-pager
+        label="Abastecimentos"
+        [total]="entries().length"
+        [page]="pager.current(entries().length)"
+        [size]="pager.size()"
+        (pageChange)="pager.page.set($event)"
+        (sizeChange)="pager.resize($event)"
+      />
+      @if (!loading() && !entries().length) {
+        <p>Nenhum abastecimento registrado.</p>
+      }
+    </section>
+    <fl-dialog #editor size="lg" title="Abastecimento" (closed)="closed.emit()"
+      ><form [id]="formId" ngNativeValidate (ngSubmit)="save()">
         <fieldset [disabled]="busy()">
           <fl-field controlId="fuel-date" label="Data do abastecimento"
             ><input flInput id="fuel-date" name="date" type="date" [(ngModel)]="form.date" required
@@ -61,6 +155,7 @@ const empty = (currency: string) => ({
               name="liters"
               inputmode="decimal"
               [(ngModel)]="form.liters"
+              (ngModelChange)="recalculateFuel()"
               required
               pattern="(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?"
           /></fl-field>
@@ -84,58 +179,50 @@ const empty = (currency: string) => ({
           <fl-field
             controlId="fuel-amount"
             label="Total pago"
-            hint="Informe o total ou o preço por litro. Se informar ambos, eles devem corresponder."
+            hint="Total e preço por litro são calculados entre si conforme os litros informados."
             ><input
               flInput
+              flMoney
+              [currency]="form.currency"
               id="fuel-amount"
               name="amount"
               inputmode="decimal"
               [(ngModel)]="form.amount"
-              pattern="(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?"
+              (ngModelChange)="priceChanged('amount', $event)"
           /></fl-field>
           <fl-field controlId="fuel-unit" label="Preço por litro"
             ><input
               flInput
+              flMoney
+              [currency]="form.currency"
               id="fuel-unit"
               name="unitPrice"
               inputmode="decimal"
               [(ngModel)]="form.unitPrice"
-              pattern="(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?"
+              (ngModelChange)="priceChanged('unitPrice', $event)"
           /></fl-field>
-          <label><input name="full" type="checkbox" [(ngModel)]="form.full" /> Tanque cheio</label>
-          <label
-            ><input name="incomplete" type="checkbox" [(ngModel)]="form.incomplete" /> Houve
-            abastecimento não registrado neste intervalo</label
+          <fl-checkbox
+            ><input name="full" type="checkbox" [(ngModel)]="form.full" /> Tanque cheio</fl-checkbox
           >
-          <button flButton type="submit" [loading]="busy()">Salvar abastecimento</button
-          ><button flButton type="button" (click)="open.set(false)">Cancelar</button>
+          <fl-checkbox
+            ><input name="incomplete" type="checkbox" [(ngModel)]="form.incomplete" /> Houve
+            abastecimento não registrado neste intervalo</fl-checkbox
+          >
         </fieldset>
       </form>
-    }
-    @for (entry of entries(); track entry.id) {
-      <article>
-        <p>
-          {{ entry.date }} · {{ entry.details.fuel }} · {{ decimal(entry.details.liters) }} L ·
-          {{ money(entry.amount, entry.currency) }} · {{ decimal(entry.km ?? '0') }} km
-        </p>
-        <p>{{ entry.details.full ? 'Tanque cheio' : 'Tanque parcial' }} · {{ entry.author }}</p>
-        @if (consumption(entry.id); as c) {
-          <p>
-            {{ status(c.status) }}
-            @if (c.kmPerLiter) {
-              · {{ c.kmPerLiter }} km/L
-            }
-          </p>
-        }
-        <button flButton (click)="edit(entry)" [disabled]="busy()">Editar abastecimento</button
-        ><button flButton (click)="remove(entry)" [disabled]="busy()">Excluir abastecimento</button>
-      </article>
-    }
-    @if (!loading() && !entries().length) {
-      <p>Nenhum abastecimento registrado.</p>
-    }
-  </section>`,
+      <div flDialogFooter class="fl-dialog-actions">
+        <button flButton type="button" (click)="editor.close()" [disabled]="busy()">Cancelar</button
+        ><button flButton variant="primary" type="submit" [attr.form]="formId" [loading]="busy()">
+          Salvar abastecimento
+        </button>
+      </div>
+      <p role="alert" [hidden]="!error()">{{ error() }}</p></fl-dialog
+    >`,
   styles: `
+    :host(.quick-editor) > section {
+      display: none;
+    }
+
     section {
       margin-top: var(--space-5);
     }
@@ -149,12 +236,48 @@ const empty = (currency: string) => ({
       border-top: 1px solid var(--line);
       margin-top: var(--space-4);
     }
-    button {
-      margin: var(--space-2);
-    }
   `,
 })
 export class Fuel {
+  readonly formId = 'fuel-form-' + nextFormId++;
+  readonly pager = new TablePaging();
+  readonly editor = viewChild.required<FlDialog>('editor');
+  readonly autoOpen = input(false);
+  readonly closed = output<void>();
+  ngAfterViewInit() {
+    if (this.autoOpen()) this.start();
+  }
+  private priceBasis: 'amount' | 'unitPrice' = 'amount';
+  priceChanged(field: 'amount' | 'unitPrice', value: string) {
+    this.priceBasis = field;
+    this.form[field] = value;
+    this.recalculateFuel();
+  }
+  recalculateFuel() {
+    const parse = (value: string) => {
+      const m = /^(\d{1,12})(?:\.(\d{0,6}))?$/.exec(value.replace(',', '.'));
+      return m ? BigInt(m[1]) * 1000000n + BigInt((m[2] ?? '').padEnd(6, '0')) : null;
+    };
+    const liters = parse(this.form.liters);
+    const source = parse(this.form[this.priceBasis]);
+    if (liters === null || liters <= 0n || source === null) return;
+    const digits = this.priceBasis === 'amount' ? 6 : this.form.currency === 'JPY' ? 0 : 2;
+    let n: bigint;
+    let d: bigint;
+    if (this.priceBasis === 'amount') {
+      n = source * 1000000n;
+      d = liters;
+    } else {
+      n = source * liters;
+      d = 10n ** BigInt(12 - digits);
+    }
+    const q = (n + d / 2n) / d;
+    const raw = q.toString().padStart(digits + 1, '0');
+    this.form[this.priceBasis === 'amount' ? 'unitPrice' : 'amount'] = digits
+      ? raw.slice(0, -digits) + '.' + raw.slice(-digits)
+      : raw;
+  }
+  readonly confirmation = inject(Confirmation);
   readonly decimal = formatDecimal;
   readonly money = formatMoneyDecimal;
   readonly endpoint = input.required<string>();
@@ -172,13 +295,14 @@ export class Fuel {
   form = empty('BRL');
   editing: number | null = null;
   ngOnInit() {
-    void this.load();
+    if (!this.autoOpen()) void this.load();
   }
   start() {
     this.form = empty(this.currency());
     this.editing = null;
     this.error.set('');
     this.open.set(true);
+    this.editor().show();
   }
   edit(e: RealEntry) {
     this.form = {
@@ -190,9 +314,12 @@ export class Fuel {
       liters: decimalInput(e.details.liters),
       unitPrice: '',
     };
+    this.priceBasis = 'amount';
+    this.recalculateFuel();
     this.editing = e.id;
     this.error.set('');
     this.open.set(true);
+    this.editor().show();
   }
   consumption(id: number) {
     return this.consumptions().find((c) => c.entryId === id);
@@ -234,16 +361,16 @@ export class Fuel {
       km: normalize(f.km),
       fuel: {
         liters: normalize(f.liters),
-        unitPrice: normalize(f.unitPrice),
+        unitPrice: this.priceBasis === 'unitPrice' ? normalize(f.unitPrice) : '',
         fuel: f.fuel,
         full: f.full,
         incomplete: f.incomplete,
       },
     });
   }
-  remove(e: RealEntry) {
+  async remove(e: RealEntry) {
     if (
-      confirm(
+      await this.confirmation.ask(
         'Excluir este abastecimento? O próximo intervalo de consumo será marcado como incompleto.',
       )
     )
@@ -272,6 +399,7 @@ export class Fuel {
       this.open.set(false);
       await this.load();
       this.changed.emit();
+      this.editor().close();
     } catch {
       this.error.set('Não foi possível salvar abastecimento.');
     } finally {

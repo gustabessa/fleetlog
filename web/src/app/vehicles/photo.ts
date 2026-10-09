@@ -1,4 +1,5 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Confirmation } from '../ui/confirmation';
+import { Component, inject, input, output, signal } from '@angular/core';
 import { FlButton, FlCard } from '../ui';
 @Component({
   selector: 'fl-photo',
@@ -44,6 +45,7 @@ import { FlButton, FlCard } from '../ui';
   `,
 })
 export class Photo {
+  readonly confirmation = inject(Confirmation);
   readonly endpoint = input.required<string>();
   readonly initialVersion = input('');
   readonly changed = output<void>();
@@ -93,7 +95,7 @@ export class Photo {
     }
   }
   async remove() {
-    if (this.busy() || !confirm('Remover a foto deste veículo?')) return;
+    if (this.busy() || !(await this.confirmation.ask('Remover a foto deste veículo?'))) return;
     this.busy.set(true);
     try {
       const r = await fetch(this.endpoint(), {

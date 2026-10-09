@@ -1,3 +1,4 @@
+import { FlMoneyInput } from '../ui/money-input';
 import { Component, computed, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FlButton, FlCard, FlField, FlInput, FlDateRange, FlPieChart, FlEntryList } from '../ui';
@@ -20,12 +21,22 @@ interface Result {
 }
 @Component({
   selector: 'fl-real-history',
-  imports: [FormsModule, FlButton, FlCard, FlField, FlInput, FlDateRange, FlPieChart, FlEntryList],
+  imports: [
+    FlMoneyInput,
+    FormsModule,
+    FlButton,
+    FlCard,
+    FlField,
+    FlInput,
+    FlDateRange,
+    FlPieChart,
+    FlEntryList,
+  ],
   template: ` <section flCard>
     <h2>{{ mode() === 'costs' ? 'Custos reais' : 'Histórico da garagem' }}</h2>
     <form ngNativeValidate (ngSubmit)="apply()">
-      <div class="filters">
-        <fl-field controlId="real-query" label="Buscar lançamentos"
+      <div class="filters" [class.history-filters]="mode() === 'history'">
+        <fl-field class="search-field" controlId="real-query" label="Buscar lançamentos"
           ><input flInput id="real-query" name="query" [(ngModel)]="query" maxlength="200"
         /></fl-field>
         <fl-field controlId="real-vehicle" label="Filtrar veículo"
@@ -44,27 +55,27 @@ interface Result {
             }
           </select></fl-field
         >
-        <fl-field controlId="real-currency" label="Filtrar moeda"
-          ><select flInput id="real-currency" name="currency" [(ngModel)]="selectedCurrency">
-            @if (mode() === 'history') {
-              <option value="">Todas as moedas</option>
-            }
-            @for (c of currencies; track c) {
-              <option>{{ c }}</option>
-            }
-          </select></fl-field
-        >
-        <fl-field
-          controlId="real-price"
-          label="Preço aproximado"
-          hint="Faixa inclusiva de ±10%, na moeda selecionada."
+        @if (mode() === 'costs') {
+          <fl-field controlId="real-currency" label="Filtrar moeda"
+            ><select flInput id="real-currency" name="currency" [(ngModel)]="selectedCurrency">
+              @if (mode() === 'history') {
+                <option value="">Todas as moedas</option>
+              }
+              @for (c of currencies; track c) {
+                <option>{{ c }}</option>
+              }
+            </select></fl-field
+          >
+        }
+        <fl-field class="price-field" controlId="real-price" label="Preço aproximado"
           ><input
             flInput
+            flMoney
+            [currency]="selectedCurrency || currency()"
             id="real-price"
             name="price"
             inputmode="decimal"
             [(ngModel)]="price"
-            pattern="(0|[1-9][0-9]{0,11})([.,][0-9]{1,6})?"
         /></fl-field>
         <fl-date-range
           id="real-range"
@@ -74,8 +85,12 @@ interface Result {
           (rangeChange)="setRange($event)"
         />
       </div>
-      <button flButton type="submit" [loading]="loading()">Aplicar filtros</button
-      ><button flButton type="button" (click)="clear()">Limpar filtros</button>
+      <div class="filter-actions">
+        <button flButton variant="primary" type="submit" [loading]="loading()">
+          Aplicar filtros</button
+        ><button flButton variant="ghost" type="button" (click)="clear()">Limpar filtros</button
+        ><span>Preço: faixa de ±10% em {{ selectedCurrency || currency() }}.</span>
+      </div>
     </form>
     @if (error()) {
       <p role="alert">{{ error() }}</p>
@@ -85,84 +100,182 @@ interface Result {
       <p role="status">Carregando lançamentos…</p>
     }
     @if (data(); as d) {
-      <div class="totals">
-        @for (total of d.totals; track total.currency) {
+      @if (d.total === 0 && (mode() !== 'costs' || !chartData()?.total)) {
+        <div class="empty-state">
+          <span class="empty-icon" aria-hidden="true">{{ mode() === 'costs' ? '◔' : '≡' }}</span>
+          <h3>
+            {{ mode() === 'costs' ? 'Sem gastos neste período' : 'Nenhum lançamento encontrado' }}
+          </h3>
           <p>
-            Total em {{ total.currency }}:
-            <strong>{{ money(total.amount, total.currency) }}</strong>
-          </p>
-        }
-      </div>
-      @if (mode() === 'costs') {
-        <h3>Gastos por tipo</h3>
-        <fl-pie-chart
-          [categories]="categories()"
-          [selected]="kind"
-          (choose)="kind = kind === $event ? '' : $event; apply()"
-        />
-        <h3>Evolução mensal</h3>
-        @for (row of d.byMonth; track row.currency + row.month) {
-          <p>{{ row.month }} · {{ money(row.amount, row.currency) }}</p>
-          <meter
-            [value]="ratio(row.amount, d.totals, row.currency)"
-            min="0"
-            max="1"
-            [attr.aria-label]="row.month + ' ' + row.currency"
-          ></meter>
-        }
-        <h3>Gastos por veículo</h3>
-        @for (row of d.byVehicle; track row.currency + row.vehicleId) {
-          <p>{{ row.vehicle }} · {{ money(row.amount, row.currency) }}</p>
-          <meter
-            [value]="ratio(row.amount, d.totals, row.currency)"
-            min="0"
-            max="1"
-            [attr.aria-label]="row.vehicle + ' ' + row.currency"
-          ></meter>
-        }
-        <h3>Distância observada</h3>
-        @for (row of d.distances; track row.vehicleId) {
-          <p>
-            {{ row.vehicle }}:
             {{
-              row.distance === null
-                ? 'Dados insuficientes: são necessárias duas leituras no período'
-                : number(row.distance) + ' km entre leituras do período'
+              mode() === 'costs'
+                ? 'Os custos aparecem aqui quando você registra abastecimentos, manutenções ou despesas.'
+                : 'Registre um lançamento no veículo ou ajuste os filtros para consultar seu histórico.'
             }}
           </p>
+        </div>
+      } @else {
+        <div class="totals">
+          @for (total of d.totals; track total.currency) {
+            <p>
+              Total em {{ total.currency }}:
+              <strong>{{ money(total.amount, total.currency) }}</strong>
+            </p>
+          }
+        </div>
+        @if (mode() === 'costs') {
+          @if (chartData(); as chart) {
+            <h3>Gastos por tipo</h3>
+            <fl-pie-chart
+              [categories]="categories()"
+              [selected]="kind"
+              (choose)="kind = kind === $event ? '' : $event; apply()"
+            />
+            <h3>Evolução mensal</h3>
+            @for (row of chart.byMonth; track row.currency + row.month) {
+              <p>{{ row.month }} · {{ money(row.amount, row.currency) }}</p>
+              <meter
+                [value]="ratio(row.amount, chart.totals, row.currency)"
+                min="0"
+                max="1"
+                [attr.aria-label]="row.month + ' ' + row.currency"
+              ></meter>
+            }
+            <h3>Gastos por veículo</h3>
+            @for (row of chart.byVehicle; track row.currency + row.vehicleId) {
+              <p>{{ row.vehicle }} · {{ money(row.amount, row.currency) }}</p>
+              <meter
+                [value]="ratio(row.amount, chart.totals, row.currency)"
+                min="0"
+                max="1"
+                [attr.aria-label]="row.vehicle + ' ' + row.currency"
+              ></meter>
+            }
+            <h3>Distância observada</h3>
+            @for (row of chart.distances; track row.vehicleId) {
+              <p>
+                {{ row.vehicle }}:
+                {{
+                  row.distance === null
+                    ? 'Dados insuficientes: são necessárias duas leituras no período'
+                    : number(row.distance) + ' km entre leituras do período'
+                }}
+              </p>
+            }
+          }
         }
+        <fl-entry-list [entries]="list()" [vehicles]="tags()" />
+        <div class="pagination">
+          <p role="status">{{ d.total }} lançamentos</p>
+          @if (pages() > 1) {
+            <span>Página {{ page }} de {{ pages() }}</span>
+            <button flButton (click)="page = page - 1; load()" [disabled]="loading() || page <= 1">
+              Página anterior</button
+            ><button
+              flButton
+              (click)="page = page + 1; load()"
+              [disabled]="loading() || page >= pages()"
+            >
+              Próxima página
+            </button>
+          }
+        </div>
       }
-      <fl-entry-list [entries]="list()" [vehicles]="tags()" />
-      <p role="status">{{ d.total }} lançamentos · Página {{ page }} de {{ pages() }}</p>
-      <button flButton (click)="page = page - 1; load()" [disabled]="loading() || page <= 1">
-        Página anterior</button
-      ><button flButton (click)="page = page + 1; load()" [disabled]="loading() || page >= pages()">
-        Próxima página
-      </button>
     }
   </section>`,
   styles: `
     .filters {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: var(--space-3);
       margin-bottom: var(--space-4);
     }
-    button {
-      margin: var(--space-2);
+    section > h2 {
+      margin-top: 0;
+      margin-bottom: var(--space-5);
     }
-    meter {
-      width: 100%;
-      height: 1rem;
-      accent-color: var(--accent);
+    fl-date-range {
+      grid-column: span 2;
     }
-    .totals {
+    .history-filters {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .history-filters fl-date-range {
+      grid-column: auto;
+    }
+    .search-field {
+      grid-column: span 2;
+    }
+    .filter-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: var(--space-5);
+      align-items: center;
+      gap: var(--space-3);
+      padding-bottom: var(--space-5);
+      border-bottom: 1px solid var(--line);
     }
-    h3 {
-      margin-top: var(--space-6);
+    .filter-actions span {
+      font: var(--font-caption);
+      color: var(--muted);
+    }
+    .empty-state {
+      padding: var(--space-10) var(--space-5);
+      text-align: center;
+      max-width: 480px;
+      margin: auto;
+    }
+    .empty-state h3 {
+      margin: var(--space-4) 0 var(--space-2);
+    }
+    .empty-state p {
+      margin: 0;
+    }
+    .empty-icon {
+      display: inline-grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: var(--soft);
+      color: var(--accent);
+      font-size: 28px;
+    }
+    .pagination {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-3);
+      margin-top: var(--space-5);
+    }
+    .pagination p {
+      margin-right: auto;
+    }
+    @media (max-width: 700px) {
+      .filters,
+      .history-filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .search-field {
+        grid-column: span 2;
+      }
+      fl-date-range,
+      .history-filters fl-date-range {
+        grid-column: span 2;
+      }
+      .filter-actions span {
+        flex-basis: 100%;
+      }
+    }
+    @media (max-width: 420px) {
+      .filters,
+      .history-filters {
+        grid-template-columns: 1fr;
+      }
+      .search-field,
+      fl-date-range,
+      .history-filters fl-date-range {
+        grid-column: auto;
+      }
     }
   `,
 })
@@ -172,8 +285,9 @@ export class RealHistory {
   readonly mode = input<'history' | 'costs'>('history');
   readonly error = signal('');
   readonly loading = signal(false);
+  readonly chartData = signal<Result | null>(null);
   readonly data = signal<Result | null>(null);
-  readonly vehicles = signal<{ id: number; name: string; plate: string }[]>([]);
+  readonly vehicles = signal<{ id: number; name: string; plate: string; tagColor?: string }[]>([]);
   readonly currencies = ['BRL', 'USD', 'EUR', 'GBP', 'ARS', 'CAD', 'JPY', 'CHF'];
   readonly kinds = [
     { id: 'fuel', name: 'Abastecimentos' },
@@ -195,7 +309,11 @@ export class RealHistory {
   number = (value: string) => formatNumber(Number(value));
   readonly pages = computed(() => Math.max(1, Math.ceil((this.data()?.total ?? 0) / 25)));
   readonly tags = computed(() =>
-    this.vehicles().map((v) => ({ name: v.name, plate: v.plate, tagColor: '#087e83' })),
+    this.vehicles().map((v) => ({
+      name: v.name,
+      plate: v.plate,
+      tagColor: v.tagColor ?? '#087e83',
+    })),
   );
   readonly list = computed(
     () =>
@@ -214,7 +332,7 @@ export class RealHistory {
       })) ?? [],
   );
   readonly categories = computed(() => {
-    const d = this.data();
+    const d = this.chartData() ?? this.data();
     if (!d) return [];
     const rows = d.byType.filter((r) => r.currency === this.selectedCurrency);
     const total = rows.reduce((n, r) => n + Number(r.amount), 0);
@@ -275,9 +393,12 @@ export class RealHistory {
     this.request = request;
     this.error.set('');
     this.loading.set(true);
-    if ((this.from && this.to && this.from > this.to) || (this.price && !this.selectedCurrency)) {
+    if (
+      (this.from && this.to && this.from > this.to) ||
+      (this.mode() === 'costs' && this.price && !this.selectedCurrency)
+    ) {
       this.error.set(
-        this.price && !this.selectedCurrency
+        this.mode() === 'costs' && this.price && !this.selectedCurrency
           ? 'Selecione uma moeda para filtrar preço.'
           : 'O início do período deve vir antes do fim.',
       );
@@ -291,7 +412,8 @@ export class RealHistory {
         q: this.query,
         vehicleId: this.vehicleId,
         kind: this.kind,
-        currency: this.selectedCurrency,
+        currency:
+          this.mode() === 'costs' || this.price ? this.selectedCurrency || this.currency() : '',
         from: this.from,
         to: this.to,
         price: this.price.replace(',', '.'),
@@ -309,6 +431,17 @@ export class RealHistory {
       if (this.request !== request) return;
       this.vehicles.set(vehicles);
       this.data.set(data);
+      if (this.mode() === 'costs') {
+        const chartQuery = new URLSearchParams(query);
+        chartQuery.set('kind', '');
+        const response = await fetch(base + '/history?' + chartQuery, {
+          cache: 'no-store',
+          signal: request.signal,
+        });
+        if (!response.ok) throw Error();
+        const chart = await response.json();
+        if (this.request === request) this.chartData.set(chart);
+      } else this.chartData.set(null);
     } catch {
       if (!request.signal.aborted) {
         this.error.set(

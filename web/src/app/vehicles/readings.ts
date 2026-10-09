@@ -1,5 +1,8 @@
+import { FlTablePager, TablePaging } from '../ui/table-pager';
+import { FlIcon } from '../ui/icon';
+import { Confirmation } from '../ui/confirmation';
 import { formatDecimal, decimalInput } from '../ui/format';
-import { Component, input, output, signal } from '@angular/core';
+import { Component, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FlButton, FlCard, FlField, FlInput } from '../ui';
 export const today = () => {
@@ -15,7 +18,7 @@ interface Reading {
 }
 @Component({
   selector: 'fl-readings',
-  imports: [FormsModule, FlButton, FlCard, FlField, FlInput],
+  imports: [FlTablePager, FlIcon, FormsModule, FlButton, FlCard, FlField, FlInput],
   template: `<section flCard>
     <h3>Odômetro</h3>
     @if (error()) {
@@ -48,16 +51,62 @@ interface Reading {
         }
       </fieldset>
     </form>
-    @for (reading of readings(); track reading.id) {
-      <p>
-        {{ dateLabel(reading) }} · {{ decimal(reading.km) }} km · {{ origin(reading.origin) }} ·
-        {{ reading.author }}
-      </p>
-      @if (reading.origin === 'manual') {
-        <button flButton (click)="edit(reading)" [disabled]="busy()">Editar leitura</button
-        ><button flButton (click)="remove(reading)" [disabled]="busy()">Excluir leitura</button>
-      }
-    }
+    <div class="record-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Km</th>
+            <th>Origem / autor</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (reading of pager.slice(readings()); track reading.id) {
+            <tr>
+              <td>{{ dateLabel(reading) }}</td>
+              <td>{{ decimal(reading.km) }} km</td>
+              <td>
+                {{ origin(reading.origin) }}<small>{{ reading.author }}</small>
+              </td>
+              <td>
+                @if (reading.origin === 'manual') {
+                  <div class="row-actions">
+                    <button
+                      flButton
+                      size="icon"
+                      aria-label="Editar leitura"
+                      title="Editar leitura"
+                      (click)="edit(reading)"
+                      [disabled]="busy()"
+                    >
+                      <fl-icon name="edit" /></button
+                    ><button
+                      flButton
+                      size="icon"
+                      aria-label="Excluir leitura"
+                      title="Excluir leitura"
+                      (click)="remove(reading)"
+                      [disabled]="busy()"
+                    >
+                      <fl-icon name="delete" />
+                    </button>
+                  </div>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <fl-table-pager
+      label="Odômetro"
+      [total]="readings().length"
+      [page]="pager.current(readings().length)"
+      [size]="pager.size()"
+      (pageChange)="pager.page.set($event)"
+      (sizeChange)="pager.resize($event)"
+    />
     @if (!loading() && readings().length <= 1) {
       <p>Nenhuma leitura adicional. A quilometragem inicial está preservada.</p>
     }
@@ -83,11 +132,13 @@ interface Reading {
       margin-top: var(--space-5);
     }
     button {
-      margin: var(--space-2);
+      margin: 0;
     }
   `,
 })
 export class Readings {
+  readonly pager = new TablePaging();
+  readonly confirmation = inject(Confirmation);
   readonly decimal = formatDecimal;
   readonly revision = input(0);
   readonly endpoint = input.required<string>();
@@ -169,8 +220,12 @@ export class Readings {
       km: this.km.replace(',', '.'),
     });
   }
-  remove(reading: Reading) {
-    if (confirm('Excluir esta leitura? O km atual será recalculado e a auditoria será preservada.'))
+  async remove(reading: Reading) {
+    if (
+      await this.confirmation.ask(
+        'Excluir esta leitura? O km atual será recalculado e a auditoria será preservada.',
+      )
+    )
       void this.mutate('DELETE', reading.id, {});
   }
   private async mutate(method: string, id: number | null, body: object) {
