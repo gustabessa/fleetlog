@@ -15,7 +15,8 @@
           "/*.js",
           "/startup.css",
           "/startup-theme.js",
-          "/logo.svg"
+          "/logo.svg",
+          "/icons/fleetlog-v2-*.png"
         ]
       }
     },
@@ -24,9 +25,7 @@
       "installMode": "lazy",
       "updateMode": "prefetch",
       "resources": {
-        "files": [
-          "/icons/*.png"
-        ]
+        "files": ["/icons/*.png"]
       }
     }
   ],

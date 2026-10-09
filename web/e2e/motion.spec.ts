@@ -69,7 +69,7 @@ test('redução de movimento desliga animações da splash', async ({ page }) =>
   });
   try {
     await page.goto('/');
-    await expect(page.locator('fl-startup')).toBeVisible();
+    await expect(page.locator('fl-startup .startup-screen')).toBeVisible();
     expect(
       await page
         .locator('fl-startup .startup-screen')

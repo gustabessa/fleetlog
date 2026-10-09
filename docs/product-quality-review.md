@@ -109,3 +109,25 @@ o teste de transição usava o nome anterior da animação e foi corrigido para
 verificar Histórico e Custos separadamente. As quatro verificações de animação,
 cor da logo e redução de movimento passaram na repetição (66 cenários únicos
 validados no conjunto). Nenhuma validação de deploy/homelab foi executada.
+
+## Correção da abertura PWA e recarga de rota interna
+
+- O `<base href="/">` agora precede os assets iniciais. Antes, recarregar uma
+  rota como `/garage/1/vehicles` fazia CSS/JS da splash serem buscados no caminho
+  da rota, deixando a imagem sem tamanho/estilo na primeira renderização.
+- A logo inicial tem dimensões explícitas, e a splash cobre a viewport sem
+  deslocar cabeçalho/conteúdo. Carregamentos rápidos não exibem a animação de
+  entrada antes de 180 ms; redução de movimento continua respeitada.
+- O manifest mantém identidade `/`, usa fundo padrão petróleo e ícones
+  versionados `fleetlog-v2-*`, incluídos no prefetch do shell. Também há
+  apple-touch-icon apontando para a nova imagem.
+- O navegador/SO cria a splash nativa a partir do manifest; ela usa a identidade
+  padrão. A splash HTML usa o tema salvo. Uma instalação antiga pode conservar
+  o ícone até o SO atualizar seus metadados; reinstalar renova essa identidade.
+  Não foi validada uma instalação física Android/iOS nesta rodada.
+
+Referência: https://web.dev/learn/pwa/web-app-manifest
+
+Validação local: build de produção, 22 verificações gerais de acesso/PWA/
+startup e quatro verificações de movimento após adaptar o teste ao overlay
+fixo (24 cenários únicos desktop/mobile validados).
