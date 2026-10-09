@@ -33,7 +33,7 @@ Esta fila organiza os checklists detalhados abaixo em entregas escolhíveis. Ord
 - [x] **T07 — manutenção com total direto.** Registro real sem exigir itens, com edição/consulta/exclusão e integração ao histórico/odômetro. Dependências: T03–T05. Detalhamento/reutilização de itens segue em T08.
 - [x] **T08 — peças, mão de obra e preços históricos.** Segundo modo de manutenção, referências reutilizáveis e pesquisa/comparação por item. Aprovar descontos, unidades/escopo e moedas diferentes; garantir que detalhamento não duplica total. Depende de T07.
 - [x] **T09 — imagens reais de veículos.** Cliente S3/RustFS, upload/substituição/remoção, metadados e leitura privada autorizada, com limites/validação. Depende de T02/T03; pode avançar em paralelo à sequência de lançamentos sem bloquear formulários.
-- [ ] **T10 — notas, compra/venda e documentação.** Entregas separáveis: notas livres; dados de aquisição/venda após definição de obrigatoriedade/arquivamento; despesas de impostos/licenciamento/taxas com tipo/moeda. Notas não substituem chassi/RENAVAM. Dados financeiros dependem de T04.
+- [x] **T10 — notas, compra/venda e documentação.** Entregas separáveis: notas livres; dados de aquisição/venda após definição de obrigatoriedade/arquivamento; despesas de impostos/licenciamento/taxas com tipo/moeda. Notas não substituem chassi/RENAVAM. Dados financeiros dependem de T04.
 
 ### P3 — consolidar histórico, análises e acesso familiar
 
@@ -396,3 +396,12 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - Reserva persistida antes de upload evita objetos sem rastreabilidade. Falhas mantêm foto anterior e fila para nova tentativa; reservas antigas são limpas após uma hora, remoções a cada minuto/reinício. Nenhuma URL pública/cache de imagem privada.
 - Build Angular/go vet/suíte Go com PostgreSQL aprovados. Testes do SDK com servidor S3 de protocolo exercitam upload/leitura/substituição/falhas/limpeza/isolamento; testes Chromium desktop/mobile de fotos reais pela API/banco aprovados.
 - Validação de versão concreta RustFS/homelab permanece externa e fora do escopo pedido. O servidor S3 de navegador é fixture descartável, não prova de compatibilidade de versão RustFS.
+
+
+## T10 — informações e despesas concluídas — 2026-10-08
+
+- Migração 010 e APIs de múltiplas anotações textuais (até 20 mil caracteres), consulta/edição/exclusão com autoria e isolamento; identificadores permanecem campos separados.
+- Compra/venda opcionais com data/valor/moeda e proprietários opcionais; venda arquiva e preserva histórico, correção/remoção de venda restaura à lista ativa. Mudanças de compra/venda auditadas. Listagem oferece incluir vendidos/arquivados.
+- Veículo sem histórico pode ser excluído; existência de notas, lançamentos, leituras/auditoria ou compra/venda bloqueia exclusão. Foto removida passa pela fila persistida de limpeza.
+- Despesas de documentação (IPVA/licenciamento/transferência/taxas/outros), seguro e outros: cadastro/consulta/edição/exclusão reais com moeda própria. Compra/venda ficam como informações patrimoniais; gráficos operacionais usam lançamentos de gastos, sem somar novamente detalhamento de manutenção.
+- Atualização de dados após salvar não desmonta os demais formulários do veículo. Build Angular e suíte Go/PostgreSQL aprovados; 6 testes Chromium desktop/mobile de notas/venda/despesas/fotos/odômetro aprovados.

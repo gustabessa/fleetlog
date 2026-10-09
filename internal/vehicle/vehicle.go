@@ -27,6 +27,7 @@ type Vehicle struct {
 	InitialKM    string `json:"initialKm"`
 	CurrentKM    string `json:"currentKm"`
 	ImageVersion string `json:"imageVersion"`
+	Archived     bool   `json:"archived"`
 }
 type Input struct {
 	Name      string       `json:"name"`
@@ -40,6 +41,7 @@ type Input struct {
 type Service struct{ Garage *garage.Service }
 
 func (s *Service) Routes(mux *http.ServeMux) {
+	s.recordRoutes(mux)
 	base := "/api/garages/{garageID}/vehicles"
 	mux.HandleFunc("GET "+base, s.Garage.RequireMember(s.list))
 	mux.HandleFunc("GET "+base+"/{vehicleID}", s.Garage.RequireMember(s.detail))
@@ -47,7 +49,7 @@ func (s *Service) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT "+base+"/{vehicleID}", s.Garage.RequireCreatorWrite(s.update))
 }
 
-const columns = `id,garage_id,name,plate,brand,model_year,chassis,renavam,initial_km::text,COALESCE((SELECT km FROM odometer_readings WHERE vehicle_id=vehicles.id ORDER BY reading_date DESC,id DESC LIMIT 1),initial_km)::text,COALESCE((SELECT object_key FROM vehicle_photos WHERE vehicle_id=vehicles.id),'')`
+const columns = `id,garage_id,name,plate,brand,model_year,chassis,renavam,initial_km::text,COALESCE((SELECT km FROM odometer_readings WHERE vehicle_id=vehicles.id ORDER BY reading_date DESC,id DESC LIMIT 1),initial_km)::text,COALESCE((SELECT object_key FROM vehicle_photos WHERE vehicle_id=vehicles.id),''),archived`
 
 var kmPattern = regexp.MustCompile(`^(0|[1-9][0-9]{0,8})(\.[0-9]{1,3})?$`)
 
@@ -93,7 +95,7 @@ func invalid(w http.ResponseWriter, fields map[string]string) {
 }
 func scan(row pgx.Row) (Vehicle, error) {
 	var v Vehicle
-	err := row.Scan(&v.ID, &v.GarageID, &v.Name, &v.Plate, &v.Brand, &v.Year, &v.Chassis, &v.Renavam, &v.InitialKM, &v.CurrentKM, &v.ImageVersion)
+	err := row.Scan(&v.ID, &v.GarageID, &v.Name, &v.Plate, &v.Brand, &v.Year, &v.Chassis, &v.Renavam, &v.InitialKM, &v.CurrentKM, &v.ImageVersion, &v.Archived)
 	return v, err
 }
 func vehicleID(w http.ResponseWriter, r *http.Request) (int64, bool) {
@@ -117,7 +119,7 @@ func result(w http.ResponseWriter, v Vehicle, err error, status int) {
 }
 func (s *Service) list(w http.ResponseWriter, r *http.Request) {
 	g, _ := garage.FromContext(r.Context())
-	rows, err := s.Garage.Auth.DB.Query(r.Context(), `SELECT `+columns+` FROM vehicles WHERE garage_id=$1 ORDER BY id`, g.ID)
+	rows, err := s.Garage.Auth.DB.Query(r.Context(), `SELECT `+columns+` FROM vehicles WHERE garage_id=$1 AND (NOT archived OR $2) ORDER BY id`, g.ID, r.URL.Query().Get("includeArchived") == "true")
 	if err != nil {
 		reply(w, 503, map[string]string{"error": "vehicle unavailable"})
 		return

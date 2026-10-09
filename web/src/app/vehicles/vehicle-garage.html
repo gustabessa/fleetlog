@@ -6,6 +6,9 @@
 } @else if (selected(); as vehicle) {
   <div class="actions">
     <button flButton type="button" (click)="selected.set(null)">Voltar à garagem</button>
+    <button flButton type="button" (click)="removeVehicle(vehicle)" [disabled]="busy()">
+      Excluir veículo
+    </button>
     <button flButton type="button" variant="primary" (click)="startEdit(vehicle)">
       Editar veículo
     </button>
@@ -60,24 +63,29 @@
       <p role="status">{{ copied() === 'chassis' ? 'Chassi' : 'RENAVAM' }} copiado.</p>
     }
   </section>
+  <fl-vehicle-records
+    [endpoint]="endpoint + '/' + vehicle.id"
+    [currency]="currency()"
+    (changed)="refreshSelected()"
+  />
   <fl-photo
     [endpoint]="endpoint + '/' + vehicle.id + '/image'"
     [initialVersion]="vehicle.imageVersion"
-    (changed)="open(vehicle); load()"
+    (changed)="refreshSelected()"
   />
   <fl-maintenance
     [endpoint]="endpoint + '/' + vehicle.id"
     [currency]="currency()"
-    (changed)="open(vehicle); load()"
+    (changed)="refreshSelected()"
   />
   <fl-fuel
     [endpoint]="endpoint + '/' + vehicle.id"
     [currency]="currency()"
-    (changed)="open(vehicle); load()"
+    (changed)="refreshSelected()"
   />
   <fl-readings
     [endpoint]="endpoint + '/' + vehicle.id + '/readings'"
-    (changed)="open(vehicle); load()"
+    (changed)="refreshSelected()"
   />
 } @else {
   <div class="actions">
@@ -94,6 +102,14 @@
       <p>Adicione o primeiro veículo para começar seu histórico.</p>
     </section>
   }
+  <label
+    ><input
+      type="checkbox"
+      [ngModel]="includeArchived()"
+      (ngModelChange)="includeArchived.set($event); load()"
+    />
+    Incluir veículos vendidos/arquivados</label
+  >
   <div class="vehicle-grid">
     @for (vehicle of vehicles(); track vehicle.id) {
       <fl-vehicle-card

@@ -1,6 +1,7 @@
 import { Component, input, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FlButton, FlCard, FlField, FlInput, FlVehicleCard } from '../ui';
+import { VehicleRecords } from './records';
 import { Photo } from './photo';
 import { Maintenance } from './maintenance';
 import { Fuel } from './fuel';
@@ -20,6 +21,7 @@ interface Vehicle {
   initialKm: string;
   currentKm: string;
   imageVersion: string;
+  archived: boolean;
 }
 const emptyForm = () => ({
   name: '',
@@ -45,6 +47,7 @@ const emptyForm = () => ({
     Fuel,
     Maintenance,
     Photo,
+    VehicleRecords,
   ],
   templateUrl: './vehicle-garage.html',
   styleUrl: './vehicle-garage.css',
@@ -52,6 +55,7 @@ const emptyForm = () => ({
 export class VehicleGarage {
   readonly currency = input('BRL');
   readonly garageId = input.required<number>();
+  readonly includeArchived = signal(false);
   readonly vehicles = signal<Vehicle[]>([]);
   readonly selected = signal<Vehicle | null>(null);
   readonly loading = signal(true);
@@ -76,10 +80,13 @@ export class VehicleGarage {
     this.loading.set(true);
     this.error.set('');
     try {
-      const response = await fetch(this.endpoint, {
-        cache: 'no-store',
-        signal: this.requestController.signal,
-      });
+      const response = await fetch(
+        this.endpoint + (this.includeArchived() ? '?includeArchived=true' : ''),
+        {
+          cache: 'no-store',
+          signal: this.requestController.signal,
+        },
+      );
       if (!response.ok) {
         this.error.set('Não foi possível carregar os veículos.');
         return;
@@ -99,7 +106,9 @@ export class VehicleGarage {
     return {
       name: vehicle.name,
       version:
-        [vehicle.brand, vehicle.year].filter(Boolean).join(' · ') || 'Informações do veículo',
+        [vehicle.brand, vehicle.year, vehicle.archived ? 'Vendido · Arquivado' : '']
+          .filter(Boolean)
+          .join(' · ') || 'Informações do veículo',
       plate: vehicle.plate || 'Sem placa informada',
       km: formatNumber(Number(vehicle.currentKm ?? vehicle.initialKm)),
       color: 'teal',
@@ -124,6 +133,28 @@ export class VehicleGarage {
     } catch {
       if (!this.requestController.signal.aborted)
         this.error.set('Não foi possível abrir o veículo.');
+    }
+  }
+  async refreshSelected() {
+    const vehicle = this.selected();
+    if (!vehicle) return;
+    try {
+      const [detail, list] = await Promise.all([
+        fetch(`${this.endpoint}/${vehicle.id}`, {
+          cache: 'no-store',
+          signal: this.requestController.signal,
+        }),
+        fetch(this.endpoint + (this.includeArchived() ? '?includeArchived=true' : ''), {
+          cache: 'no-store',
+          signal: this.requestController.signal,
+        }),
+      ]);
+      if (!detail.ok || !list.ok) throw Error();
+      this.selected.set(await detail.json());
+      this.vehicles.set(await list.json());
+    } catch {
+      if (!this.requestController.signal.aborted)
+        this.error.set('Não foi possível atualizar os dados do veículo.');
     }
   }
   startCreate() {
@@ -187,6 +218,31 @@ export class VehicleGarage {
     } catch {
       if (!this.requestController.signal.aborted)
         this.formError.set('Não foi possível salvar. Tente novamente.');
+    } finally {
+      this.busy.set(false);
+    }
+  }
+  async removeVehicle(vehicle: Vehicle) {
+    if (this.busy() || !confirm('Excluir este veículo sem histórico?')) return;
+    this.busy.set(true);
+    try {
+      const r = await fetch(`${this.endpoint}/${vehicle.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      if (!r.ok) {
+        this.error.set(
+          r.status === 409
+            ? 'Veículos com histórico não podem ser excluídos.'
+            : 'Não foi possível excluir veículo.',
+        );
+        return;
+      }
+      this.selected.set(null);
+      await this.load();
+    } catch {
+      this.error.set('Não foi possível excluir veículo.');
     } finally {
       this.busy.set(false);
     }

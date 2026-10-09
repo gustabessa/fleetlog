@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"math/big"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -23,7 +24,12 @@ type Fuel struct {
 	Full       bool   `json:"full"`
 	Incomplete bool   `json:"incomplete"`
 }
+type Expense struct {
+	Category string `json:"category"`
+	Subtype  string `json:"subtype"`
+}
 type Input struct {
+	Expense  *Expense     `json:"expense"`
 	Date     string       `json:"date"`
 	Title    string       `json:"title"`
 	Amount   string       `json:"amount"`
@@ -51,6 +57,7 @@ const columns = `e.id,e.vehicle_id,e.kind,e.entry_date::text,e.title,e.amount::t
 func (s *Service) Routes(m *http.ServeMux) {
 	s.routesKind(m, "fuel")
 	s.routesKind(m, "service")
+	s.routesKind(m, "expense")
 	s.itemRoutes(m)
 	base := "/api/garages/{garageID}/vehicles/{vehicleID}/consumption"
 	m.HandleFunc("GET "+base, s.Garage.RequireMember(s.consumption))
@@ -123,6 +130,34 @@ func validate(input *Input, kind string) (json.RawMessage, error) {
 			return nil, errors.New("fuel fields not valid for service")
 		}
 		return maintenanceDetails(input)
+	}
+	if kind == "expense" {
+		if input.Fuel != nil || input.Service != nil || input.KM != nil || input.Expense == nil {
+			return nil, errors.New("invalid expense fields")
+		}
+		e := input.Expense
+		if e.Category != "documentation" && e.Category != "insurance" && e.Category != "other" {
+			return nil, errors.New("invalid category")
+		}
+		if e.Category == "documentation" {
+			if !slices.Contains([]string{"ipva", "licensing", "transfer", "fees", "other"}, e.Subtype) {
+				return nil, errors.New("invalid documentation subtype")
+			}
+		} else if e.Subtype != "" {
+			return nil, errors.New("subtype only for documentation")
+		}
+		value, err := money.Parse(input.Amount)
+		if err != nil {
+			return nil, err
+		}
+		input.Amount = money.Round(value, money.Scale(input.Currency))
+		if _, err = money.Parse(input.Amount); err != nil {
+			return nil, err
+		}
+		if input.Title == "" {
+			input.Title = map[string]string{"documentation": "Documentação", "insurance": "Seguro", "other": "Outra despesa"}[e.Category]
+		}
+		return json.Marshal(e)
 	}
 	return nil, errors.New("unsupported entry")
 }
