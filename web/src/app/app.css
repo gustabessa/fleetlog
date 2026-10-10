@@ -245,11 +245,13 @@ main {
 }
 
 .login-submit {
-  align-self: flex-start;
+  align-self: center;
   min-width: 100px;
 }
 .passkey-login {
-  margin-top: var(--space-4);
+  display: flex;
+  width: fit-content;
+  margin: var(--space-4) auto 0;
   max-width: 100%;
 }
 .passkey-login[data-variant='ghost'],
