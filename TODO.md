@@ -354,7 +354,7 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 ## T05 — odômetro concluído — 2026-10-08
 
 - Migração 005: leituras e auditoria com autor/origem; APIs de leituras avulsas e consulta de auditoria. Origens financeiras são modificadas pelo lançamento correspondente.
-- Data civil preenchida com hoje, editável; km inicial preservado; km atual pela última data/id. Leituras abaixo do inicial ou em queda cronológica são recusadas, inclusive retroativos/edições. Exclusão recalcula leitura atual.
+- Data civil preenchida com hoje, editável; km inicial preservado; km atual pela última data, maior km dentro do dia e ID como desempate. Leituras abaixo do inicial ou em queda cronológica são recusadas, inclusive retroativos/edições. Exclusão recalcula leitura atual.
 - Transações bloqueiam o veículo para serializar alterações concorrentes; auditoria registra antes/depois e autor da sessão. Tela real permite cadastrar/editar/excluir leitura e consultar auditoria.
 - Go/PostgreSQL aprovados (cronologia, rollback, recálculo, revogação de vínculo), build Angular aprovado e 4 testes de odômetro/veículos desktop/mobile aprovados.
 
@@ -530,3 +530,12 @@ registrar no banco conforme o tipo. Feature futura; não implementar nesta rodad
 - [x] Registrar manutenção reutiliza o diálogo existente e grava o vínculo atomicamente; vincular existente é idempotente e restrito ao veículo.
 - [x] Recálculo após correções/retroativos/exclusões, calendário mensal, km ausente e arquivamento; permissões/auditoria por garagem.
 - [ ] Notificações externas, adiamento e demais fluxos: próximos escopos a definir em docs/maintenance-reminders.md.
+
+## TODO — experiência de consulta de peças e preços
+
+- [ ] Repensar busca de itens/preços históricos na seção Manutenções. Por enquanto
+  esconder o bloco externo de pesquisa/preços, mantendo tabela e Registrar manutenção.
+  O detalhamento de peças/mão de obra dentro do lançamento continua disponível.
+
+- [ ] Repensar a apresentação dos avisos de manutenção na home da garagem.
+  Por enquanto, o painel fica abaixo da grade de veículos.

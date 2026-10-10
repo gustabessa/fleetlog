@@ -172,3 +172,41 @@ Suíte Go/PostgreSQL e vet passaram; 12 cenários únicos desktop/mobile foram
 validados. O módulo de lembretes é separado por carregamento sob demanda;
 o bundle inicial ainda gera aviso (514,57 kB/500 kB), sem falha de compilação.
 Notificações externas e implantação não fazem parte desta entrega.
+
+## Revisão de experiência de registros — 2026-10-09
+
+- Consulta de preços/itens externa à seção Manutenções foi ocultada; mantidos
+  tabela e registro. O lançamento detalhado continua funcional, com atualização
+  explícita do formulário após confirmação de troca de modo.
+- Ações de tabelas não empilham: grupos compactos à direita, ícones uniformes e
+  rolagem horizontal da tabela no mobile. Lembretes têm uma ação Realizar
+  manutenção, abrindo o diálogo aprovado com Nova ou Existente.
+- Avisos de lembretes ficam abaixo dos veículos; uma nova experiência segue no TODO.
+- Datas exibidas usam locale, separando datas civis de timestamps para evitar
+  deslocar o dia por fuso. API e controles de data conservam valores ISO.
+- Snackbar flutuante com sucesso/erro de operações de escrita; leituras/filtros
+  não geram mensagens. Usa camada popover para aparecer sobre diálogos, sem
+  tirar o foco do formulário. Erros detalhados continuam nos campos/formulários.
+- GETs usam indicador único, discreto e atrasado 180 ms; não inserem altura na
+  tela e não removem tabelas já carregadas. A atualização de veículos também
+  preserva o conteúdo enquanto busca novos dados.
+- Dinheiro por centavos, da direita para a esquerda: 1234 vira 12,34. A máscara
+  exibe pelo menos duas casas, preservando preços calculados de maior precisão.
+  Valores negativos continuam permitidos apenas nos campos que já os aceitavam.
+- Odômetro: a falha de retroativo no mesmo dia foi reproduzida. Como não há
+  horário da leitura, usamos data, km dentro do dia e ID como desempate. A queda
+  real entre dias e leitura abaixo do km inicial continuam bloqueadas. Leitura
+  atual, consumo e lembretes seguem a mesma ordem. Criar/apagar abastecimentos
+  remove suas leituras automaticamente e restaura o inicial quando não restam
+  registros; testes também verificam ausência de leituras órfãs.
+
+Validação: suíte Go/PostgreSQL completa e vet aprovados; 24 cenários únicos
+Chromium desktop/mobile validados (22 principais mais dois de erro com diálogo).
+Build concluído com aviso de bundle inicial: 519,59 kB/500 kB. Demo local
+atualizada, com dados preservados. Alterações desta revisão ficam sem commit.
+
+Ajuste de feedback — 2026-10-10: sucesso com barra regressiva de 2,5 segundos;
+sucesso e indicador de GET entram/saem pela direita com fade. Fechamento manual
+preserva a saída animada, e um novo GET durante a saída mantém o indicador.
+Duração, barra regressiva, fechamento automático e saída do loading conferidos
+no navegador local. Redução de movimento continua respeitada.

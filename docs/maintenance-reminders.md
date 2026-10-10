@@ -19,7 +19,7 @@ Não há agendador nem integração de notificações externas nesta entrega.
   deixam um lançamento salvo sem renovar o lembrete.
 - Vincular existente permite selecionar uma manutenção do mesmo veículo;
   repetições do mesmo vínculo não duplicam a conclusão.
-- A manutenção vinculada mais recente por data/id define a referência. Uma
+- A manutenção vinculada mais recente por data/km/id define a referência. Uma
   manutenção retroativa não substitui uma mais recente. Editar data/km recalcula
   as metas; excluir faz retornar à referência anterior ou à inicial. Se retirar
   um km necessário, o estado passa a Dados incompletos, sem inventar uma meta.
