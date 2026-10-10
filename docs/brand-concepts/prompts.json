@@ -1,0 +1,126 @@
+{
+  "generator": "built-in image_gen",
+  "selected": "04",
+  "concepts": [
+    {
+      "id": "01",
+      "name": "Garage doorway and road",
+      "file": "docs/brand-concepts/options/01-garage-road.png",
+      "prompt": "Original logo for FleetLog, personal/family vehicle-management PWA. Minimal geometric garage doorway merging into a road with subtle ledger lines, charcoal/turquoise on white, exact FleetLog wordmark, no standalone F/FL monogram, no gradients, shadows, 3D mockups or watermark. Square, generous whitespace, review concept only."
+    },
+    {
+      "id": "02",
+      "name": "Orbital wheels",
+      "file": "docs/brand-concepts/options/02.png",
+      "prompt": "Create one ORIGINAL logo concept 02 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: Three connected wheel circles forming a small orbit, suggesting a shared family garage and a record timeline. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus turquoise on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "03",
+      "name": "Odometer horizon",
+      "file": "docs/brand-concepts/options/03.png",
+      "prompt": "Create one ORIGINAL logo concept 03 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: A concise odometer arc above a short horizon/road, with one restrained indicator dot. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus restrained burnt orange on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "04",
+      "name": "Vehicle ledger",
+      "file": "docs/brand-concepts/options/04.png",
+      "prompt": "Create one ORIGINAL logo concept 04 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: A minimal car contour intersecting two ledger lines and a subtle check, well-balanced open negative space. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus deep teal on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "05",
+      "name": "Continuous route",
+      "file": "docs/brand-concepts/options/05.png",
+      "prompt": "Create one ORIGINAL logo concept 05 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: A compact infinity-like road with two endpoint dots, smooth geometric curves and no letters. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus turquoise on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "06",
+      "name": "Steering and journal",
+      "file": "docs/brand-concepts/options/06.png",
+      "prompt": "Create one ORIGINAL logo concept 06 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: A circular steering-wheel shape merged with a slim journal spine, unexpectedly simple. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus restrained burnt orange on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "07",
+      "name": "Garage crest",
+      "file": "docs/brand-concepts/options/07.png",
+      "prompt": "Create one ORIGINAL logo concept 07 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: An understated rounded garage crest enclosing a single road stripe, friendly not aggressive or security-brand-like. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus deep teal on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "08",
+      "name": "Road bookmark",
+      "file": "docs/brand-concepts/options/08.png",
+      "prompt": "Create one ORIGINAL logo concept 08 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: A geometric bookmark with a road line in negative space, evoking saved vehicle history. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus turquoise on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "09",
+      "name": "Fuel and distance",
+      "file": "docs/brand-concepts/options/09.png",
+      "prompt": "Create one ORIGINAL logo concept 09 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: A clean gauge arc with a tiny fuel-drop silhouette in negative space; restrained distinctive symbol. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus restrained burnt orange on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "10",
+      "name": "Car and motorcycle",
+      "file": "docs/brand-concepts/options/10.png",
+      "prompt": "Create one ORIGINAL logo concept 10 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: One continuous-line symbol abstractly combining car and motorcycle wheels under a garage roof. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus deep teal on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "11",
+      "name": "Wheel location",
+      "file": "docs/brand-concepts/options/11.png",
+      "prompt": "Create one ORIGINAL logo concept 11 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: A location marker formed by a wheel ring and a short road entrance, highly minimal and balanced. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus turquoise on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "12",
+      "name": "Calendar route",
+      "file": "docs/brand-concepts/options/12.png",
+      "prompt": "Create one ORIGINAL logo concept 12 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: A small rounded calendar outline with a route/check in negative space, no tiny date numbers. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus restrained burnt orange on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "13",
+      "name": "Flowing records",
+      "file": "docs/brand-concepts/options/13.png",
+      "prompt": "Create one ORIGINAL logo concept 13 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: Three flowing parallel ledger lines becoming a road bend, asymmetric and elegant. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus deep teal on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "14",
+      "name": "Shared garage",
+      "file": "docs/brand-concepts/options/14.png",
+      "prompt": "Create one ORIGINAL logo concept 14 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: Two offset garage/vehicle silhouettes merging into a single geometric app mark, no letterforms. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus turquoise on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "15",
+      "name": "Road hexagon",
+      "file": "docs/brand-concepts/options/15.png",
+      "prompt": "Create one ORIGINAL logo concept 15 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: A thin hexagonal frame with a precise road turn inside, geometric technical clarity with rounded corners. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus restrained burnt orange on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "16",
+      "name": "Route ribbon",
+      "file": "docs/brand-concepts/options/16.png",
+      "prompt": "Create one ORIGINAL logo concept 16 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: A folded ribbon forming a simple road route, two flat solid colors only, no simulated depth. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus deep teal on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "17",
+      "name": "Night journey",
+      "file": "docs/brand-concepts/options/17.png",
+      "prompt": "Create one ORIGINAL logo concept 17 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: An open crescent-like wheel arc with a short path inside, calm friendly identity, not a moon mascot. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus turquoise on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "18",
+      "name": "Open garage app",
+      "file": "docs/brand-concepts/options/18.png",
+      "prompt": "Create one ORIGINAL logo concept 18 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: A rounded-square app mark with an open garage doorway in negative space, beautifully sparse. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus restrained burnt orange on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "19",
+      "name": "Timeline wheel",
+      "file": "docs/brand-concepts/options/19.png",
+      "prompt": "Create one ORIGINAL logo concept 19 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: A tire-like ring with three small timeline markers and a short ledger stroke, legible and restrained. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus deep teal on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    },
+    {
+      "id": "20",
+      "name": "Family wheels",
+      "file": "docs/brand-concepts/options/20.png",
+      "prompt": "Create one ORIGINAL logo concept 20 for FleetLog, a personal and family vehicle-management PWA for cars and motorcycles, fuel, maintenance and history. Direction: Two different-size connected wheel circles bridged by a garage roofline, warm and minimal. Flat vector-like minimal identity, clean contemporary sans-serif exact wordmark 'FleetLog' below or beside the icon. No standalone F/FL monogram, no manufacturer emblems, no generic stock clipart, no gradients, no shadows, no 3D mockup, no watermark, no slogans or extra text. Strong small-size readability. Charcoal plus turquoise on plain white. Square composition with generous whitespace. Distinct polished design, review concept only, do not combine alternatives."
+    }
+  ]
+}

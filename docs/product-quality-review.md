@@ -81,7 +81,7 @@ define a aparência da splash nativa, enquanto a splash HTML acompanha o tema.
 
 ### 4. Segurança de revisão e identidade
 
-- 20 conceitos originais gerados para revisão; a galeria permanece local e fora do bundle.
+- 20 conceitos originais gerados para revisão; a galeria está versionada como material de design, fora do bundle.
 - Direção 04 escolhida pelo usuário e adaptada para vetor; imagem de referência
   preservada junto à documentação. Símbolo separado nos ícones PWA para legibilidade.
 
