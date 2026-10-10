@@ -81,7 +81,7 @@ func (s *Service) consumption(w http.ResponseWriter, r *http.Request) {
 		odometer.Failure(w, err)
 		return
 	}
-	rows, err := s.Garage.Auth.DB.Query(r.Context(), `SELECT `+columns+` FROM entries e JOIN users u ON u.id=e.created_by WHERE e.vehicle_id=$1 AND e.kind='fuel' ORDER BY e.entry_date,e.id`, apiutil.ID(r, "vehicleID"))
+	rows, err := s.Garage.Auth.DB.Query(r.Context(), `SELECT `+columns+` FROM entries e JOIN users u ON u.id=e.created_by WHERE e.vehicle_id=$1 AND e.kind='fuel' ORDER BY e.entry_date,e.km NULLS LAST,e.id`, apiutil.ID(r, "vehicleID"))
 	if err != nil {
 		odometer.Failure(w, err)
 		return

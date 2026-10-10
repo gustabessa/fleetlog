@@ -51,7 +51,7 @@ func (s *Service) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT "+base+"/{vehicleID}", s.Garage.RequireMemberWrite(s.update))
 }
 
-const columns = `id,garage_id,name,plate,brand,model_year,chassis,renavam,initial_km::text,COALESCE((SELECT km FROM odometer_readings WHERE vehicle_id=vehicles.id ORDER BY reading_date DESC,id DESC LIMIT 1),initial_km)::text,COALESCE((SELECT object_key FROM vehicle_photos WHERE vehicle_id=vehicles.id),''),archived,tag_color`
+const columns = `id,garage_id,name,plate,brand,model_year,chassis,renavam,initial_km::text,COALESCE((SELECT km FROM odometer_readings WHERE vehicle_id=vehicles.id ORDER BY reading_date DESC,km DESC,id DESC LIMIT 1),initial_km)::text,COALESCE((SELECT object_key FROM vehicle_photos WHERE vehicle_id=vehicles.id),''),archived,tag_color`
 
 var kmPattern = regexp.MustCompile(`^(0|[1-9][0-9]{0,8})(\.[0-9]{1,3})?$`)
 

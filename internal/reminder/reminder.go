@@ -89,9 +89,9 @@ func (s *Service) list(w http.ResponseWriter, r *http.Request) {
  SELECT m.*,v.name vehicle_name,c.id last_entry_id,
  CASE WHEN c.id IS NOT NULL THEN c.km ELSE m.base_km END effective_km,
  CASE WHEN c.id IS NOT NULL THEN c.entry_date ELSE m.base_date END effective_date,
- COALESCE((SELECT km FROM odometer_readings WHERE vehicle_id=v.id ORDER BY reading_date DESC,id DESC LIMIT 1),v.initial_km) current_km
+ COALESCE((SELECT km FROM odometer_readings WHERE vehicle_id=v.id ORDER BY reading_date DESC,km DESC,id DESC LIMIT 1),v.initial_km) current_km
  FROM maintenance_reminders m JOIN vehicles v ON v.id=m.vehicle_id
- LEFT JOIN LATERAL (SELECT e.* FROM maintenance_reminder_completions mc JOIN entries e ON e.id=mc.entry_id WHERE mc.reminder_id=m.id ORDER BY e.entry_date DESC,e.id DESC LIMIT 1) c ON true
+ LEFT JOIN LATERAL (SELECT e.* FROM maintenance_reminder_completions mc JOIN entries e ON e.id=mc.entry_id WHERE mc.reminder_id=m.id ORDER BY e.entry_date DESC,e.km DESC NULLS LAST,e.id DESC LIMIT 1) c ON true
  WHERE v.garage_id=$1 AND ($2::bigint=0 OR v.id=$2) AND ($2::bigint<>0 OR NOT v.archived)
  ), targets AS (SELECT *,effective_km+interval_km next_km,(effective_date+make_interval(months=>interval_months))::date next_date FROM goals)
  SELECT id,vehicle_id,vehicle_name,title,interval_km::text,interval_months,base_km::text,base_date::text,advance_km::text,advance_days,

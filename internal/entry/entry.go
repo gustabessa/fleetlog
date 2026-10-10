@@ -266,7 +266,7 @@ func (s *Service) write(w http.ResponseWriter, r *http.Request, kind string) {
 		action = "delete"
 		_, err = tx.Exec(r.Context(), `DELETE FROM entries WHERE id=$1`, id)
 		if err == nil && kind == "fuel" { // A removed fill makes the next interval incomplete rather than inflating consumption.
-			_, err = tx.Exec(r.Context(), `UPDATE entries SET details=jsonb_set(details,'{incomplete}','true') WHERE id=(SELECT id FROM entries WHERE vehicle_id=$1 AND kind='fuel' AND (entry_date,id)>((($2::jsonb)->>'entry_date')::date,$3) ORDER BY entry_date,id LIMIT 1)`, vid, before, id)
+			_, err = tx.Exec(r.Context(), `UPDATE entries SET details=jsonb_set(details,'{incomplete}','true') WHERE id=(SELECT id FROM entries WHERE vehicle_id=$1 AND kind='fuel' AND (entry_date,km,id)>((($2::jsonb)->>'entry_date')::date,(($2::jsonb)->>'km')::numeric,$3) ORDER BY entry_date,km,id LIMIT 1)`, vid, before, id)
 		}
 	} else if r.Method == "POST" {
 		err = tx.QueryRow(r.Context(), `INSERT INTO entries(vehicle_id,kind,entry_date,title,amount,currency,km,details,created_by,updated_by) VALUES($1,$2,$3::date,$4,$5::numeric,$6,$7::numeric,$8,$9,$9) RETURNING id,to_jsonb(entries)`, vid, kind, input.Date, input.Title, input.Amount, input.Currency, input.KM, details, user.ID).Scan(&id, &after)

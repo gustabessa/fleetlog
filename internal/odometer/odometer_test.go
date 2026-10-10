@@ -69,3 +69,29 @@ func TestChronologyIntegration(t *testing.T) {
 		t.Fatal("revoked membership still reads", w.Code)
 	}
 }
+
+func TestSameDayRetroactiveReadings(t *testing.T) {
+	a := testutil.New(t)
+	(&vehicle.Service{Garage: a.Garage}).Routes(a.Mux)
+	(&odometer.Service{Garage: a.Garage}).Routes(a.Mux)
+	base := fmt.Sprintf("/api/garages/%d/vehicles", a.GarageID)
+	w := a.Request("POST", base, `{"name":"Same day","initialKm":100}`)
+	var v vehicle.Vehicle
+	json.Unmarshal(w.Body.Bytes(), &v)
+	url := fmt.Sprintf("%s/%d", base, v.ID)
+	for _, km := range []string{"300", "200", "250"} {
+		w = a.Request("POST", url+"/readings", fmt.Sprintf(`{"date":"2026-10-08","km":"%s"}`, km))
+		if w.Code != 200 {
+			t.Fatal(w.Code, w.Body.String())
+		}
+	}
+	w = a.Request("GET", url, "")
+	json.Unmarshal(w.Body.Bytes(), &v)
+	if v.CurrentKM != "300.000" {
+		t.Fatal("current odometer follows insertion order", v.CurrentKM)
+	}
+	w = a.Request("POST", url+"/readings", `{"date":"2026-10-09","km":"280"}`)
+	if w.Code != 409 {
+		t.Fatal("real cross-day regression accepted")
+	}
+}

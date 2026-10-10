@@ -68,7 +68,7 @@ func Sync(ctx context.Context, tx pgx.Tx, vehicleID int64, origin string, source
 		}
 	}
 	var invalid bool
-	err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM (SELECT km,lag(km) OVER(ORDER BY reading_date,id) previous FROM odometer_readings WHERE vehicle_id=$1) r WHERE km<previous OR km<(SELECT initial_km FROM vehicles WHERE id=$1))`, vehicleID).Scan(&invalid)
+	err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM (SELECT km,lag(km) OVER(ORDER BY reading_date,km,id) previous FROM odometer_readings WHERE vehicle_id=$1) r WHERE km<previous OR km<(SELECT initial_km FROM vehicles WHERE id=$1))`, vehicleID).Scan(&invalid)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (s *Service) list(w http.ResponseWriter, r *http.Request) {
 		Failure(w, pgx.ErrNoRows)
 		return
 	}
-	rows, err := s.Garage.Auth.DB.Query(r.Context(), `SELECT o.id,o.reading_date::text,o.km::text,o.origin,o.source_id,u.username FROM odometer_readings o JOIN users u ON u.id=o.created_by WHERE o.vehicle_id=$1 ORDER BY o.reading_date DESC,o.id DESC`, apiutil.ID(r, "vehicleID"))
+	rows, err := s.Garage.Auth.DB.Query(r.Context(), `SELECT o.id,o.reading_date::text,o.km::text,o.origin,o.source_id,u.username FROM odometer_readings o JOIN users u ON u.id=o.created_by WHERE o.vehicle_id=$1 ORDER BY o.reading_date DESC,o.km DESC,o.id DESC`, apiutil.ID(r, "vehicleID"))
 	if err != nil {
 		Failure(w, err)
 		return
