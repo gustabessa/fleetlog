@@ -240,7 +240,7 @@ Estas tarefas registram lacunas operacionais identificadas na revisão; não alt
 - Troca de senha local retirada desta rodada pelo usuário; recuperação administrativa sem fluxo aprovado, fora da entrega.
 - [ ] Planejar backup/restauração de PostgreSQL e S3 e executar restauração de teste.
 - [ ] Exportação JSON/CSV e extras: usuário decidiu deixá-los para outra tarefa em 2026-10-08; não implementar nesta rodada.
-- [ ] Implementar lembretes por veículo após aprovação de recorrência/canais. Proposta e TODO detalhado: [docs/maintenance-reminders.md](docs/maintenance-reminders.md), conforme pedido de tarefa separada.
+- [x] Implementar painel de lembretes por veículo e avisos internos por km/data; atalho reutiliza manutenção existente, com vínculo e renovação atômicos. Notificações/canais e adiamento seguem pendentes. Regras e TODO detalhado: [docs/maintenance-reminders.md](docs/maintenance-reminders.md), conforme pedido de tarefa separada.
 
 ## Backlog — depois do núcleo do produto
 
@@ -522,3 +522,11 @@ registrar no banco conforme o tipo. Feature futura; não implementar nesta rodad
   quando houver campos ausentes, ambíguos ou transcrição incerta; não inventar valores.
 - [ ] Testar fala em português, valores monetários, identificação do veículo/tipo,
   ambiguidades, falhas de transcrição/IA e consistência do lançamento persistido.
+
+## Lembretes internos de manutenção — 2026-10-09
+
+- [x] Configuração por veículo em km/meses, vencendo pelo primeiro limite e com antecedência configurável.
+- [x] Tabela paginada, metas e estados; avisos na garagem com atalho ao veículo.
+- [x] Registrar manutenção reutiliza o diálogo existente e grava o vínculo atomicamente; vincular existente é idempotente e restrito ao veículo.
+- [x] Recálculo após correções/retroativos/exclusões, calendário mensal, km ausente e arquivamento; permissões/auditoria por garagem.
+- [ ] Notificações externas, adiamento e demais fluxos: próximos escopos a definir em docs/maintenance-reminders.md.

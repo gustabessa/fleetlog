@@ -161,6 +161,17 @@
     [initialVersion]="vehicle.imageVersion"
     (changed)="refreshSelected()"
   />
+  @defer (on idle) {
+    <fl-reminders
+      [garageId]="garageId()"
+      [vehicleId]="vehicle.id"
+      [currency]="currency()"
+      [revision]="dataRevision()"
+      (changed)="refreshSelected()"
+    />
+  } @placeholder {
+    <fl-loading>Carregando lembretes…</fl-loading>
+  }
   <fl-maintenance
     [endpoint]="endpoint + '/' + vehicle.id"
     [currency]="currency()"
@@ -197,6 +208,15 @@
     />
     Incluir veículos vendidos/arquivados</fl-checkbox
   >
+  @defer (on idle) {
+    <fl-reminders
+      [garageId]="garageId()"
+      [revision]="dataRevision()"
+      (navigate)="navigate.emit($event)"
+    />
+  } @placeholder {
+    <fl-loading>Carregando lembretes…</fl-loading>
+  }
   <div class="vehicle-grid">
     @for (vehicle of vehicles(); track vehicle.id) {
       <div class="vehicle-tile">

@@ -160,3 +160,15 @@ Validação desta entrega: 40 testes Chromium desktop/mobile passaram (tema,
 prévia, persistência, erro recuperável, perfil, instalação e atualização PWA),
 além dos testes Go e vet de httpserver. A demo local foi atualizada mantendo
 os dados existentes. Instalação física no celular segue sob revisão do usuário.
+
+## Lembretes internos entregues
+
+Painel por veículo, tabela paginada, metas por km/calendário e avisos na garagem.
+O atalho reutiliza manutenção e vincula no mesmo commit do banco; vínculo de
+registro existente é idempotente. Correções, exclusões e dados ausentes ajustam
+as metas sem inventar referências. Ver docs/maintenance-reminders.md.
+
+Suíte Go/PostgreSQL e vet passaram; 12 cenários únicos desktop/mobile foram
+validados. O módulo de lembretes é separado por carregamento sob demanda;
+o bundle inicial ainda gera aviso (514,57 kB/500 kB), sem falha de compilação.
+Notificações externas e implantação não fazem parte desta entrega.

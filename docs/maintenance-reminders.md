@@ -1,29 +1,58 @@
-# Lembretes de manutenção — proposta e TODO
+# Lembretes de manutenção por veículo
 
-Entrega separada solicitada em 2026-10-08. Nenhum agendador, provedor de
-notificações ou serviço do homelab foi configurado nesta rodada.
+Painel e avisos internos implementados após aprovação em 2026-10-09.
+Não há agendador nem integração de notificações externas nesta entrega.
 
-## Painel proposto por veículo
+## Funcionamento
 
-- Serviço: óleo/filtro, revisão, pneus, inspeção ou descrição livre.
-- Última realização: data e odômetro; oferecer preenchimento pela manutenção real.
-- Recorrência: intervalo em quilômetros, meses ou ambos, conforme manual e escolha do usuário.
-- Antecedência: quilômetros/dias antes do vencimento.
-- Próxima meta: km/data calculados; estado próximo/vencido/concluído.
-- Ao concluir, vincular manutenção real e sugerir a próxima recorrência.
+- Cada veículo tem lembretes com serviço, última realização (km/data), intervalo
+  em quilômetros, meses ou ambos e antecedência em km/dias.
+- Os intervalos são escolhidos pelo usuário conforme o manual. Nenhum intervalo
+  de fabricante é presumido pelo sistema. A referência inicial é obrigatória
+  para cada limite configurado.
+- Vence pelo primeiro limite atingido. Próxima meta, distância/dias restantes e
+  estados Em dia, Próxima, Vencida e Dados incompletos aparecem na tabela.
+- Meses seguem calendário civil, ajustando ao último dia quando necessário.
+- Registrar manutenção abre o formulário existente com veículo/descrição
+  preenchidos. O km é obrigatório quando o lembrete usa intervalo em km.
+- A manutenção e seu vínculo são gravados numa única transação. Falhas não
+  deixam um lançamento salvo sem renovar o lembrete.
+- Vincular existente permite selecionar uma manutenção do mesmo veículo;
+  repetições do mesmo vínculo não duplicam a conclusão.
+- A manutenção vinculada mais recente por data/id define a referência. Uma
+  manutenção retroativa não substitui uma mais recente. Editar data/km recalcula
+  as metas; excluir faz retornar à referência anterior ou à inicial. Se retirar
+  um km necessário, o estado passa a Dados incompletos, sem inventar uma meta.
+- A garagem destaca próximos, vencidos e registros com dados incompletos, com
+  atalho para o veículo. Veículos arquivados conservam regras/histórico, mas
+  ficam fora dos avisos da garagem.
+- Qualquer membro pode configurar/vincular; permissões e autoria seguem a
+  garagem. Inclusão, edição, exclusão e conclusão são auditadas.
+- Datas de avaliação vêm do dia civil informado pelo app; consultas sem asOf
+  usam o dia UTC do servidor. Não há horário de entrega de notificações aqui.
+- A tabela começa com cinco itens e permite aumentar a paginação. O módulo de
+  lembretes é carregado sob demanda, separado do bundle principal.
 
-Os valores dos intervalos vêm do manual/configuração do usuário. Antes de
-implementar, aprovar a combinação km/data, adiamento, conclusão sem manutenção,
-tratamento de correções de odômetro e quais membros podem configurar regras.
+## Validação local
 
-## TODO da entrega
+Testes PostgreSQL isolados cobrem primeiro limite, antecedência, fim de mês e
+ano bissexto, referência de manutenção, atomicidade, idempotência, correções,
+exclusão, km ausente, isolamento entre veículos, acesso anônimo e arquivamento.
+Testes Chromium desktop/mobile cobrem cadastro, atalho com descrição preenchida,
+manutenção, persistência após F5, avisos na garagem e vínculo existente por data.
 
-- [ ] Aprovar regras do painel e recorrência; dados insuficientes não criam falsas metas.
-- [ ] Persistir regras por veículo e permissões; integrar com manutenção e odômetro.
-- [ ] Exibir lembretes na garagem e detalhes, com confirmação de conclusão/adiamento.
-- [ ] Definir destinatários, fuso/horários, consentimento e antecedência padrão.
-- [ ] Implementar fila persistida, tentativas, deduplicação e cancelamento após correção.
-- [ ] Avaliar Web Push direto com VAPID, sem exigir assinatura de plataforma comercial: HTTPS, service worker, consentimento e subscriptions por dispositivo. A [Push API](https://developer.mozilla.org/en-US/docs/Web/API/Push_API) permite entrega pelo serviço de push do navegador; validar navegadores/dispositivos e funcionamento da PWA instalada.
-- [ ] Separar o lembrete do canal: adaptadores futuros para e-mail/webhook/ferramenta self-hosted podem usar a mesma fila. Escolher/configurar serviços do homelab em tarefa própria.
-- [ ] Proteger endpoints de subscription e não expor conteúdo da garagem sem consentimento.
-- [ ] Testar mudanças de km/data, lançamentos retroativos, recorrência, múltiplos membros/dispositivos e repetição de entrega.
+## Próximas entregas — decisões pendentes
+
+- [ ] Definir adiamento, pausa e histórico visual de ciclos concluídos.
+- [ ] Definir destinatários, fuso/horários, consentimento e canais de notificação.
+- [ ] Fila persistida, tentativas, deduplicação e cancelamento após correções.
+- [ ] Avaliar Web Push com VAPID; requer HTTPS, consentimento e subscriptions.
+- [ ] Adaptadores para e-mail/webhook/ferramentas self-hosted, sem acoplar canal
+  à regra de lembrete. Serviços do homelab ficam em tarefa própria.
+- [ ] Proteger endpoints de subscriptions e definir conteúdo permitido.
+- [ ] Testar múltiplos membros/dispositivos e repetição de entrega.
+
+Resultado: suíte Go/PostgreSQL completa e `go vet ./...` aprovados; 12 cenários
+únicos Chromium desktop/mobile validados (10 da regressão e dois adicionais
+para vínculo existente). Build aprovado com aviso de tamanho: bundle inicial
+514,57 kB para orçamento de aviso de 500 kB; o limite não foi aumentado.

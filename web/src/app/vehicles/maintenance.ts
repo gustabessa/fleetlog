@@ -163,9 +163,12 @@ interface Item {
               [(ngModel)]="form.title"
               maxlength="500"
           /></fl-field>
-          <fl-field controlId="service-km" label="Odômetro da manutenção (opcional)"
+          <fl-field
+            controlId="service-km"
+            [label]="requireKM() ? 'Odômetro da manutenção' : 'Odômetro da manutenção (opcional)'"
             ><input
               flInput
+              [required]="requireKM()"
               id="service-km"
               name="km"
               [(ngModel)]="form.km"
@@ -453,6 +456,9 @@ export class Maintenance {
   readonly pager = new TablePaging();
   readonly editor = viewChild.required<FlDialog>('editor');
   readonly autoOpen = input(false);
+  readonly reminderId = input<number | null>(null);
+  readonly suggestedTitle = input('');
+  readonly requireKM = input(false);
   readonly closed = output<void>();
   ngAfterViewInit() {
     if (this.autoOpen()) this.start();
@@ -594,6 +600,7 @@ export class Maintenance {
   }
   start() {
     this.form = empty(this.currency());
+    this.form.title = this.suggestedTitle();
     this.mode = 'direct';
     this.items = [];
     this.discount = '0';
@@ -640,6 +647,7 @@ export class Maintenance {
   save() {
     return this.mutate(this.editing ? 'PUT' : 'POST', this.editing, {
       ...this.form,
+      ...(this.reminderId() ? { reminderId: this.reminderId() } : {}),
       amount: this.form.amount.replace(',', '.'),
       km: this.form.km ? this.form.km.replace(',', '.') : null,
       service: {

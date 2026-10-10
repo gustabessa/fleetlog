@@ -1,3 +1,4 @@
+import { Reminders } from './reminders';
 import { FlIcon } from '../ui/icon';
 import { Confirmation } from '../ui/confirmation';
 import { Component, inject, input, signal, viewChild, output } from '@angular/core';
@@ -41,6 +42,7 @@ const emptyForm = () => ({
   selector: 'fl-vehicle-garage',
   imports: [
     FlIcon,
+    Reminders,
     FlCheckbox,
     FormsModule,
     FlButton,
@@ -67,6 +69,7 @@ export class VehicleGarage {
   readonly garageId = input.required<number>();
   readonly quick = signal<{ vehicle: Vehicle; kind: 'fuel' | 'service' | 'expense' } | null>(null);
   quickDone() {
+    this.dataRevision.update((n) => n + 1);
     this.success.set('Lançamento registrado.');
     this.quick.set(null);
     void this.load();
