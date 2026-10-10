@@ -62,18 +62,19 @@ import { palettes } from './themes';
       @if (error()) {
         <p role="alert">{{ error() }}</p>
       }
-      <div flDialogFooter class="theme-actions">
-        <button flButton [disabled]="saving()" (click)="dialog.close()">Cancelar</button>
-        <button
-          flButton
-          class="done"
-          variant="primary"
-          [loading]="saving()"
-          (click)="confirm.emit({ palette: palette(), dark: dark() })"
-        >
-          Confirmar tema
-        </button>
-      </div>
+      <button flDialogFooter flButton [disabled]="saving()" (click)="dialog.close()">
+        Cancelar
+      </button>
+      <button
+        flDialogFooter
+        flButton
+        class="done"
+        variant="primary"
+        [loading]="saving()"
+        (click)="confirm.emit({ palette: palette(), dark: dark() })"
+      >
+        Confirmar tema
+      </button>
     </fl-dialog>`,
   styles: `
     :host {
@@ -151,18 +152,9 @@ import { palettes } from './themes';
       bottom: 8px;
       color: var(--accent);
     }
-    .theme-actions {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-    }
-    @media (max-width: 600px) {
-      .theme-actions button {
-        min-height: 44px;
-        padding-inline: 16px;
-      }
+    .done {
+      width: auto;
+      float: right;
     }
   `,
 })
