@@ -1,4 +1,8 @@
 @import './themes.css';
+/* Use the themed control feedback instead of the browser's blue touch overlay. */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
 :root {
   --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --text-page: 2.25rem;
