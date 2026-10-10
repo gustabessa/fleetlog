@@ -495,3 +495,30 @@ de demonstração local, sem acesso ao homelab.
   sobrescreve decisão manual de arquivamento; novo registro/remoção de venda
   ainda aplica a transição já definida.
 - UI mostra Arquivar/Desarquivar; Recarregar veículos removido.
+
+## TODO — lançamento por áudio com IA
+
+Pedido em 2026-10-09: enviar um áudio para a IA transcrever, identificar se o
+lançamento é abastecimento, manutenção ou documentação, extrair os dados e
+registrar no banco conforme o tipo. Feature futura; não implementar nesta rodada.
+
+- [ ] Permitir envio de áudio e transcrição para texto.
+- [ ] Classificar abastecimento, manutenção e documentação; identificar veículo e data.
+- [ ] Extrair valores/moeda e campos pertinentes: litros, preço por litro, total,
+  odômetro, combustível, descrição/itens de manutenção e tipo de documentação.
+- [ ] Validar dados estruturados com as regras existentes, preservando precisão
+  monetária, autoria do usuário logado e permissões por garagem.
+- [ ] Integrar o registro no banco aos fluxos existentes de lançamentos e odômetro,
+  evitando duplicidade em novas tentativas e mantendo auditoria.
+- [ ] Projetar integração configurável por adaptadores, permitindo self-hosted
+  e provedores externos, como OpenAI/GPT, Anthropic/Claude e Amazon Bedrock,
+  sem acoplar o fluxo de lançamentos a um fornecedor específico.
+- [ ] Separar transcrição e interpretação/extração estruturada para permitir
+  provedores/modelos distintos em cada etapa, conforme suas capacidades.
+- [ ] Definir com o usuário seleção/configuração de provedores, modelos/endpoints,
+  credenciais, custos e limites de áudio, armazenamento/retenção e tratamento
+  de dados. Escopo da configuração (instância/garagem/usuário) fica pendente.
+- [ ] Definir revisão/confirmação antes da gravação e como pedir esclarecimento
+  quando houver campos ausentes, ambíguos ou transcrição incerta; não inventar valores.
+- [ ] Testar fala em português, valores monetários, identificação do veículo/tipo,
+  ambiguidades, falhas de transcrição/IA e consistência do lançamento persistido.
