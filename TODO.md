@@ -42,10 +42,10 @@ Núcleo do produto entregue: T01–T12 e OIDC com código integrado e validaçã
 
 ### Entrega a definir e melhorias futuras
 
-- OIDC configurável: requisito confirmado, data de entrega pendente; pode ser antecipado se login com provedor for necessário para uso.
+- OIDC configurável entregue com vinculação explícita; configuração/validação no provedor real permanece externa ao produto.
 - Troca/recuperação de senha e backup/restauração: propostas a definir antes de depender de dados reais no uso contínuo.
 - Instalação PWA real/HTTPS e CI de navegador: validação transversal, não exigir nova rodada de polimento visual para cada funcionalidade.
-- Exportação, lembretes e multiarch: escopo/prioridade ainda a aprovar.
+- Lembretes internos entregues; notificações externas ainda dependem de definição. Exportação e multiarch permanecem em escopos separados.
 - Importação e offline: backlog, fora da prioridade atual de construir o produto.
 
 ## Etapa 1 — base executável (implementada; validação de implantação pendente)
@@ -451,13 +451,13 @@ Barra da PWA: theme-color atualizado a partir de --surface ao aplicar/restaurar 
 - [x] Navegação por URL com F5, links diretos e histórico Voltar/Avançar.
 - [x] Subir instância local separada com usuário/senha de teste e validar desktop/mobile.
 
-## TODO — imagens opcionais em todos os registros
+## TODO — imagens opcionais em manutenções e despesas (baixa prioridade)
 
-Pedido em 2026-10-09: permitir imagens opcionais em abastecimentos, manutenções,
-anotações e demais ações/registros do produto. Entrega separada, não implementar
-como parte da revisão de UI.
+Escopo revisto em 2026-10-10: não adicionar imagens a abastecimentos. Imagens
+opcionais em manutenção/despesas ficam como melhoria de baixa prioridade;
+anotações já têm imagem opcional. Quantidade/limites ainda serão definidos.
 
-- [ ] Definir quais registros aceitam anexos e quantidade por registro.
+- [ ] Definir quantidade de anexos por manutenção/despesa.
 - [ ] Aprovar formatos, tamanho/dimensões, ordenação/legendas e limites de armazenamento.
 - [ ] Generalizar metadados S3 privados, vínculo com registro e autorização por garagem.
 - [ ] Upload/leitura/substituição/remoção com fila de limpeza e rollback consistente.
@@ -500,8 +500,14 @@ de demonstração local, sem acesso ao homelab.
 
 Pedido em 2026-10-09: enviar um áudio para a IA transcrever, identificar se o
 lançamento é abastecimento, manutenção ou documentação, extrair os dados e
-registrar no banco conforme o tipo. Feature futura; não implementar nesta rodada.
+registrar no banco conforme o tipo. Planejamento detalhado em
+[docs/ai-audio-entry-plan.md](docs/ai-audio-entry-plan.md); propostas ainda sujeitas
+a aprovação. Não implementar/provisionar serviços durante o planejamento.
 
+- [ ] Aprovar MVP, revisão/confirmação, limites/retenção e configuração dos provedores.
+- [ ] Avaliar modelos com áudios reais em português; medir qualidade, latência e consumo no ambiente escolhido, sem registrar inventário pessoal no repositório.
+- [ ] Fila persistente com recuperação após reinício e worker serial; carregar modelos
+  sob demanda e descarregar ao terminar/ficar ocioso, sem mantê-los residentes.
 - [ ] Permitir envio de áudio e transcrição para texto.
 - [ ] Classificar abastecimento, manutenção e documentação; identificar veículo e data.
 - [ ] Extrair valores/moeda e campos pertinentes: litros, preço por litro, total,
