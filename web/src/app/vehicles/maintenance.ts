@@ -1,3 +1,4 @@
+import { LocalDate } from '../ui/local-date';
 import { FlLoading } from '../ui/loading';
 let nextFormId = 0;
 import { FlTablePager, TablePaging } from '../ui/table-pager';
@@ -6,7 +7,15 @@ import { FlDialog } from '../ui/dialog';
 import { Confirmation } from '../ui/confirmation';
 import { FlMoneyInput } from '../ui/money-input';
 import { formatMoneyDecimal, formatDecimal, decimalInput } from '../ui/format';
-import { Component, inject, input, output, signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  inject,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FlButton, FlCard, FlField, FlInput } from '../ui';
 import { today } from './readings';
@@ -27,6 +36,7 @@ interface Item {
   host: { '[class.quick-editor]': 'autoOpen()' },
   selector: 'fl-maintenance',
   imports: [
+    LocalDate,
     FlLoading,
     FlTablePager,
     FlIcon,
@@ -40,28 +50,6 @@ interface Item {
   ],
   template: `<section flCard>
       <h3>Manutenções</h3>
-      <fl-field controlId="item-search" label="Pesquisar preços de item"
-        ><input
-          flInput
-          id="item-search"
-          [ngModel]="itemQuery"
-          (ngModelChange)="itemQuery = $event" /></fl-field
-      ><button flButton (click)="loadReferences()">Buscar itens</button>
-      @for (ref of references(); track ref.refId) {
-        <button flButton (click)="showPrices(ref.refId)">Preços de {{ ref.name }}</button>
-      }
-      @if (prices(); as list) {
-        @for (price of list; track $index) {
-          <p>
-            {{ price.date }} · {{ price.vehicle }} · {{ price.name }} ·
-            {{ decimal(price.unitPrice) }} {{ price.currency }} / {{ unitLabel(price.unit) }} ·
-            {{ decimal(price.quantity) }}
-          </p>
-        }
-        @if (!list.length) {
-          <p>Nenhum preço histórico para este item.</p>
-        }
-      }
       @if (error()) {
         <p role="alert">{{ error() }}</p>
         <button flButton (click)="load()">Recarregar manutenções</button>
@@ -89,7 +77,7 @@ interface Item {
               @for (e of pager.slice(entries()); track e.id) {
                 <tr>
                   <td>
-                    {{ e.date }}<strong>{{ e.title }}</strong
+                    {{ e.date | localDate }}<strong>{{ e.title }}</strong
                     ><small>{{ e.author }}</small>
                   </td>
                   <td>{{ e.km ? decimal(e.km) + ' km' : '—' }}</td>
@@ -452,6 +440,7 @@ interface Item {
   `,
 })
 export class Maintenance {
+  private readonly changeDetector = inject(ChangeDetectorRef);
   readonly formId = 'maintenance-form-' + nextFormId++;
   readonly pager = new TablePaging();
   readonly editor = viewChild.required<FlDialog>('editor');
@@ -552,6 +541,7 @@ export class Maintenance {
     )
       return;
     this.mode = mode;
+    this.changeDetector.markForCheck();
     this.items = [];
     this.form.amount = '';
     this.discount = '0';

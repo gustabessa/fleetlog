@@ -7,7 +7,7 @@ import { Component } from '@angular/core';
   styles: `
     :host {
       display: block;
-      min-height: 88px;
+      min-height: 0;
       padding: 12px 0;
     }
     .loading {

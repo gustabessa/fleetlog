@@ -1,3 +1,4 @@
+import { LocalDate } from '../ui/local-date';
 import { Component, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FlButton, FlCard, FlField, FlInput, FlLoading, FlDialog } from '../ui';
@@ -38,6 +39,7 @@ const empty = () => ({
 @Component({
   selector: 'fl-reminders',
   imports: [
+    LocalDate,
     FormsModule,
     FlButton,
     FlCard,
@@ -104,7 +106,7 @@ const empty = () => ({
                     </td>
                     <td>
                       {{ rule.nextKm ? number(rule.nextKm) + ' km' : ''
-                      }}<small>{{ rule.nextDate || '' }}</small>
+                      }}<small>{{ rule.nextDate || '' | localDate }}</small>
                     </td>
                     <td>
                       <span [attr.data-status]="rule.status">{{ status(rule.status) }}</span
@@ -112,8 +114,7 @@ const empty = () => ({
                     </td>
                     <td>
                       <div class="actions">
-                        <button flButton (click)="active.set(rule)">Registrar manutenção</button
-                        ><button flButton (click)="link(rule)">Vincular existente</button
+                        <button flButton (click)="choose(rule)">Realizar manutenção</button
                         ><button
                           flButton
                           size="icon"
@@ -153,6 +154,16 @@ const empty = () => ({
       }
     </section>
     @if (vehicleId()) {
+      <fl-dialog #chooser title="Realizar manutenção">
+        <p>{{ chosen()?.title }} · escolha como registrar a realização.</p>
+        <div class="choice-actions">
+          <button flButton variant="primary" (click)="registerChoice()">
+            Registrar nova manutenção
+          </button>
+          <button flButton (click)="existingChoice()">Vincular manutenção existente</button>
+        </div>
+        <button flDialogFooter flButton (click)="chooser.close()">Cancelar</button>
+      </fl-dialog>
       <fl-dialog
         #editor
         [title]="editing === null ? 'Adicionar lembrete' : 'Editar lembrete'"
@@ -252,7 +263,7 @@ const empty = () => ({
             <option [ngValue]="0">Selecione</option>
             @for (e of entries(); track e.id) {
               <option [ngValue]="e.id">
-                {{ e.date }} · {{ e.title || 'Manutenção' }} ·
+                {{ e.date | localDate }} · {{ e.title || 'Manutenção' }} ·
                 {{ e.km === null ? 'sem odômetro' : e.km + ' km' }}
               </option>
             }
@@ -292,6 +303,14 @@ const empty = () => ({
     }
   `,
   styles: `
+    .choice-actions {
+      display: grid;
+      gap: 12px;
+    }
+    .choice-actions button {
+      min-height: 48px;
+      justify-content: flex-start;
+    }
     :host {
       display: block;
       margin-block: 16px;
@@ -349,6 +368,22 @@ const empty = () => ({
   `,
 })
 export class Reminders {
+  readonly chooser = viewChild<FlDialog>('chooser');
+  readonly chosen = signal<Rule | null>(null);
+  choose(rule: Rule) {
+    this.chosen.set(rule);
+    this.chooser()?.show();
+  }
+  registerChoice() {
+    const rule = this.chosen();
+    this.chooser()?.close();
+    if (rule) this.active.set(rule);
+  }
+  existingChoice() {
+    const rule = this.chosen();
+    this.chooser()?.close();
+    if (rule) void this.link(rule);
+  }
   readonly garageId = input.required<number>();
   readonly vehicleId = input<number | null>(null);
   readonly currency = input('BRL');

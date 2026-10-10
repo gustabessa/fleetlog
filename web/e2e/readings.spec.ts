@@ -23,25 +23,25 @@ test('odômetro salva retroativo coerente, rejeita erro e recalcula após exclui
   await page.getByLabel('Quilometragem (km)', { exact: true }).fill('300');
   await page.getByRole('button', { name: 'Adicionar leitura', exact: true }).click();
   await expect(
-    page.getByRole('row').filter({ hasText: '2026-10-08' }).filter({ hasText: '300 km' }),
+    page.getByRole('row').filter({ hasText: '08/10/2026' }).filter({ hasText: '300 km' }),
   ).toBeVisible();
   await page.getByLabel('Data da leitura').fill('2026-10-01');
   await page.getByLabel('Quilometragem (km)', { exact: true }).fill('200');
   await page.getByRole('button', { name: 'Adicionar leitura', exact: true }).click();
   await expect(
-    page.getByRole('row').filter({ hasText: '2026-10-01' }).filter({ hasText: '200 km' }),
+    page.getByRole('row').filter({ hasText: '01/10/2026' }).filter({ hasText: '200 km' }),
   ).toBeVisible();
   await page.getByLabel('Data da leitura').fill('2026-10-02');
   await page.getByLabel('Quilometragem (km)', { exact: true }).fill('400');
   await page.getByRole('button', { name: 'Adicionar leitura', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('incoerente');
+  await expect(page.locator('fl-readings').getByRole('alert')).toContainText('incoerente');
   await page.getByRole('button', { name: 'Excluir leitura', exact: true }).first().click();
   await page
     .getByRole('dialog', { name: 'Confirmar ação' })
     .getByRole('button', { name: 'Confirmar', exact: true })
     .click();
   await expect(
-    page.getByRole('row').filter({ hasText: '2026-10-08' }).filter({ hasText: '300 km' }),
+    page.getByRole('row').filter({ hasText: '08/10/2026' }).filter({ hasText: '300 km' }),
   ).not.toBeVisible();
   await page.getByRole('button', { name: 'Ver auditoria de leituras' }).click();
   await expect(page.getByText(/e2e · delete/)).toBeVisible();

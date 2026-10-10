@@ -1,3 +1,4 @@
+import { LocalDate } from './local-date';
 import { formatMoney, formatMoneyDecimal } from './format';
 import { Component, input } from '@angular/core';
 import { FlBadge } from './badge';
@@ -16,7 +17,7 @@ export interface LogEntry {
 }
 @Component({
   selector: 'fl-entry-list',
-  imports: [FlBadge],
+  imports: [LocalDate, FlBadge],
   template: `@for (entry of entries(); track entry.id ?? $index) {
       <article class="entry">
         <span class="icon" aria-hidden="true">{{
@@ -26,7 +27,7 @@ export interface LogEntry {
           <fl-badge [color]="vehicles()[entry.vehicle].tagColor"
             >{{ vehicles()[entry.vehicle].name }} · {{ vehicles()[entry.vehicle].plate }}</fl-badge
           >
-          <p class="date">{{ entry.date }} · {{ entry.km }}</p>
+          <p class="date">{{ entry.isoDate | localDate }} · {{ entry.km }}</p>
           <h3>{{ entry.title }}</h3>
           <p>{{ entry.detail }}</p>
         </div>

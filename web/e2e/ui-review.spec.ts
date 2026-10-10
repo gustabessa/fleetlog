@@ -56,7 +56,7 @@ test('URL preserva detalhes, ações rápidas usam diálogo e máscara é imedia
   await expect(dialog.getByLabel('Total pago')).toHaveValue(/R\$ 1\.234,56/);
   await dialog.getByLabel('Litros', { exact: true }).fill('10');
   await expect(dialog.getByLabel('Preço por litro')).toHaveValue(/123,456/);
-  await dialog.getByLabel('Preço por litro').fill('6,2');
+  await dialog.getByLabel('Preço por litro').fill('620');
   await expect(dialog.getByLabel('Total pago')).toHaveValue(/62,00/);
   await dialog.getByLabel('Litros', { exact: true }).fill('20');
   await expect(dialog.getByLabel('Total pago')).toHaveValue(/124,00/);

@@ -1,3 +1,4 @@
+import { LocalDate } from '../ui/local-date';
 import { FlLoading } from '../ui/loading';
 import { FlTablePager, TablePaging } from '../ui/table-pager';
 import { FlIcon } from '../ui/icon';
@@ -19,7 +20,17 @@ interface Reading {
 }
 @Component({
   selector: 'fl-readings',
-  imports: [FlLoading, FlTablePager, FlIcon, FormsModule, FlButton, FlCard, FlField, FlInput],
+  imports: [
+    LocalDate,
+    FlLoading,
+    FlTablePager,
+    FlIcon,
+    FormsModule,
+    FlButton,
+    FlCard,
+    FlField,
+    FlInput,
+  ],
   template: `<section flCard>
     <h3>Odômetro</h3>
     @if (error()) {
@@ -117,7 +128,7 @@ interface Reading {
     @if (audit(); as events) {
       @for (event of events; track event.id) {
         <p>
-          {{ event.changedAt }} · {{ event.author }} · {{ event.action }} ·
+          {{ event.changedAt | localDate }} · {{ event.author }} · {{ event.action }} ·
           {{ event.before ? decimal(event.before.km) : '—' }} →
           {{ event.after ? decimal(event.after.km) : '—' }} km
         </p>
@@ -182,8 +193,8 @@ export class Readings {
   }
   dateLabel(reading: Reading) {
     return reading.origin === 'registration'
-      ? 'Cadastrado em ' + new Date(reading.date).toLocaleDateString('pt-BR')
-      : reading.date;
+      ? 'Cadastrado em ' + new LocalDate().transform(reading.date)
+      : new LocalDate().transform(reading.date);
   }
   reset() {
     this.date = today();

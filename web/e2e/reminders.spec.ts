@@ -26,14 +26,18 @@ test('lembrete usa manutenção real, persiste metas e mostra aviso na garagem',
   const section = page.locator('fl-reminders');
   const row = section.getByRole('row').filter({ hasText: 'Troca de óleo' });
   await expect(row).toContainText('Vencida');
-  await row.getByRole('button', { name: 'Registrar manutenção', exact: true }).click();
+  await row.getByRole('button', { name: 'Realizar manutenção', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Realizar manutenção', exact: true })
+    .getByRole('button', { name: 'Registrar nova manutenção', exact: true })
+    .click();
   const maintenance = page.getByRole('dialog', { name: 'Manutenção', exact: true });
   await expect(maintenance).toBeVisible();
   await expect(
     maintenance.getByLabel('Descrição da manutenção (opcional)', { exact: true }),
   ).toHaveValue('Troca de óleo');
   await maintenance.getByLabel('Odômetro da manutenção', { exact: true }).fill('1100');
-  await maintenance.getByLabel('Total da manutenção', { exact: true }).fill('100');
+  await maintenance.getByLabel('Total da manutenção', { exact: true }).fill('10000');
   await maintenance.getByRole('button', { name: 'Salvar manutenção', exact: true }).click();
   await expect(maintenance).not.toBeVisible();
   await expect(row).toContainText('Em dia');
@@ -94,14 +98,18 @@ test('vincular manutenção existente renova lembrete por data sem exigir km', a
   ).json();
   await page.goto(`/garage/${gs[0].id}/vehicles/${v.id}`);
   const row = page.locator('fl-reminders').getByRole('row').filter({ hasText: 'Inspeção' });
-  await row.getByRole('button', { name: 'Vincular existente', exact: true }).click();
+  await row.getByRole('button', { name: 'Realizar manutenção', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Realizar manutenção', exact: true })
+    .getByRole('button', { name: 'Vincular manutenção existente', exact: true })
+    .click();
   const dialog = page.getByRole('dialog', { name: 'Vincular manutenção existente' });
   await dialog
     .getByLabel('Manutenção registrada', { exact: true })
-    .selectOption({ label: '2026-02-28 · Inspeção realizada · sem odômetro' });
+    .selectOption({ label: '28/02/2026 · Inspeção realizada · sem odômetro' });
   await dialog.getByRole('button', { name: 'Vincular manutenção', exact: true }).click();
   await expect(dialog).not.toBeVisible();
-  await expect(row).toContainText('2026-03-28');
+  await expect(row).toContainText('28/03/2026');
   const rules = await (await page.request.get(url + '/reminders')).json();
   expect(rules.find((r: any) => r.id === rule.id).lastEntryId).toBe(entry.id);
 });

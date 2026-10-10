@@ -1,3 +1,4 @@
+import { FlSnackbar, Snackbar } from './ui/snackbar';
 import { FlLoading, FlStartup, FlLogo } from './ui';
 import { FlConfirmation } from './ui/confirmation';
 import { Members } from './vehicles/members';
@@ -33,6 +34,7 @@ import { SwUpdate } from '@angular/service-worker';
   selector: 'app-root',
   imports: [
     RouterOutlet,
+    FlSnackbar,
     FlLoading,
     FlStartup,
     FlLogo,
@@ -610,6 +612,7 @@ export class App {
         matchMedia('(prefers-color-scheme: dark)').matches),
   );
   constructor() {
+    inject(Snackbar).install();
     this.applyTheme();
     const result = new URLSearchParams(location.search).get('oidc');
     if (result) {

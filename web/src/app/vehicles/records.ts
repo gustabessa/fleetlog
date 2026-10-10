@@ -1,3 +1,4 @@
+import { LocalDate } from '../ui/local-date';
 import { FlLoading } from '../ui/loading';
 let nextFormId = 0;
 import { FlTablePager, TablePaging } from '../ui/table-pager';
@@ -22,6 +23,7 @@ const trade = (currency: string): Trade => ({ date: today(), amount: '', currenc
   host: { '[class.quick-editor]': 'autoOpen()' },
   selector: 'fl-vehicle-records',
   imports: [
+    LocalDate,
     FlLoading,
     FlTablePager,
     FlIcon,
@@ -221,7 +223,10 @@ const trade = (currency: string): Trade => ({ date: today(), amount: '', currenc
 
       @for (e of expenses(); track e.id) {
         <article>
-          <p>{{ e.date }} · {{ e.title }} · {{ money(e.amount, e.currency) }} · {{ e.author }}</p>
+          <p>
+            {{ e.date | localDate }} · {{ e.title }} · {{ money(e.amount, e.currency) }} ·
+            {{ e.author }}
+          </p>
           <button
             flButton
             (click)="editExpense(e)"

@@ -15,7 +15,7 @@ test('manutenção detalhada soma itens e consulta preços reais', async ({ page
     })
   ).json();
   await page.reload();
-  if (!new URL(page.url()).pathname.endsWith('/vehicles/'+v.id))
+  if (!new URL(page.url()).pathname.endsWith('/vehicles/' + v.id))
     await page.locator('button.vehicle-open').filter({ hasText: v.name }).click();
   await page.getByRole('button', { name: 'Registrar manutenção' }).click();
   await page.getByLabel('Modo de valor').selectOption('detailed');
@@ -26,15 +26,12 @@ test('manutenção detalhada soma itens e consulta preços reais', async ({ page
   await page.getByLabel('Nome do item', { exact: true }).fill('Filtro teste ' + Date.now());
   const item = await page.getByLabel('Nome do item', { exact: true }).inputValue();
   await page.getByLabel('Quantidade', { exact: true }).fill('2');
-  await page.getByLabel('Preço unitário', { exact: true }).fill('30');
-  await page.getByLabel('Desconto', { exact: true }).fill('5');
-  await page.getByLabel('Ajuste', { exact: true }).fill('-1');
+  await page.getByLabel('Preço unitário', { exact: true }).fill('3000');
+  await page.getByLabel('Desconto', { exact: true }).fill('500');
+  await page.getByLabel('Ajuste', { exact: true }).fill('-100');
   await page.getByRole('button', { name: 'Salvar manutenção' }).click();
   await expect(
     page.getByRole('row').filter({ hasText: 'Manutenção' }).filter({ hasText: '54,00' }),
   ).toBeVisible();
-  await page.getByLabel('Pesquisar preços de item').fill(item);
-  await page.getByRole('button', { name: 'Buscar itens' }).click();
-  await page.getByRole('button', { name: 'Preços de ' + item, exact: true }).click();
-  await expect(page.getByText(new RegExp(item + ' · 30 BRL'))).toBeVisible();
+  await expect(page.getByLabel('Pesquisar preços de item')).toHaveCount(0);
 });

@@ -1,3 +1,4 @@
+import { LocalDate } from '../ui/local-date';
 import { FlLoading } from '../ui/loading';
 let nextFormId = 0;
 import { FlTablePager, TablePaging } from '../ui/table-pager';
@@ -37,6 +38,7 @@ const empty = (currency: string) => ({
   host: { '[class.quick-editor]': 'autoOpen()' },
   selector: 'fl-fuel',
   imports: [
+    LocalDate,
     FlLoading,
     FlTablePager,
     FlIcon,
@@ -78,7 +80,7 @@ const empty = (currency: string) => ({
               @for (entry of pager.slice(entries()); track entry.id) {
                 <tr>
                   <td>
-                    {{ entry.date
+                    {{ entry.date | localDate
                     }}<small
                       >{{ entry.details.fuel }} ·
                       {{ entry.details.full ? 'Tanque cheio' : 'Parcial' }}</small

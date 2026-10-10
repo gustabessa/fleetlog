@@ -22,7 +22,7 @@ test('abastecimento real deriva total, preserva moeda e integra odômetro', asyn
   await page.getByLabel('Data do abastecimento').fill('2026-10-08');
   await page.getByLabel('Litros', { exact: true }).fill('42,5');
   await page.getByLabel('Odômetro do abastecimento (km)').fill('200');
-  await page.getByLabel('Preço por litro').fill('6,2');
+  await page.getByLabel('Preço por litro').fill('620');
   await page.getByLabel('Moeda do abastecimento').selectOption('USD');
   await page.getByRole('button', { name: 'Salvar abastecimento' }).click();
   await expect(page.getByText(/263,50/)).toBeVisible();
@@ -30,7 +30,7 @@ test('abastecimento real deriva total, preserva moeda e integra odômetro', asyn
     page
       .locator('fl-readings')
       .getByRole('row')
-      .filter({ hasText: '2026-10-08' })
+      .filter({ hasText: '08/10/2026' })
       .filter({ hasText: 'Abastecimento' }),
   ).toBeVisible();
   const e = await (await page.request.get(`${base}/${v.id}/fuel`)).json();
