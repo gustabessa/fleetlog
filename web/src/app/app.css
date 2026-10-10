@@ -243,3 +243,36 @@ main {
     width: 74px;
   }
 }
+
+.login-submit {
+  align-self: flex-start;
+  min-width: 100px;
+}
+.passkey-login {
+  margin-top: var(--space-4);
+  max-width: 100%;
+}
+.passkey-login[data-variant='ghost'],
+.passkey-login[data-variant='ghost']:hover:not(:disabled),
+.passkey-login[data-variant='ghost']:active:not(:disabled) {
+  background: transparent;
+  border-color: transparent;
+}
+.passkey-login:hover:not(:disabled) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.profile-oidc {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+.profile-oidc p {
+  margin: 0;
+}
+.profile-oidc button {
+  max-width: 100%;
+  padding-block: var(--space-2);
+}

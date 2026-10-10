@@ -8,7 +8,7 @@ test('OIDC exige vínculo explícito e depois autentica o mesmo usuário', async
     return route.continue({ url: url.toString() });
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Entrar com provedor', exact: true }).click();
+  await page.getByRole('button', { name: 'Entrar com passkey', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('ainda não está vinculada');
   await page.getByLabel('Usuário', { exact: true }).fill('e2e');
   await page.getByLabel('Senha', { exact: true }).fill('e2e-password-12345');
@@ -22,7 +22,7 @@ test('OIDC exige vínculo explícito e depois autentica o mesmo usuário', async
   if (!(await page.getByRole('button', { name: 'Sair', exact: true }).isVisible()))
     await page.getByRole('button', { name: /^Perfil de / }).click();
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
-  await page.getByRole('button', { name: 'Entrar com provedor', exact: true }).click();
+  await page.getByRole('button', { name: 'Entrar com passkey', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Perfil de e2e' })).toBeVisible();
   const current = await (await page.request.get('/api/auth/me')).json();
   expect(current.username).toBe('e2e');

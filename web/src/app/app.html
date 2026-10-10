@@ -43,18 +43,22 @@
     <p class="error" role="alert">{{ authError() }}</p>
   }
   @if (oidcStatus().enabled) {
-    <p>
-      {{
-        oidcStatus().linked
-          ? 'Sua conta está vinculada ao provedor.'
-          : 'Vincule sua própria identidade para usar o provedor.'
-      }}
-    </p>
-    <button flButton type="button" [loading]="oidcBusy()" (click)="startOIDC(true)">
-      {{
-        oidcStatus().linked ? 'Vincular outra identidade do provedor' : 'Vincular conta do provedor'
-      }}
-    </button>
+    <div class="profile-oidc">
+      <p>
+        {{
+          oidcStatus().linked
+            ? 'Sua conta está vinculada ao provedor.'
+            : 'Vincule sua própria identidade para usar o provedor.'
+        }}
+      </p>
+      <button flButton type="button" [loading]="oidcBusy()" (click)="startOIDC(true)">
+        {{
+          oidcStatus().linked
+            ? 'Vincular outra identidade do provedor'
+            : 'Vincular conta do provedor'
+        }}
+      </button>
+    </div>
   }
   <form id="profile-form" ngNativeValidate (ngSubmit)="saveCurrency()">
     <fl-field
@@ -149,7 +153,7 @@
               autocomplete="current-password"
               required
             /> </fl-field
-          ><button flButton variant="primary" size="lg" type="submit" [loading]="busy()">
+          ><button flButton variant="primary" class="login-submit" type="submit" [loading]="busy()">
             {{ busy() ? 'Entrando…' : 'Entrar' }}
           </button>
         </form>
@@ -157,12 +161,14 @@
       @if (authOptions().oidcEnabled) {
         <button
           flButton
-          variant="primary"
+          variant="ghost"
+          class="passkey-login"
           type="button"
           [loading]="oidcBusy()"
           (click)="startOIDC(false)"
         >
-          Entrar com provedor
+          <fl-icon name="fingerprint" />
+          Entrar com passkey
         </button>
       }
       <button

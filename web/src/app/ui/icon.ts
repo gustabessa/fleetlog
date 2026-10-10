@@ -24,9 +24,19 @@ import { Component, input } from '@angular/core';
 })
 export class FlIcon {
   readonly name = input<
-    'edit' | 'delete' | 'calendar' | 'fuel' | 'service' | 'expense' | 'archive' | 'restore'
+    | 'edit'
+    | 'delete'
+    | 'calendar'
+    | 'fuel'
+    | 'service'
+    | 'expense'
+    | 'archive'
+    | 'restore'
+    | 'fingerprint'
   >('edit');
   readonly paths = {
+    fingerprint:
+      'M12 11a2 2 0 0 0-2 2c0 3-.5 5-1.5 7M14 13c0 4-.5 7-1.5 9M8 16v-3a4 4 0 0 1 8 0c0 3-.2 5-.7 7M5 17v-4a7 7 0 0 1 14 0v3M3 10a9 9 0 0 1 18 0M7 4a9 9 0 0 1 10 0',
     archive: 'M3 4h18v4H3V4ZM5 8v13h14V8M10 12h4',
     restore: 'M4 12a8 8 0 1 0 2-6M2 4v6h6',
     edit: 'M16 3l5 5M3 21l4-1 14-14a2 2 0 0 0-5-3L2 17l1 4Z',

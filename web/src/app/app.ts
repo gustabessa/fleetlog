@@ -1,3 +1,4 @@
+import { FlIcon } from './ui/icon';
 import { FlSnackbar, Snackbar } from './ui/snackbar';
 import { FlLoading, FlStartup, FlLogo } from './ui';
 import { FlConfirmation } from './ui/confirmation';
@@ -43,6 +44,7 @@ import { SwUpdate } from '@angular/service-worker';
     RealHistory,
     Members,
     FormsModule,
+    FlIcon,
     FlButton,
     FlInput,
     FlField,
