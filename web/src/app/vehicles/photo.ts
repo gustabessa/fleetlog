@@ -1,5 +1,5 @@
 import { Confirmation } from '../ui/confirmation';
-import { Component, inject, input, output, signal } from '@angular/core';
+import { Component, ElementRef, inject, input, output, signal } from '@angular/core';
 import { FlButton, FlCard } from '../ui';
 @Component({
   selector: 'fl-photo',
@@ -16,11 +16,48 @@ import { FlButton, FlCard } from '../ui';
         [disabled]="busy()"
         (change)="choose($event)"
     /></label>
+    @if (preview()) {
+      <h4>Enquadramento na garagem</h4>
+      <p>Ajuste o zoom e a posição. A prévia mostra o recorte que será salvo.</p>
+      <canvas width="1024" height="1024" aria-label="Prévia do enquadramento"></canvas>
+      <label
+        >Zoom<input
+          type="range"
+          min="1"
+          max="3"
+          step="0.01"
+          [value]="zoom"
+          [disabled]="busy()"
+          (input)="adjust('zoom', $event)"
+      /></label>
+      <label
+        >Posição horizontal<input
+          type="range"
+          min="0"
+          max="100"
+          [value]="horizontal"
+          [disabled]="busy()"
+          (input)="adjust('horizontal', $event)"
+      /></label>
+      <label
+        >Posição vertical<input
+          type="range"
+          min="0"
+          max="100"
+          [value]="vertical"
+          [disabled]="busy()"
+          (input)="adjust('vertical', $event)"
+      /></label>
+      <button flButton [disabled]="busy()" (click)="cancel()">Cancelar enquadramento</button>
+    }
+    @if (version() && !preview()) {
+      <button flButton [disabled]="busy()" (click)="edit()">Ajustar enquadramento</button>
+    }
     @if (error()) {
       <p role="alert">{{ error() }}</p>
     }
-    <button flButton [loading]="busy()" [disabled]="!file" (click)="save()">
-      {{ version() ? 'Substituir foto' : 'Salvar foto' }}
+    <button flButton [loading]="busy()" [disabled]="!preview()" (click)="save()">
+      {{ version() ? 'Salvar enquadramento' : 'Salvar foto' }}
     </button>
     @if (version()) {
       <button flButton [disabled]="busy()" (click)="remove()">Remover foto</button>
@@ -38,6 +75,12 @@ import { FlButton, FlCard } from '../ui';
       object-fit: contain;
       border-radius: var(--radius-control);
     }
+    canvas {
+      width: 100%;
+      max-width: 340px;
+      aspect-ratio: 1;
+      border-radius: var(--radius-control);
+    }
     label {
       display: grid;
       gap: var(--space-2);
@@ -52,30 +95,117 @@ export class Photo {
   readonly version = signal('');
   readonly busy = signal(false);
   readonly error = signal('');
-  file: File | null = null;
+  readonly preview = signal<HTMLImageElement | null>(null);
+  readonly element = inject(ElementRef<HTMLElement>);
+  zoom = 1;
+  horizontal = 50;
+  vertical = 50;
+  private selection = 0;
   readonly encode = encodeURIComponent;
   ngOnChanges() {
     this.version.set(this.initialVersion());
   }
-  choose(event: Event) {
-    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
-    if (file && file.size > 10 * 1024 * 1024) {
+  async choose(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
       this.error.set('A foto deve ter até 10 MB.');
-      this.file = null;
       return;
     }
-    this.file = file;
-    this.error.set('');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      this.error.set('Use uma foto JPEG, PNG ou WebP.');
+      return;
+    }
+    this.busy.set(true);
+    try {
+      await this.load(file);
+    } finally {
+      this.busy.set(false);
+    }
   }
-  async save() {
-    if (this.busy() || !this.file) return;
+  async edit() {
+    if (this.busy()) return;
     this.busy.set(true);
     this.error.set('');
     try {
+      const r = await fetch(this.endpoint() + '?v=' + this.encode(this.version()));
+      if (!r.ok) throw Error();
+      await this.load(await r.blob());
+    } catch {
+      this.error.set('Não foi possível abrir a foto. Tente novamente.');
+    } finally {
+      this.busy.set(false);
+    }
+  }
+  private async load(blob: Blob) {
+    const selection = ++this.selection;
+    const url = URL.createObjectURL(blob);
+    try {
+      const img = new Image();
+      img.src = url;
+      await img.decode();
+      if (selection !== this.selection) return;
+      if (img.naturalWidth * img.naturalHeight > 20_000_000) {
+        this.error.set('A foto deve ter até 20 megapixels.');
+        return;
+      }
+      this.zoom = 1;
+      this.horizontal = this.vertical = 50;
+      this.preview.set(img);
+      this.error.set('');
+    } catch {
+      if (selection === this.selection) this.error.set('Não foi possível abrir esta foto.');
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+  ngAfterViewChecked() {
+    const canvas = this.element.nativeElement.querySelector('canvas');
+    if (canvas && this.preview()) this.draw(canvas);
+  }
+  adjust(control: 'zoom' | 'horizontal' | 'vertical', event: Event) {
+    this[control] = Number((event.target as HTMLInputElement).value);
+  }
+  private draw(canvas: HTMLCanvasElement) {
+    const img = this.preview();
+    const ctx = canvas.getContext('2d');
+    if (!img || !ctx) return;
+    const size = canvas.width;
+    const scale = Math.min(size / img.naturalWidth, size / img.naturalHeight) * this.zoom;
+    const width = img.naturalWidth * scale;
+    const height = img.naturalHeight * scale;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+    ctx.drawImage(
+      img,
+      ((size - width) * this.horizontal) / 100,
+      ((size - height) * this.vertical) / 100,
+      width,
+      height,
+    );
+  }
+  cancel() {
+    ++this.selection;
+    this.preview.set(null);
+    this.error.set('');
+  }
+  async save() {
+    if (this.busy() || !this.preview()) return;
+    this.busy.set(true);
+    this.error.set('');
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 1024;
+      this.draw(canvas);
+      const blob = await new Promise<Blob>((resolve, reject) =>
+        canvas.toBlob((value) => (value ? resolve(value) : reject(Error())), 'image/jpeg', 0.92),
+      );
       const r = await fetch(this.endpoint(), {
         method: 'PUT',
-        headers: { 'Content-Type': this.file.type },
-        body: this.file,
+        headers: { 'Content-Type': blob.type },
+        body: blob,
       });
       if (!r.ok) {
         this.error.set(
@@ -86,7 +216,7 @@ export class Photo {
         return;
       }
       this.version.set((await r.json()).version);
-      this.file = null;
+      this.cancel();
       this.changed.emit();
     } catch {
       this.error.set('Não foi possível salvar a foto.');
@@ -105,6 +235,7 @@ export class Photo {
       });
       if (!r.ok) throw Error();
       this.version.set('');
+      this.cancel();
       this.changed.emit();
     } catch {
       this.error.set('Não foi possível remover a foto.');

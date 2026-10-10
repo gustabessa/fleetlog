@@ -46,17 +46,35 @@ test('foto usa S3 privado, persiste na garagem e remove', async ({ page }) => {
     })
   ).json();
   await page.reload();
-  if (!new URL(page.url()).pathname.endsWith('/vehicles/'+v.id))
+  if (!new URL(page.url()).pathname.endsWith('/vehicles/' + v.id))
     await page.locator('button.vehicle-open').filter({ hasText: v.name }).click();
   await page
     .getByLabel('Selecionar foto')
     .setInputFiles({ name: 'vehicle.png', mimeType: 'image/png', buffer: png() });
+  await expect(page.getByLabel('Prévia do enquadramento')).toBeVisible();
+  await page.getByLabel('Zoom', { exact: true }).fill('1.5');
+  await page.getByLabel('Posição horizontal', { exact: true }).fill('30');
   await page.getByRole('button', { name: 'Salvar foto', exact: true }).click();
   await expect(page.getByRole('img', { name: 'Foto do veículo', exact: true })).toBeVisible();
   await page.reload();
-  if (!new URL(page.url()).pathname.endsWith('/vehicles/'+v.id))
+  if (!new URL(page.url()).pathname.endsWith('/vehicles/' + v.id))
     await page.locator('button.vehicle-open').filter({ hasText: v.name }).click();
   await expect(page.getByRole('img', { name: 'Foto do veículo', exact: true })).toBeVisible();
+  const savedPhoto = page.getByRole('img', { name: 'Foto do veículo', exact: true });
+  await expect
+    .poll(() =>
+      savedPhoto.evaluate((img: HTMLImageElement) => [img.naturalWidth, img.naturalHeight]),
+    )
+    .toEqual([1024, 1024]);
+  await page.getByRole('button', { name: 'Ajustar enquadramento', exact: true }).click();
+  await expect(page.getByLabel('Prévia do enquadramento')).toBeVisible();
+  await page.getByRole('button', { name: 'Cancelar enquadramento', exact: true }).click();
+  await expect(page.getByLabel('Prévia do enquadramento')).not.toBeVisible();
+  await expect(savedPhoto).toBeVisible();
+  await page.getByRole('button', { name: 'Ajustar enquadramento', exact: true }).click();
+  await page.getByLabel('Zoom', { exact: true }).fill('2');
+  await page.getByRole('button', { name: 'Salvar enquadramento', exact: true }).click();
+  await expect(page.getByLabel('Prévia do enquadramento')).not.toBeVisible();
   await page.getByRole('button', { name: 'Remover foto', exact: true }).click();
   await page
     .getByRole('dialog', { name: 'Confirmar ação' })
