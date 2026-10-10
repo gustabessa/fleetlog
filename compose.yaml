@@ -3,6 +3,8 @@ services:
     image: ${FLEETLOG_IMAGE:-ghcr.io/gustabessa/fleetlog:main}
     pull_policy: always
     environment:
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+      LOG_FORMAT: "${LOG_FORMAT:-json}"
       PGHOST: fleetlog-db
       PGPORT: "5432"
       PGDATABASE: fleetlog

@@ -7,9 +7,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fleetlog/internal/apiutil"
+	"fleetlog/internal/observability"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/oauth2"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -21,7 +23,7 @@ import (
 
 type OIDCConfig struct {
 	Issuer, DiscoveryURL, ClientID, ClientSecret, CallbackPath string
-	DisplayName                                              string
+	DisplayName                                                string
 	Scopes                                                     []string
 	LocalEnabled                                               bool
 }
@@ -139,6 +141,7 @@ func (s *Service) oidcRoutes(m *http.ServeMux) {
 		user, _ := UserFromContext(r.Context())
 		var linked bool
 		if err := s.DB.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM external_identities WHERE user_id=$1 AND issuer=$2)`, user.ID, s.OIDC.Issuer).Scan(&linked); err != nil {
+			observability.HTTPError(w, "request dependency failed", err)
 			reply(w, 503, map[string]string{"error": "identity unavailable"})
 			return
 		}
@@ -192,16 +195,19 @@ func (s *Service) beginOIDC(w http.ResponseWriter, r *http.Request, link bool) {
 
 	state, e := randomToken()
 	if e != nil {
+		observability.HTTPError(w, "OIDC initialization failed", e)
 		reply(w, 503, map[string]string{"error": "OIDC unavailable"})
 		return
 	}
 	browser, e := randomToken()
 	if e != nil {
+		observability.HTTPError(w, "OIDC initialization failed", e)
 		reply(w, 503, map[string]string{"error": "OIDC unavailable"})
 		return
 	}
 	nonce, e := randomToken()
 	if e != nil {
+		observability.HTTPError(w, "OIDC initialization failed", e)
 		reply(w, 503, map[string]string{"error": "OIDC unavailable"})
 		return
 	}
@@ -218,25 +224,30 @@ func (s *Service) beginOIDC(w http.ResponseWriter, r *http.Request, link bool) {
 	}
 	tx, e := s.DB.Begin(r.Context())
 	if e != nil {
+		observability.HTTPError(w, "OIDC initialization failed", e)
 		reply(w, 503, map[string]string{"error": "OIDC unavailable"})
 		return
 	}
 	defer tx.Rollback(r.Context())
 	if _, e = tx.Exec(r.Context(), `DELETE FROM oidc_flows WHERE expires_at<=now()`); e != nil {
+		observability.HTTPError(w, "OIDC initialization failed", e)
 		reply(w, 503, map[string]string{"error": "OIDC unavailable"})
 		return
 	}
 	if old, e := r.Cookie("fleetlog_oidc"); e == nil {
 		if _, e = tx.Exec(r.Context(), `DELETE FROM oidc_flows WHERE browser_hash=$1`, digest(old.Value)); e != nil {
+			observability.HTTPError(w, "OIDC initialization failed", e)
 			reply(w, 503, map[string]string{"error": "OIDC unavailable"})
 			return
 		}
 	}
 	if _, e = tx.Exec(r.Context(), `INSERT INTO oidc_flows(state_hash,browser_hash,nonce,verifier,link_user_id,session_hash,expires_at) VALUES($1,$2,$3,$4,$5,$6,now()+interval '10 minutes')`, digest(state), digest(browser), nonce, verifier, userID, sessionHash); e != nil {
+		observability.HTTPError(w, "OIDC initialization failed", e)
 		reply(w, 503, map[string]string{"error": "OIDC unavailable"})
 		return
 	}
 	if e = tx.Commit(r.Context()); e != nil {
+		observability.HTTPError(w, "OIDC initialization failed", e)
 		reply(w, 503, map[string]string{"error": "OIDC unavailable"})
 		return
 	}
@@ -244,6 +255,13 @@ func (s *Service) beginOIDC(w http.ResponseWriter, r *http.Request, link bool) {
 	reply(w, 200, map[string]string{"url": s.OIDC.OAuth.AuthCodeURL(state, oidc.Nonce(nonce), oauth2.S256ChallengeOption(verifier))})
 }
 func (s *Service) oidcRedirect(w http.ResponseWriter, r *http.Request, result string) {
+	level := slog.LevelInfo
+	if result == "unavailable" {
+		level = slog.LevelError
+	} else if result != "login" && result != "linked" {
+		level = slog.LevelWarn
+	}
+	observability.Log(r.Context(), level, "OIDC flow completed", "result", result)
 	w.Header().Set("Cache-Control", "no-store")
 	http.Redirect(w, r, s.Origin+"/?oidc="+result, http.StatusSeeOther)
 }
@@ -262,6 +280,9 @@ func (s *Service) callbackOIDC(w http.ResponseWriter, r *http.Request) {
 	var sessionHash *string
 	err = s.DB.QueryRow(r.Context(), `DELETE FROM oidc_flows WHERE state_hash=$1 AND browser_hash=$2 AND expires_at>now() RETURNING nonce,verifier,link_user_id,session_hash`, digest(r.URL.Query().Get("state")), digest(cookie.Value)).Scan(&nonce, &verifier, &linkID, &sessionHash)
 	if err != nil {
+		if !errors.Is(err, pgx.ErrNoRows) {
+			observability.Error(r.Context(), "OIDC flow operation failed", err)
+		}
 		s.oidcRedirect(w, r, "invalid")
 		return
 	}
@@ -273,6 +294,7 @@ func (s *Service) callbackOIDC(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), oauth2.HTTPClient, s.OIDC.Client)
 	tokens, err := s.OIDC.OAuth.Exchange(ctx, r.URL.Query().Get("code"), oauth2.VerifierOption(verifier))
 	if err != nil {
+		observability.Error(r.Context(), "OIDC flow operation failed", err)
 		s.oidcRedirect(w, r, "invalid")
 		return
 	}
@@ -282,6 +304,9 @@ func (s *Service) callbackOIDC(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	idToken, err := s.OIDC.Verifier.Verify(ctx, raw)
+	if err != nil {
+		observability.Error(r.Context(), "OIDC ID token verification failed", err)
+	}
 	if err != nil || idToken.Subject == "" || len(idToken.Subject) > 512 || subtle.ConstantTimeCompare([]byte(idToken.Nonce), []byte(nonce)) != 1 {
 		s.oidcRedirect(w, r, "invalid")
 		return
@@ -295,6 +320,7 @@ func (s *Service) callbackOIDC(w http.ResponseWriter, r *http.Request) {
 	}
 	tx, err := s.DB.Begin(ctx)
 	if err != nil {
+		observability.Error(r.Context(), "OIDC flow operation failed", err)
 		s.oidcRedirect(w, r, "unavailable")
 		return
 	}
@@ -309,6 +335,7 @@ func (s *Service) callbackOIDC(w http.ResponseWriter, r *http.Request) {
 		var boundID int64
 		err = tx.QueryRow(ctx, `INSERT INTO external_identities(issuer,subject,user_id) VALUES($1,$2,$3) ON CONFLICT(issuer,subject) DO UPDATE SET subject=excluded.subject RETURNING user_id`, s.OIDC.Issuer, idToken.Subject, userID).Scan(&boundID)
 		if err != nil {
+			observability.Error(r.Context(), "OIDC database operation failed", err)
 			s.oidcRedirect(w, r, "unavailable")
 			return
 		}
@@ -323,30 +350,36 @@ func (s *Service) callbackOIDC(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err != nil {
+			observability.Error(r.Context(), "OIDC database operation failed", err)
 			s.oidcRedirect(w, r, "unavailable")
 			return
 		}
 	}
 	session, err := randomToken()
 	if err != nil {
+		observability.Error(r.Context(), "OIDC flow operation failed", err)
 		s.oidcRedirect(w, r, "unavailable")
 		return
 	}
 	if sessionHash != nil {
 		if _, err = tx.Exec(ctx, `DELETE FROM sessions WHERE token_hash=$1`, sessionHash); err != nil {
+			observability.Error(r.Context(), "OIDC database operation failed", err)
 			s.oidcRedirect(w, r, "unavailable")
 			return
 		}
 	}
 	if _, err = tx.Exec(ctx, `DELETE FROM sessions WHERE expires_at<=now()`); err != nil {
+		observability.Error(r.Context(), "OIDC database operation failed", err)
 		s.oidcRedirect(w, r, "unavailable")
 		return
 	}
 	if _, err = tx.Exec(ctx, `INSERT INTO sessions(token_hash,user_id,expires_at) VALUES($1,$2,now()+interval '24 hours')`, digest(session), userID); err != nil {
+		observability.Error(r.Context(), "OIDC database operation failed", err)
 		s.oidcRedirect(w, r, "unavailable")
 		return
 	}
 	if err = tx.Commit(ctx); err != nil {
+		observability.Error(r.Context(), "OIDC database operation failed", err)
 		s.oidcRedirect(w, r, "unavailable")
 		return
 	}

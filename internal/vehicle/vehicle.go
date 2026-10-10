@@ -3,6 +3,7 @@ package vehicle
 import (
 	"encoding/json"
 	"errors"
+	"fleetlog/internal/observability"
 	"io"
 	"net/http"
 	"regexp"
@@ -116,6 +117,7 @@ func result(w http.ResponseWriter, v Vehicle, err error, status int) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			reply(w, 404, map[string]string{"error": "vehicle not found"})
 		} else {
+			observability.HTTPError(w, "request dependency failed", err)
 			reply(w, 503, map[string]string{"error": "vehicle unavailable"})
 		}
 		return
@@ -126,6 +128,7 @@ func (s *Service) list(w http.ResponseWriter, r *http.Request) {
 	g, _ := garage.FromContext(r.Context())
 	rows, err := s.Garage.Auth.DB.Query(r.Context(), `SELECT `+columns+` FROM vehicles WHERE garage_id=$1 AND (NOT archived OR $2) ORDER BY id`, g.ID, r.URL.Query().Get("includeArchived") == "true")
 	if err != nil {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 503, map[string]string{"error": "vehicle unavailable"})
 		return
 	}
@@ -134,12 +137,14 @@ func (s *Service) list(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		v, err := scan(rows)
 		if err != nil {
+			observability.HTTPError(w, "request dependency failed", err)
 			reply(w, 503, map[string]string{"error": "vehicle unavailable"})
 			return
 		}
 		list = append(list, v)
 	}
-	if rows.Err() != nil {
+	if err := rows.Err(); err != nil {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 503, map[string]string{"error": "vehicle unavailable"})
 		return
 	}

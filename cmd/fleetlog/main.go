@@ -16,6 +16,7 @@ import (
 	"fleetlog/internal/entry"
 	"fleetlog/internal/garage"
 	"fleetlog/internal/httpserver"
+	"fleetlog/internal/observability"
 	"fleetlog/internal/odometer"
 	"fleetlog/internal/photo"
 	"fleetlog/internal/reminder"
@@ -23,6 +24,10 @@ import (
 )
 
 func main() {
+	if err := observability.Configure(); err != nil {
+		slog.Error("logging configuration failed", "error", err)
+		os.Exit(1)
+	}
 	if len(os.Args) > 1 && os.Args[1] == "healthcheck" {
 		client := http.Client{Timeout: 3 * time.Second}
 		url, err := healthURL(env("HTTP_ADDR", ":8080"))
@@ -48,7 +53,7 @@ func main() {
 	authentication, err := auth.Open(startup, os.Getenv("DATABASE_URL"), os.Getenv("PUBLIC_URL"), os.Getenv("BOOTSTRAP_USERNAME"), os.Getenv("BOOTSTRAP_PASSWORD"))
 	cancel()
 	if err != nil {
-		slog.Error("startup failed", "error", err)
+		observability.Error(context.Background(), "database startup failed", err)
 		os.Exit(1)
 	}
 	defer authentication.DB.Close()
@@ -56,7 +61,7 @@ func main() {
 	err = authentication.ConfigureOIDCFromEnv(oidcContext)
 	oidcCancel()
 	if err != nil {
-		slog.Error("OIDC configuration failed", "error", err)
+		observability.Error(context.Background(), "OIDC configuration failed", err)
 		os.Exit(1)
 	}
 	store, err := photo.FromEnv()
@@ -64,6 +69,7 @@ func main() {
 		slog.Error("image configuration failed", "error", err)
 		os.Exit(1)
 	}
+	slog.Info("dependencies initialized", "database", "ready", "oidc_enabled", authentication.OIDC != nil, "storage_enabled", store != nil)
 	mux := http.NewServeMux()
 	authentication.Routes(mux)
 	garages := &garage.Service{Auth: authentication}
@@ -89,7 +95,7 @@ func main() {
 	mux.HandleFunc("/api/", apiNotFound)
 	mux.HandleFunc("/api", apiNotFound)
 	mux.Handle("/", httpserver.SPA(os.DirFS(directory)))
-	server := &http.Server{Addr: env("HTTP_ADDR", ":8080"), Handler: mux,
+	server := &http.Server{Addr: env("HTTP_ADDR", ":8080"), Handler: observability.HTTP(mux),
 		ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second,
 		WriteTimeout: 30 * time.Second, IdleTimeout: 60 * time.Second}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -97,6 +103,7 @@ func main() {
 	go photos.Run(ctx)
 	go func() {
 		<-ctx.Done()
+		slog.Info("shutdown requested")
 		shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := server.Shutdown(shutdown); err != nil {

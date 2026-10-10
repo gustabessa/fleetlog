@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fleetlog/internal/observability"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -68,16 +69,23 @@ func NewS3(endpoint, region, bucket, key, secret string, pathStyle bool) (Store,
 }
 func (s *S3Store) Put(ctx context.Context, key string, data []byte, kind string) error {
 	_, err := s.Client.PutObject(ctx, &s3.PutObjectInput{Bucket: &s.Bucket, Key: &key, Body: bytes.NewReader(data), ContentType: &kind})
+	if err != nil {
+		observability.Error(ctx, "S3 operation failed", err, "bucket", s.Bucket)
+	}
 	return err
 }
 func (s *S3Store) Get(ctx context.Context, key string) (io.ReadCloser, error) {
 	out, err := s.Client.GetObject(ctx, &s3.GetObjectInput{Bucket: &s.Bucket, Key: &key})
 	if err != nil {
+		observability.Error(ctx, "S3 operation failed", err, "bucket", s.Bucket)
 		return nil, err
 	}
 	return out.Body, nil
 }
 func (s *S3Store) Delete(ctx context.Context, key string) error {
 	_, err := s.Client.DeleteObject(ctx, &s3.DeleteObjectInput{Bucket: &s.Bucket, Key: &key})
+	if err != nil {
+		observability.Error(ctx, "S3 operation failed", err, "bucket", s.Bucket)
+	}
 	return err
 }

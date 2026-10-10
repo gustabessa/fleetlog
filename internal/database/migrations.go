@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"log/slog"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -28,11 +29,13 @@ func Migrate(ctx context.Context, tx pgx.Tx) error {
 		if applied {
 			continue
 		}
+		slog.InfoContext(ctx, "database migration started", "version", m.version)
 		sql, err := migrations.ReadFile("migrations/" + m.file)
 		if err != nil {
 			return err
 		}
 		if _, err = tx.Exec(ctx, string(sql)); err != nil {
+			slog.ErrorContext(ctx, "database migration failed", "version", m.version)
 			return fmt.Errorf("migration %d: %w", m.version, err)
 		}
 	}

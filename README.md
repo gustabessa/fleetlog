@@ -73,6 +73,16 @@ Recrie o serviço afetado após mudar variáveis (`docker compose up -d`). A sen
 
 OIDC e S3 estão documentados abaixo; preferências de moeda/tema ficam no perfil. Os dois Compose encaminham S3__, OIDC__ e AUTH_LOCAL_ENABLED ao processo Go. Defina os valores no .env local ou Environment do Dokploy e recrie a aplicação para aplicá-los. O bucket/provedor precisam existir e estar configurados; os Compose não criam esses serviços.
 
+## Logs e diagnóstico
+
+A aplicação registra logs JSON em stdout, disponíveis no Dokploy. `LOG_LEVEL` aceita `debug`, `info` (padrão), `warn` e `error`; `LOG_FORMAT` aceita `json` (padrão) e `text`. Os dois Compose encaminham essas variáveis; recrie o serviço após alterá-las.
+
+Requisições de API registram método, rota sem valores privados, status, duração e bytes enviados. O header `X-Request-ID` correlaciona a resposta com os logs da requisição e de suas dependências. Falhas HTTP usam nível error, rejeições 4xx usam warn; health checks e arquivos estáticos bem-sucedidos aparecem apenas em debug.
+
+Falhas de banco registram o código PostgreSQL; operações S3 registram operação, bucket, código S3 e status do upstream quando disponíveis, além de indicadores de DNS e timeout. OIDC registra o resultado do fluxo e falhas internas. Limpeza de fotos, inicialização, migrações e desligamento também possuem registros. Senhas, cookies, tokens, query strings, corpos de requisições e mensagens brutas das dependências não são registrados.
+
+Para investigar um upload, localize o request ID da requisição PUT no navegador e procure `S3 operation failed` e `HTTP request completed` nos logs. Um 503 sem registro correspondente pode ter sido gerado antes de chegar ao Fleetlog. Os logs não substituem métricas, tracing distribuído ou auditoria de ações.
+
 ## Primeiro acesso e sessões
 
 O startup aplica migrações SQL versionadas em transação com lock, criando usuários, sessões, garagens/vínculos e a reserva de identidades externas (`issuer` + `subject`). Com a tabela de usuários vazia, exige bootstrap e grava a senha com bcrypt. Reiniciar ou mudar bootstrap não altera contas existentes. Não existe cadastro público; o criador inclui familiares no painel. Troca/recuperação de senha local ficou fora da entrega por decisão do usuário.

@@ -9,6 +9,7 @@ import (
 	"fleetlog/internal/apiutil"
 	"fleetlog/internal/auth"
 	"fleetlog/internal/garage"
+	"fleetlog/internal/observability"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -90,6 +91,7 @@ func Failure(w http.ResponseWriter, err error) {
 	} else if errors.Is(err, pgx.ErrNoRows) {
 		apiutil.Reply(w, 404, map[string]string{"error": "record not found"})
 	} else {
+		observability.HTTPError(w, "database operation failed", err)
 		apiutil.Reply(w, 503, map[string]string{"error": "record unavailable"})
 	}
 }

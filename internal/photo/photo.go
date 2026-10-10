@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fleetlog/internal/apiutil"
 	"fleetlog/internal/garage"
+	"fleetlog/internal/observability"
 	"fleetlog/internal/odometer"
 	"github.com/jackc/pgx/v5"
 	_ "golang.org/x/image/webp"
@@ -186,6 +187,7 @@ func (s *Service) read(w http.ResponseWriter, r *http.Request) {
 	defer body.Close()
 	data, err := io.ReadAll(io.LimitReader(body, MaxBytes+1))
 	if err != nil || int64(len(data)) != size {
+		observability.Error(r.Context(), "stored photo read failed or size mismatch", err, "expected_bytes", size, "actual_bytes", len(data))
 		apiutil.Reply(w, 503, map[string]string{"error": "image unavailable"})
 		return
 	}
@@ -277,7 +279,9 @@ func (s *Service) Run(ctx context.Context) {
 	defer ticker.Stop()
 	for {
 		cleanup, cancel := context.WithTimeout(ctx, 25*time.Second)
-		_ = s.Cleanup(cleanup)
+		if err := s.Cleanup(cleanup); err != nil && ctx.Err() == nil {
+			observability.Error(cleanup, "photo cleanup failed", err)
+		}
 		cancel()
 		select {
 		case <-ctx.Done():

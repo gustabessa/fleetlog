@@ -3,6 +3,7 @@ package garage
 import (
 	"errors"
 	"fleetlog/internal/apiutil"
+	"fleetlog/internal/observability"
 	"github.com/jackc/pgx/v5/pgconn"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
@@ -36,6 +37,7 @@ func (s *Service) members(w http.ResponseWriter, r *http.Request) {
 	g, _ := FromContext(r.Context())
 	rows, err := s.Auth.DB.Query(r.Context(), `SELECT u.id,u.username,u.id=g.created_by,EXISTS(SELECT 1 FROM external_identities x WHERE x.user_id=u.id) FROM garage_members m JOIN users u ON u.id=m.user_id JOIN garages g ON g.id=m.garage_id WHERE m.garage_id=$1 ORDER BY u.id`, g.ID)
 	if err != nil {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 503, map[string]string{"error": "members unavailable"})
 		return
 	}
@@ -49,13 +51,15 @@ func (s *Service) members(w http.ResponseWriter, r *http.Request) {
 	list := []member{}
 	for rows.Next() {
 		var m member
-		if rows.Scan(&m.ID, &m.Username, &m.Owner, &m.OIDCLinked) != nil {
+		if err := rows.Scan(&m.ID, &m.Username, &m.Owner, &m.OIDCLinked); err != nil {
+			observability.HTTPError(w, "request dependency failed", err)
 			reply(w, 503, map[string]string{"error": "members unavailable"})
 			return
 		}
 		list = append(list, m)
 	}
-	if rows.Err() != nil {
+	if err := rows.Err(); err != nil {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 503, map[string]string{"error": "members unavailable"})
 		return
 	}
@@ -80,12 +84,14 @@ func (s *Service) addMember(w http.ResponseWriter, r *http.Request) {
 	if !input.Existing {
 		hash, err = bcrypt.GenerateFromPassword([]byte(input.Password), 12)
 		if err != nil {
+			observability.HTTPError(w, "request dependency failed", err)
 			reply(w, 503, map[string]string{"error": "account unavailable"})
 			return
 		}
 	}
 	tx, err := s.Auth.DB.Begin(r.Context())
 	if err != nil {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 503, map[string]string{"error": "members unavailable"})
 		return
 	}
@@ -107,10 +113,12 @@ func (s *Service) addMember(w http.ResponseWriter, r *http.Request) {
 	}
 	g, _ := FromContext(r.Context())
 	if _, err = tx.Exec(r.Context(), `INSERT INTO garage_members(garage_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING`, g.ID, id); err != nil {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 503, map[string]string{"error": "members unavailable"})
 		return
 	}
 	if err = tx.Commit(r.Context()); err != nil {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 503, map[string]string{"error": "members unavailable"})
 		return
 	}
@@ -129,6 +137,7 @@ func (s *Service) removeMember(w http.ResponseWriter, r *http.Request) {
 	}
 	result, err := s.Auth.DB.Exec(r.Context(), `DELETE FROM garage_members WHERE garage_id=$1 AND user_id=$2`, g.ID, id)
 	if err != nil {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 503, map[string]string{"error": "members unavailable"})
 		return
 	}

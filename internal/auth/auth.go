@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fleetlog/internal/observability"
 	"fmt"
 	"io"
 	"net/http"
@@ -108,7 +109,8 @@ func (s *Service) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()
-		if s.DB.Ping(ctx) != nil {
+		if err := s.DB.Ping(ctx); err != nil {
+			observability.HTTPError(w, "request dependency failed", err)
 			reply(w, 503, map[string]string{"status": "unavailable"})
 			return
 		}
@@ -162,6 +164,7 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 	var hash string
 	err := s.DB.QueryRow(r.Context(), `SELECT id,password_hash FROM users WHERE username=$1 AND password_hash IS NOT NULL`, strings.TrimSpace(input.Username)).Scan(&id, &hash)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 503, map[string]string{"error": "login unavailable"})
 		return
 	}
@@ -175,6 +178,7 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 	}
 	token := make([]byte, 32)
 	if _, err = rand.Read(token); err != nil {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 500, map[string]string{"error": "login failed"})
 		return
 	}
@@ -182,25 +186,30 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 	expiry := time.Now().Add(24 * time.Hour)
 	tx, err := s.DB.Begin(r.Context())
 	if err != nil {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 503, map[string]string{"error": "login unavailable"})
 		return
 	}
 	defer tx.Rollback(r.Context())
 	if _, err = tx.Exec(r.Context(), `DELETE FROM sessions WHERE expires_at <= now()`); err != nil {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 503, map[string]string{"error": "login unavailable"})
 		return
 	}
 	if old, e := r.Cookie("fleetlog_session"); e == nil {
 		if _, err = tx.Exec(r.Context(), `DELETE FROM sessions WHERE token_hash=$1`, digest(old.Value)); err != nil {
+			observability.HTTPError(w, "request dependency failed", err)
 			reply(w, 503, map[string]string{"error": "login unavailable"})
 			return
 		}
 	}
 	if _, err = tx.Exec(r.Context(), `INSERT INTO sessions(token_hash,user_id,expires_at) VALUES($1,$2,$3)`, digest(raw), id, expiry); err != nil {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 503, map[string]string{"error": "login unavailable"})
 		return
 	}
-	if tx.Commit(r.Context()) != nil {
+	if err = tx.Commit(r.Context()); err != nil {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 503, map[string]string{"error": "login unavailable"})
 		return
 	}
@@ -225,6 +234,7 @@ func (s *Service) me(w http.ResponseWriter, r *http.Request) {
 func (s *Service) logout(w http.ResponseWriter, r *http.Request) {
 	if c, e := r.Cookie("fleetlog_session"); e == nil {
 		if _, e = s.DB.Exec(r.Context(), `DELETE FROM sessions WHERE token_hash=$1`, digest(c.Value)); e != nil {
+			observability.HTTPError(w, "session revocation failed", e)
 			reply(w, 503, map[string]string{"error": "logout unavailable"})
 			return
 		}

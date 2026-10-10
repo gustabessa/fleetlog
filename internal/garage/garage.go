@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fleetlog/internal/observability"
 	"net/http"
 	"strconv"
 
@@ -48,6 +49,7 @@ func (s *Service) RequireMember(next http.HandlerFunc) http.HandlerFunc {
 			if errors.Is(err, pgx.ErrNoRows) {
 				reply(w, 404, map[string]string{"error": "garage not found"})
 			} else {
+				observability.HTTPError(w, "request dependency failed", err)
 				reply(w, 503, map[string]string{"error": "garage unavailable"})
 			}
 			return
@@ -60,6 +62,7 @@ func (s *Service) list(w http.ResponseWriter, r *http.Request) {
 	user, _ := auth.UserFromContext(r.Context())
 	rows, err := s.Auth.DB.Query(r.Context(), `SELECT g.id,g.name,g.created_by FROM garages g JOIN garage_members m ON m.garage_id=g.id WHERE m.user_id=$1 ORDER BY g.id`, user.ID)
 	if err != nil {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 503, map[string]string{"error": "garage unavailable"})
 		return
 	}
@@ -67,14 +70,16 @@ func (s *Service) list(w http.ResponseWriter, r *http.Request) {
 	garages := []Garage{}
 	for rows.Next() {
 		var g Garage
-		if rows.Scan(&g.ID, &g.Name, &g.CreatedBy) != nil {
+		if err := rows.Scan(&g.ID, &g.Name, &g.CreatedBy); err != nil {
+			observability.HTTPError(w, "request dependency failed", err)
 			reply(w, 503, map[string]string{"error": "garage unavailable"})
 			return
 		}
 		g.CanManage = g.CreatedBy == user.ID
 		garages = append(garages, g)
 	}
-	if rows.Err() != nil {
+	if err := rows.Err(); err != nil {
+		observability.HTTPError(w, "request dependency failed", err)
 		reply(w, 503, map[string]string{"error": "garage unavailable"})
 		return
 	}

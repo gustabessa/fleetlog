@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"fleetlog/internal/observability"
 	"net/http"
 
 	"github.com/jackc/pgx/v5"
@@ -37,6 +38,7 @@ func (s *Service) RequireUser(next http.HandlerFunc) http.HandlerFunc {
 			if errors.Is(err, pgx.ErrNoRows) {
 				reply(w, 401, map[string]string{"error": "authentication required"})
 			} else {
+				observability.HTTPError(w, "request dependency failed", err)
 				reply(w, 503, map[string]string{"error": "authentication unavailable"})
 			}
 			return

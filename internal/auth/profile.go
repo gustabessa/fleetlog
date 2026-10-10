@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"fleetlog/internal/observability"
 	"io"
 	"net/http"
 	"slices"
@@ -36,6 +37,7 @@ func (s *Service) updateProfile(w http.ResponseWriter, r *http.Request) {
 	user, _ := UserFromContext(r.Context())
 	err := s.DB.QueryRow(r.Context(), `UPDATE users SET currency=COALESCE($2,currency),palette=COALESCE($3,palette),theme=COALESCE($4,theme) WHERE id=$1 RETURNING currency,palette,theme`, user.ID, input.Currency, input.Palette, input.Theme).Scan(&user.Currency, &user.Palette, &user.Theme)
 	if err != nil {
+		observability.HTTPError(w, "profile update failed", err)
 		reply(w, 503, map[string]string{"error": "profile unavailable"})
 		return
 	}
