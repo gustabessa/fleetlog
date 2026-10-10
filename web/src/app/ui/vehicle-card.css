@@ -179,12 +179,15 @@
   overflow: hidden;
 }
 .card-actions {
+  position: absolute;
+  right: 12px;
+  bottom: calc(25% + 12px);
+  z-index: 2;
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
-  border-top: 1px solid var(--line);
+
 }
 .card-actions button {
   width: 36px;
