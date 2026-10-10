@@ -21,6 +21,7 @@ import (
 
 type OIDCConfig struct {
 	Issuer, DiscoveryURL, ClientID, ClientSecret, CallbackPath string
+	DisplayName                                              string
 	Scopes                                                     []string
 	LocalEnabled                                               bool
 }
@@ -28,6 +29,7 @@ type OIDCService struct {
 	OAuth                oauth2.Config
 	Verifier             *oidc.IDTokenVerifier
 	Issuer, CallbackPath string
+	DisplayName          string
 	Client               *http.Client
 }
 
@@ -102,7 +104,7 @@ func (s *Service) ConfigureOIDC(ctx context.Context, cfg OIDCConfig) error {
 	if cfg.ClientSecret == "" {
 		endpoint.AuthStyle = oauth2.AuthStyleInParams
 	}
-	s.OIDC = &OIDCService{OAuth: oauth2.Config{ClientID: cfg.ClientID, ClientSecret: cfg.ClientSecret, Endpoint: endpoint, RedirectURL: s.Origin + cfg.CallbackPath, Scopes: scopes}, Verifier: provider.VerifierContext(ctx, &oidc.Config{ClientID: cfg.ClientID}), Issuer: cfg.Issuer, CallbackPath: cfg.CallbackPath, Client: client}
+	s.OIDC = &OIDCService{OAuth: oauth2.Config{ClientID: cfg.ClientID, ClientSecret: cfg.ClientSecret, Endpoint: endpoint, RedirectURL: s.Origin + cfg.CallbackPath, Scopes: scopes}, Verifier: provider.VerifierContext(ctx, &oidc.Config{ClientID: cfg.ClientID}), Issuer: cfg.Issuer, CallbackPath: cfg.CallbackPath, Client: client, DisplayName: strings.TrimSpace(cfg.DisplayName)}
 	s.LocalDisabled = !cfg.LocalEnabled
 	return nil
 }
@@ -119,11 +121,15 @@ func (s *Service) ConfigureOIDCFromEnv(ctx context.Context) error {
 	if len(scopes) == 0 {
 		scopes = []string{"openid", "profile"}
 	}
-	return s.ConfigureOIDC(ctx, OIDCConfig{Issuer: os.Getenv("OIDC_ISSUER"), DiscoveryURL: os.Getenv("OIDC_DISCOVERY_URL"), ClientID: os.Getenv("OIDC_CLIENT_ID"), ClientSecret: os.Getenv("OIDC_CLIENT_SECRET"), CallbackPath: os.Getenv("OIDC_CALLBACK_PATH"), Scopes: scopes, LocalEnabled: local})
+	return s.ConfigureOIDC(ctx, OIDCConfig{Issuer: os.Getenv("OIDC_ISSUER"), DiscoveryURL: os.Getenv("OIDC_DISCOVERY_URL"), ClientID: os.Getenv("OIDC_CLIENT_ID"), ClientSecret: os.Getenv("OIDC_CLIENT_SECRET"), CallbackPath: os.Getenv("OIDC_CALLBACK_PATH"), Scopes: scopes, LocalEnabled: local, DisplayName: os.Getenv("OIDC_DISPLAY_NAME")})
 }
 func (s *Service) oidcRoutes(m *http.ServeMux) {
 	m.HandleFunc("GET /api/auth/options", func(w http.ResponseWriter, r *http.Request) {
-		reply(w, 200, map[string]bool{"oidcEnabled": s.OIDC != nil, "localEnabled": !s.LocalDisabled})
+		displayName := ""
+		if s.OIDC != nil {
+			displayName = s.OIDC.DisplayName
+		}
+		reply(w, 200, map[string]any{"oidcEnabled": s.OIDC != nil, "localEnabled": !s.LocalDisabled, "oidcDisplayName": displayName})
 	})
 	m.HandleFunc("GET /api/auth/oidc/status", s.RequireUser(func(w http.ResponseWriter, r *http.Request) {
 		if s.OIDC == nil {

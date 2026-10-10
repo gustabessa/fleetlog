@@ -144,6 +144,8 @@ ações externas a esta entrega de código; o cliente segue o contrato S3.
 `OIDC_CLIENT_SECRET` é opcional para cliente público com PKCE; clientes
 confidenciais devem configurá-lo. `OIDC_DISCOVERY_URL` opcional substitui a URL
 do documento, mas seu issuer deve continuar idêntico a `OIDC_ISSUER`.
+`OIDC_DISPLAY_NAME` define o nome no botão de login (ex.: `Pocket ID` →
+**Entrar com Pocket ID**). Vazio mantém **Entrar com provedor**.
 `OIDC_SCOPES` padrão `openid profile`; openid sempre é incluído.
 `OIDC_CALLBACK_PATH` padrão `/api/auth/oidc/callback`, podendo usar um caminho
 sob `/api/auth/oidc/callback/`. Redirect URI: `PUBLIC_URL` + esse caminho.

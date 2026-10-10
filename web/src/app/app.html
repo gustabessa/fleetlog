@@ -167,8 +167,11 @@
           [loading]="oidcBusy()"
           (click)="startOIDC(false)"
         >
-          <fl-icon name="fingerprint" />
-          Entrar com passkey
+          {{
+            authOptions().oidcDisplayName
+              ? 'Entrar com ' + authOptions().oidcDisplayName
+              : 'Entrar com provedor'
+          }}
         </button>
       }
       <button

@@ -51,6 +51,7 @@ const server = spawn(binary, [], {
     PUBLIC_URL: 'http://127.0.0.1:4173',
     OIDC_ISSUER: identity.issuer,
     OIDC_CLIENT_ID: 'e2e-client',
+    OIDC_DISPLAY_NAME: 'Fixture ID',
     OIDC_CLIENT_SECRET: 'e2e-oidc-secret',
     AUTH_LOCAL_ENABLED: 'true',
     S3_ENDPOINT: `http://127.0.0.1:${s3.address().port}`,
