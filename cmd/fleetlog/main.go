@@ -18,6 +18,7 @@ import (
 	"fleetlog/internal/httpserver"
 	"fleetlog/internal/odometer"
 	"fleetlog/internal/photo"
+	"fleetlog/internal/reminder"
 	"fleetlog/internal/vehicle"
 )
 
@@ -70,6 +71,7 @@ func main() {
 	(&vehicle.Service{Garage: garages}).Routes(mux)
 	(&odometer.Service{Garage: garages}).Routes(mux)
 	(&entry.Service{Garage: garages}).Routes(mux)
+	(&reminder.Service{Garage: garages}).Routes(mux)
 	photos := &photo.Service{Garage: garages, Store: store}
 	photos.Routes(mux)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {

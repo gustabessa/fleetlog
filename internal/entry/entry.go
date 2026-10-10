@@ -8,6 +8,7 @@ import (
 	"fleetlog/internal/garage"
 	"fleetlog/internal/money"
 	"fleetlog/internal/odometer"
+	"fleetlog/internal/reminder"
 	"github.com/jackc/pgx/v5"
 	"math/big"
 	"net/http"
@@ -29,14 +30,15 @@ type Expense struct {
 	Subtype  string `json:"subtype"`
 }
 type Input struct {
-	Expense  *Expense     `json:"expense"`
-	Date     string       `json:"date"`
-	Title    string       `json:"title"`
-	Amount   string       `json:"amount"`
-	Currency string       `json:"currency"`
-	KM       *string      `json:"km"`
-	Fuel     *Fuel        `json:"fuel"`
-	Service  *Maintenance `json:"service"`
+	ReminderID *int64       `json:"reminderId,omitempty"`
+	Expense    *Expense     `json:"expense"`
+	Date       string       `json:"date"`
+	Title      string       `json:"title"`
+	Amount     string       `json:"amount"`
+	Currency   string       `json:"currency"`
+	KM         *string      `json:"km"`
+	Fuel       *Fuel        `json:"fuel"`
+	Service    *Maintenance `json:"service"`
 }
 type Entry struct {
 	ID        int64           `json:"id"`
@@ -221,6 +223,10 @@ func (s *Service) write(w http.ResponseWriter, r *http.Request, kind string) {
 		if !apiutil.Decode(w, r, &input) {
 			return
 		}
+		if input.ReminderID != nil && (kind != "service" || r.Method != "POST" || *input.ReminderID <= 0) {
+			apiutil.Reply(w, 400, map[string]string{"error": "reminder requires a new maintenance"})
+			return
+		}
 		details, err = validate(&input, kind)
 		if err != nil {
 			apiutil.Reply(w, 400, map[string]string{"error": err.Error()})
@@ -283,6 +289,16 @@ func (s *Service) write(w http.ResponseWriter, r *http.Request, kind string) {
 	if _, err = tx.Exec(r.Context(), `INSERT INTO entry_audit(vehicle_id,entry_id,action,actor_id,before_value,after_value) VALUES($1,$2,$3,$4,$5,$6)`, vid, id, action, user.ID, nullableJSON(before), nullableJSON(after)); err != nil {
 		odometer.Failure(w, err)
 		return
+	}
+	if input.ReminderID != nil {
+		if err = reminder.Complete(r.Context(), tx, vid, *input.ReminderID, id, user.ID); err != nil {
+			if errors.Is(err, reminder.ErrMaintenanceKM) {
+				apiutil.Reply(w, 400, map[string]string{"error": err.Error()})
+			} else {
+				odometer.Failure(w, err)
+			}
+			return
+		}
 	}
 	if err = tx.Commit(r.Context()); err != nil {
 		odometer.Failure(w, err)
