@@ -2,6 +2,10 @@
 
 [Voltar ao FleetLog](../README.md) · [Guia de self-hosting](self-hosting.md)
 
+## API e integração
+
+A [referência OpenAPI](api.md) documenta os endpoints e a autenticação por sessão. A interface Scalar é servida em `/docs/api`, separada da aplicação Angular e sem CDN.
+
 ## Desenvolvimento
 
 Requisitos: Node 22.22.3+ na linha 22 e Go 1.27+.

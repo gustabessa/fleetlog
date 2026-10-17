@@ -1,0 +1,6 @@
+extends:
+  - recommended
+rules:
+  # Public health/options routes do not invent client errors; OIDC succeeds via 303.
+  operation-4xx-response: off
+  operation-2xx-response: off

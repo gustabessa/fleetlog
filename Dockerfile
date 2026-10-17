@@ -4,6 +4,7 @@ COPY web/package*.json ./
 RUN npm ci
 COPY web/ ./
 COPY VERSION /build/VERSION
+COPY docs/openapi.json /build/docs/openapi.json
 RUN npm run build
 
 FROM golang:1.27.1-alpine AS backend

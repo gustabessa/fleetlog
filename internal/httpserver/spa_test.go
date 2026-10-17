@@ -75,3 +75,19 @@ func TestPublicThemeManifestURL(t *testing.T) {
 		t.Fatal("installation fetch without cookies must receive selected theme")
 	}
 }
+
+func TestAPIReferenceRedirect(t *testing.T) {
+	handler := SPA(fstest.MapFS{"docs/api/index.html": {Data: []byte("API reference")}})
+	for _, path := range []string{"/docs/api"} {
+		result := httptest.NewRecorder()
+		handler.ServeHTTP(result, httptest.NewRequest("GET", path, nil))
+		if result.Code != 307 || result.Header().Get("Location") != "/docs/api/" {
+			t.Fatalf("%s: %d %s", path, result.Code, result.Header().Get("Location"))
+		}
+	}
+	result := httptest.NewRecorder()
+	handler.ServeHTTP(result, httptest.NewRequest("GET", "/docs/api/", nil))
+	if result.Code != 200 || result.Body.String() != "API reference" {
+		t.Fatal("must serve standalone documentation instead of Angular")
+	}
+}

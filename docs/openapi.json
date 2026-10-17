@@ -1,0 +1,6349 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FleetLog API",
+    "version": "0.2.0",
+    "description": "API da garagem familiar FleetLog.\n\n**Sessão:** entre no aplicativo nesta mesma origem ou use POST /api/auth/login; a sessão usa cookie HttpOnly fleetlog_session. Não há bearer token nem cadastro público.\n\n**Escritas:** envie Origin igual a PUBLIC_URL e Content-Type application/json (inclusive DELETE com {}). Uploads usam bytes puros com Content-Type da imagem. A API não oferece CORS para clientes de outras origens.\n\n**Valores:** dinheiro e quilômetros são decimais em texto, exceto initialKm no cadastro de veículo (número JSON). Datas civis usam YYYY-MM-DD. Registros de garagens não autorizadas retornam 404.\n\nO console executa requisições reais usando sua sessão: alterações e exclusões afetam a instância atual.",
+    "license": {
+      "name": "MIT",
+      "url": "https://github.com/gustabessa/fleetlog/blob/main/LICENSE"
+    }
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Esta instância do FleetLog"
+    }
+  ],
+  "security": [
+    {
+      "sessionCookie": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Saúde",
+      "description": "Disponibilidade do processo e banco."
+    },
+    {
+      "name": "Autenticação",
+      "description": "Sessão local e vínculo explícito OIDC."
+    },
+    {
+      "name": "Perfil",
+      "description": "Preferências da conta."
+    },
+    {
+      "name": "Garagens",
+      "description": "Garagens acessíveis ao usuário."
+    },
+    {
+      "name": "Membros",
+      "description": "Gestão pelo criador da garagem."
+    },
+    {
+      "name": "Veículos",
+      "description": "Cadastro e arquivamento."
+    },
+    {
+      "name": "Odômetro",
+      "description": "Leituras e auditoria."
+    },
+    {
+      "name": "Abastecimentos",
+      "description": "Abastecimentos e consumo."
+    },
+    {
+      "name": "Manutenção",
+      "description": "Manutenção direta ou detalhada."
+    },
+    {
+      "name": "Despesas",
+      "description": "Documentação, seguro e outras despesas."
+    },
+    {
+      "name": "Histórico",
+      "description": "Consulta paginada e agregados por moeda."
+    },
+    {
+      "name": "Itens",
+      "description": "Catálogo e histórico de preços."
+    },
+    {
+      "name": "Notas",
+      "description": "Notas de veículo e anexos."
+    },
+    {
+      "name": "Compra e venda",
+      "description": "Transações do veículo."
+    },
+    {
+      "name": "Lembretes",
+      "description": "Regras e conclusão da manutenção."
+    },
+    {
+      "name": "Imagens",
+      "description": "Imagens privadas via S3."
+    }
+  ],
+  "paths": {
+    "/healthz": {
+      "get": {
+        "operationId": "get_healthz",
+        "tags": [
+          "Saúde"
+        ],
+        "summary": "Verificar processo HTTP",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/readyz": {
+      "get": {
+        "operationId": "get_readyz",
+        "tags": [
+          "Saúde"
+        ],
+        "summary": "Verificar conexão com PostgreSQL",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PostgreSQL indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "unavailable"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/options": {
+      "get": {
+        "operationId": "get_api_auth_options",
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Consultar métodos de login",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "oidcEnabled": {
+                      "type": "boolean"
+                    },
+                    "localEnabled": {
+                      "type": "boolean"
+                    },
+                    "oidcDisplayName": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "post_api_auth_login",
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Entrar com conta local",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "headers": {
+              "Set-Cookie": {
+                "description": "Sessão fleetlog_session HttpOnly, SameSite=Lax; Secure quando PUBLIC_URL usa HTTPS.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "username",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "post_api_auth_logout",
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Revogar sessão",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ]
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "operationId": "get_api_auth_me",
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Consultar usuário autenticado",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/profile": {
+      "put": {
+        "operationId": "put_api_profile",
+        "tags": [
+          "Perfil"
+        ],
+        "summary": "Atualizar moeda, paleta ou modo",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currency": {
+                    "type": "string",
+                    "enum": [
+                      "BRL",
+                      "USD",
+                      "EUR",
+                      "GBP",
+                      "ARS",
+                      "CAD",
+                      "JPY",
+                      "CHF"
+                    ],
+                    "example": "BRL"
+                  },
+                  "palette": {
+                    "type": "string",
+                    "enum": [
+                      "original",
+                      "orange",
+                      "blue",
+                      "violet",
+                      "green",
+                      "rose",
+                      "amber",
+                      "cyan",
+                      "red",
+                      "lime",
+                      "mono",
+                      "copper",
+                      "navy",
+                      "emerald",
+                      "lavender",
+                      "magenta",
+                      "ruby",
+                      "sand",
+                      "olive",
+                      "arctic",
+                      "indigo",
+                      "mint",
+                      "lemon",
+                      "coral"
+                    ]
+                  },
+                  "theme": {
+                    "type": "string",
+                    "enum": [
+                      "light",
+                      "dark"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "minProperties": 1
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ]
+      }
+    },
+    "/api/auth/oidc/status": {
+      "get": {
+        "operationId": "get_api_auth_oidc_status",
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Consultar vínculo OIDC",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "linked": {
+                      "type": "boolean"
+                    },
+                    "issuer": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/auth/oidc/start": {
+      "post": {
+        "operationId": "post_api_auth_oidc_start",
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Iniciar login ou vínculo OIDC",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "security": [],
+        "description": "Use a URL devolvida para navegar ao provedor. link=true exige sessão local e vincula explicitamente a identidade; não há associação automática por email.\n\nEscrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "link": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ]
+      }
+    },
+    "/api/auth/oidc/callback": {
+      "get": {
+        "operationId": "get_api_auth_oidc_callback",
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Concluir callback OIDC",
+        "responses": {
+          "303": {
+            "description": "Redireciona à aplicação com resultado do login/vínculo.",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Código retornado pelo provedor."
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Estado validado pelo servidor."
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Erro retornado pelo provedor."
+          }
+        ],
+        "security": [],
+        "description": "Rota padrão. O caminho pode ser alterado por OIDC_CALLBACK_PATH. Não invocar manualmente: o fluxo valida state, nonce, PKCE e cookies."
+      }
+    },
+    "/api/garages": {
+      "get": {
+        "operationId": "get_api_garages",
+        "tags": [
+          "Garagens"
+        ],
+        "summary": "Listar garagens acessíveis",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Garage"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/garages/{garageID}": {
+      "get": {
+        "operationId": "get_api_garages_garageID",
+        "tags": [
+          "Garagens"
+        ],
+        "summary": "Consultar garagem",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Garage"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      }
+    },
+    "/api/garages/{garageID}/members": {
+      "get": {
+        "operationId": "get_api_garages_garageID_members",
+        "tags": [
+          "Membros"
+        ],
+        "summary": "Listar membros",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Member"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ],
+        "description": "Somente o criador da garagem pode gerir membros. existing=true vincula uma conta existente sem senha; não é possível remover o criador."
+      },
+      "post": {
+        "operationId": "post_api_garages_garageID_members",
+        "tags": [
+          "Membros"
+        ],
+        "summary": "Criar ou vincular membro",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Member"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "description": "Somente o criador da garagem pode gerir membros. existing=true vincula uma conta existente sem senha; não é possível remover o criador.\n\nEscrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "minLength": 12,
+                    "maxLength": 72
+                  },
+                  "existing": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "username"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/garages/{garageID}/members/{userID}": {
+      "delete": {
+        "operationId": "delete_api_garages_garageID_members_userID",
+        "tags": [
+          "Membros"
+        ],
+        "summary": "Remover membro",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Member"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "userID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "description": "Somente o criador da garagem pode gerir membros. existing=true vincula uma conta existente sem senha; não é possível remover o criador.\n\nEscrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/garages/{garageID}/vehicles": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles",
+        "tags": [
+          "Veículos"
+        ],
+        "summary": "Listar veículos",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Vehicle"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "includeArchived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Inclui veículos vendidos/arquivados."
+          }
+        ]
+      },
+      "post": {
+        "operationId": "post_api_garages_garageID_vehicles",
+        "tags": [
+          "Veículos"
+        ],
+        "summary": "Cadastrar veículo",
+        "responses": {
+          "201": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vehicle"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleCreate"
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles_vehicleID",
+        "tags": [
+          "Veículos"
+        ],
+        "summary": "Consultar veículo",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vehicle"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      },
+      "put": {
+        "operationId": "put_api_garages_garageID_vehicles_vehicleID",
+        "tags": [
+          "Veículos"
+        ],
+        "summary": "Editar veículo",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vehicle"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleUpdate"
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      },
+      "delete": {
+        "operationId": "delete_api_garages_garageID_vehicles_vehicleID",
+        "tags": [
+          "Veículos"
+        ],
+        "summary": "Arquivar veículo",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "format": "int64",
+                      "minimum": 1
+                    },
+                    "archived": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "description": "Não apaga histórico; equivale a archived=true.\n\nEscrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/archive": {
+      "put": {
+        "operationId": "put_api_garages_garageID_vehicles_vehicleID_archive",
+        "tags": [
+          "Veículos"
+        ],
+        "summary": "Arquivar ou restaurar veículo",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "format": "int64",
+                      "minimum": 1
+                    },
+                    "archived": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "archived": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "archived"
+                ]
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/readings": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles_vehicleID_readings",
+        "tags": [
+          "Odômetro"
+        ],
+        "summary": "Listar leituras e registro inicial",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Reading"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "post_api_garages_garageID_vehicles_vehicleID_readings",
+        "tags": [
+          "Odômetro"
+        ],
+        "summary": "Registrar leitura",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Reading"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "description": "Leituras vinculadas a lançamentos devem ser alteradas no lançamento de origem; registro inicial é imutável. A sequência cronológica deve ser consistente.\n\nEscrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReadingInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/readings/audit": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles_vehicleID_readings_audit",
+        "tags": [
+          "Odômetro"
+        ],
+        "summary": "Consultar auditoria de leituras",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadingAudit"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/readings/{readingID}": {
+      "put": {
+        "operationId": "put_api_garages_garageID_vehicles_vehicleID_readings_readingID",
+        "tags": [
+          "Odômetro"
+        ],
+        "summary": "Editar leitura manual",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Reading"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "readingID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "description": "Leituras vinculadas a lançamentos devem ser alteradas no lançamento de origem; registro inicial é imutável. A sequência cronológica deve ser consistente.\n\nEscrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReadingInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_api_garages_garageID_vehicles_vehicleID_readings_readingID",
+        "tags": [
+          "Odômetro"
+        ],
+        "summary": "Remover leitura manual",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Reading"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "readingID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "description": "Leituras vinculadas a lançamentos devem ser alteradas no lançamento de origem; registro inicial é imutável. A sequência cronológica deve ser consistente.\n\nEscrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/fuel": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles_vehicleID_fuel",
+        "tags": [
+          "Abastecimentos"
+        ],
+        "summary": "Listar lançamentos",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Entry"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "post_api_garages_garageID_vehicles_vehicleID_fuel",
+        "tags": [
+          "Abastecimentos"
+        ],
+        "summary": "Criar lançamento",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FuelInput"
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/fuel/{entryID}": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles_vehicleID_fuel_entryID",
+        "tags": [
+          "Abastecimentos"
+        ],
+        "summary": "Consultar lançamento",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "entryID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      },
+      "put": {
+        "operationId": "put_api_garages_garageID_vehicles_vehicleID_fuel_entryID",
+        "tags": [
+          "Abastecimentos"
+        ],
+        "summary": "Editar lançamento",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "entryID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FuelInput"
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      },
+      "delete": {
+        "operationId": "delete_api_garages_garageID_vehicles_vehicleID_fuel_entryID",
+        "tags": [
+          "Abastecimentos"
+        ],
+        "summary": "Remover lançamento",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deleted": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "entryID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/service": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles_vehicleID_service",
+        "tags": [
+          "Manutenção"
+        ],
+        "summary": "Listar lançamentos",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Entry"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "post_api_garages_garageID_vehicles_vehicleID_service",
+        "tags": [
+          "Manutenção"
+        ],
+        "summary": "Criar lançamento",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenanceInput"
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/service/{entryID}": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles_vehicleID_service_entryID",
+        "tags": [
+          "Manutenção"
+        ],
+        "summary": "Consultar lançamento",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "entryID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      },
+      "put": {
+        "operationId": "put_api_garages_garageID_vehicles_vehicleID_service_entryID",
+        "tags": [
+          "Manutenção"
+        ],
+        "summary": "Editar lançamento",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "entryID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenanceInput"
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      },
+      "delete": {
+        "operationId": "delete_api_garages_garageID_vehicles_vehicleID_service_entryID",
+        "tags": [
+          "Manutenção"
+        ],
+        "summary": "Remover lançamento",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deleted": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "entryID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/expense": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles_vehicleID_expense",
+        "tags": [
+          "Despesas"
+        ],
+        "summary": "Listar lançamentos",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Entry"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "post_api_garages_garageID_vehicles_vehicleID_expense",
+        "tags": [
+          "Despesas"
+        ],
+        "summary": "Criar lançamento",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseInput"
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/expense/{entryID}": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles_vehicleID_expense_entryID",
+        "tags": [
+          "Despesas"
+        ],
+        "summary": "Consultar lançamento",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "entryID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      },
+      "put": {
+        "operationId": "put_api_garages_garageID_vehicles_vehicleID_expense_entryID",
+        "tags": [
+          "Despesas"
+        ],
+        "summary": "Editar lançamento",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "entryID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseInput"
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      },
+      "delete": {
+        "operationId": "delete_api_garages_garageID_vehicles_vehicleID_expense_entryID",
+        "tags": [
+          "Despesas"
+        ],
+        "summary": "Remover lançamento",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deleted": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "entryID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/consumption": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles_vehicleID_consumption",
+        "tags": [
+          "Abastecimentos"
+        ],
+        "summary": "Consultar consumo calculado",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Consumption"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ],
+        "description": "Calcula por ciclos de tanque cheio. Registros parciais, incompletos ou sem distância válida não geram consumo válido."
+      }
+    },
+    "/api/garages/{garageID}/history": {
+      "get": {
+        "operationId": "get_api_garages_garageID_history",
+        "tags": [
+          "Histórico"
+        ],
+        "summary": "Consultar histórico, totais e agrupamentos",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/History"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "0 ou ausente inclui todos."
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "fuel",
+                "service",
+                "documentation",
+                "insurance",
+                "other"
+              ]
+            },
+            "description": "Tipo de custo."
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-10-17"
+            },
+            "description": "Data inicial inclusiva."
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-10-17"
+            },
+            "description": "Data final inclusiva."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "description": "Busca textual."
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "BRL",
+                "USD",
+                "EUR",
+                "GBP",
+                "ARS",
+                "CAD",
+                "JPY",
+                "CHF"
+              ],
+              "example": "BRL"
+            },
+            "description": "Moeda; obrigatória para filtro price."
+          },
+          {
+            "name": "price",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+              "example": "125.90",
+              "description": "Decimal em texto; nunca float JSON para valores financeiros."
+            },
+            "description": "Preço aproximado ±10%; requer currency."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000,
+              "default": 1
+            },
+            "description": "Página."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            },
+            "description": "Registros por página."
+          }
+        ]
+      }
+    },
+    "/api/garages/{garageID}/items": {
+      "get": {
+        "operationId": "get_api_garages_garageID_items",
+        "tags": [
+          "Itens"
+        ],
+        "summary": "Buscar referências de itens",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemReference"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "description": "Busca por nome, marca ou código; até 200 resultados."
+          }
+        ]
+      }
+    },
+    "/api/garages/{garageID}/items/{itemID}/prices": {
+      "get": {
+        "operationId": "get_api_garages_garageID_items_itemID_prices",
+        "tags": [
+          "Itens"
+        ],
+        "summary": "Consultar preços históricos do item",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemPrice"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "itemID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/notes": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles_vehicleID_notes",
+        "tags": [
+          "Notas"
+        ],
+        "summary": "Listar notas",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Note"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "post_api_garages_garageID_vehicles_vehicleID_notes",
+        "tags": [
+          "Notas"
+        ],
+        "summary": "Criar nota",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Note"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-Note-ID": {
+                "description": "ID da nota alterada, usado para anexar imagem.",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 20000
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "content"
+                ]
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/notes/{noteID}": {
+      "put": {
+        "operationId": "put_api_garages_garageID_vehicles_vehicleID_notes_noteID",
+        "tags": [
+          "Notas"
+        ],
+        "summary": "Editar nota",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Note"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-Note-ID": {
+                "description": "ID da nota alterada, usado para anexar imagem.",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "noteID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 20000
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "content"
+                ]
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      },
+      "delete": {
+        "operationId": "delete_api_garages_garageID_vehicles_vehicleID_notes_noteID",
+        "tags": [
+          "Notas"
+        ],
+        "summary": "Remover nota",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Note"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-Note-ID": {
+                "description": "ID da nota alterada, usado para anexar imagem.",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "noteID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/ownership": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles_vehicleID_ownership",
+        "tags": [
+          "Compra e venda"
+        ],
+        "summary": "Consultar compra e venda",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ownership"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      },
+      "put": {
+        "operationId": "put_api_garages_garageID_vehicles_vehicleID_ownership",
+        "tags": [
+          "Compra e venda"
+        ],
+        "summary": "Atualizar compra e venda",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ownership"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Ownership"
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/reminders": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles_vehicleID_reminders",
+        "tags": [
+          "Lembretes"
+        ],
+        "summary": "Listar lembretes e situação",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Reminder"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-10-17"
+            },
+            "description": "Data de referência; padrão é hoje em UTC."
+          }
+        ]
+      },
+      "post": {
+        "operationId": "post_api_garages_garageID_vehicles_vehicleID_reminders",
+        "tags": [
+          "Lembretes"
+        ],
+        "summary": "Criar lembrete",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordID"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReminderInput"
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      }
+    },
+    "/api/garages/{garageID}/reminders": {
+      "get": {
+        "operationId": "get_api_garages_garageID_reminders",
+        "tags": [
+          "Lembretes"
+        ],
+        "summary": "Listar lembretes e situação",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Reminder"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-10-17"
+            },
+            "description": "Data de referência; padrão é hoje em UTC."
+          }
+        ]
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/reminders/{reminderID}": {
+      "put": {
+        "operationId": "put_api_garages_garageID_vehicles_vehicleID_reminders_reminderID",
+        "tags": [
+          "Lembretes"
+        ],
+        "summary": "Editar lembrete",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordID"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "reminderID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReminderInput"
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      },
+      "delete": {
+        "operationId": "delete_api_garages_garageID_vehicles_vehicleID_reminders_reminderID",
+        "tags": [
+          "Lembretes"
+        ],
+        "summary": "Remover lembrete",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordID"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "reminderID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/reminders/{reminderID}/complete": {
+      "post": {
+        "operationId": "post_api_garages_garageID_vehicles_vehicleID_reminders_reminderID_complete",
+        "tags": [
+          "Lembretes"
+        ],
+        "summary": "Concluir lembrete com manutenção existente",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OK"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "reminderID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "description": "entryId deve ser uma manutenção desse veículo, com odômetro quando exigido pelo intervalo.\n\nEscrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "entryId": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 1
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "entryId"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/image": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles_vehicleID_image",
+        "tags": [
+          "Imagens"
+        ],
+        "summary": "Ler imagem privada",
+        "responses": {
+          "200": {
+            "description": "Imagem privada; Cache-Control: no-store.",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Versão da imagem; não dispensa autenticação."
+          }
+        ]
+      },
+      "put": {
+        "operationId": "put_api_garages_garageID_vehicles_vehicleID_image",
+        "tags": [
+          "Imagens"
+        ],
+        "summary": "Enviar imagem",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "description": "Envie bytes puros, sem multipart. Origin deve ser exatamente PUBLIC_URL. Aceita JPEG/PNG/WebP até 10 MB e 20 megapixels. Requer S3 configurado. O enquadramento da UI salva JPEG 1024×1024.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "image/jpeg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/webp": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_api_garages_garageID_vehicles_vehicleID_image",
+        "tags": [
+          "Imagens"
+        ],
+        "summary": "Remover imagem",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deleted": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "deleted"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      }
+    },
+    "/api/garages/{garageID}/vehicles/{vehicleID}/notes/{noteID}/image": {
+      "get": {
+        "operationId": "get_api_garages_garageID_vehicles_vehicleID_notes_noteID_image",
+        "tags": [
+          "Imagens"
+        ],
+        "summary": "Ler imagem privada",
+        "responses": {
+          "200": {
+            "description": "Imagem privada; Cache-Control: no-store.",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "noteID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Versão da imagem; não dispensa autenticação."
+          }
+        ]
+      },
+      "put": {
+        "operationId": "put_api_garages_garageID_vehicles_vehicleID_notes_noteID_image",
+        "tags": [
+          "Imagens"
+        ],
+        "summary": "Enviar imagem",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "noteID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "description": "Envie bytes puros, sem multipart. Origin deve ser exatamente PUBLIC_URL. Aceita JPEG/PNG/WebP até 10 MB e 20 megapixels. Requer S3 configurado. O enquadramento da UI salva JPEG 1024×1024.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "image/jpeg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/webp": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_api_garages_garageID_vehicles_vehicleID_notes_noteID_image",
+        "tags": [
+          "Imagens"
+        ],
+        "summary": "Remover imagem",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deleted": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "deleted"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "garageID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "vehicleID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "noteID",
+            "in": "path",
+            "required": true,
+            "description": "Identificador no escopo autorizado.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Escrita: requer Origin igual a PUBLIC_URL e Content-Type: application/json. Em DELETE, envie {}."
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "fleetlog_session",
+        "description": "Cookie HttpOnly criado pelo login. No navegador, entre no FleetLog na mesma origem; o console reutiliza a sessão sem ler o cookie."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "username": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "BRL",
+              "USD",
+              "EUR",
+              "GBP",
+              "ARS",
+              "CAD",
+              "JPY",
+              "CHF"
+            ],
+            "example": "BRL"
+          },
+          "palette": {
+            "type": "string",
+            "enum": [
+              "original",
+              "orange",
+              "blue",
+              "violet",
+              "green",
+              "rose",
+              "amber",
+              "cyan",
+              "red",
+              "lime",
+              "mono",
+              "copper",
+              "navy",
+              "emerald",
+              "lavender",
+              "magenta",
+              "ruby",
+              "sand",
+              "olive",
+              "arctic",
+              "indigo",
+              "mint",
+              "lemon",
+              "coral"
+            ]
+          },
+          "theme": {
+            "type": "string",
+            "enum": [
+              "light",
+              "dark"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "currency",
+          "palette",
+          "theme"
+        ]
+      },
+      "Garage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "name": {
+            "type": "string"
+          },
+          "canManage": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "canManage"
+        ]
+      },
+      "Member": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "username": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "boolean"
+          },
+          "oidcLinked": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "owner",
+          "oidcLinked"
+        ]
+      },
+      "VehicleCreate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "plate": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "brand": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9999
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "chassis": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "renavam": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "tagColor": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "example": "#ff9b52"
+          },
+          "initialKm": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 999999999.999,
+            "multipleOf": 0.001,
+            "example": 42000
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "initialKm"
+        ],
+        "example": {
+          "name": "Honda Civic",
+          "plate": "ABC1D23",
+          "brand": "Honda",
+          "year": 2020,
+          "initialKm": 42000,
+          "tagColor": "#ff9b52"
+        }
+      },
+      "VehicleUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "plate": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "brand": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9999
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "chassis": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "renavam": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "tagColor": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "example": "#ff9b52"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Substitui os campos cadastrais. initialKm não deve ser enviado na edição.",
+        "required": [
+          "name"
+        ]
+      },
+      "Vehicle": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "plate": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "brand": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9999
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "chassis": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "renavam": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "tagColor": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "example": "#ff9b52"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "garageId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "initialKm": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,3})?$",
+            "example": "42000.5"
+          },
+          "currentKm": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,3})?$",
+            "example": "42000.5"
+          },
+          "imageVersion": {
+            "type": "string"
+          },
+          "archived": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "garageId",
+          "name",
+          "initialKm",
+          "currentKm",
+          "archived"
+        ]
+      },
+      "ReadingInput": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-17"
+          },
+          "km": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,3})?$",
+            "example": "42000.5"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "date",
+          "km"
+        ],
+        "example": {
+          "date": "2026-10-17",
+          "km": "42500"
+        }
+      },
+      "Reading": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "date": {
+            "type": "string",
+            "description": "Data civil para leituras; timestamp UTC para o registro inicial do veículo."
+          },
+          "km": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,3})?$",
+            "example": "42000.5"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "fuel",
+              "service",
+              "expense",
+              "registration"
+            ]
+          },
+          "sourceId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "author": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "date",
+          "km",
+          "origin",
+          "sourceId",
+          "author"
+        ]
+      },
+      "ReadingAudit": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "readingId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "action": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "before": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "after": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "FuelDetails": {
+        "type": "object",
+        "properties": {
+          "liters": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+            "example": "125.90",
+            "description": "Decimal em texto; nunca float JSON para valores financeiros."
+          },
+          "unitPrice": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+            "example": "125.90",
+            "description": "Decimal em texto; nunca float JSON para valores financeiros."
+          },
+          "fuel": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "Gasolina"
+          },
+          "full": {
+            "type": "boolean"
+          },
+          "incomplete": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "liters",
+          "fuel"
+        ]
+      },
+      "ExpenseDetails": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "documentation",
+              "insurance",
+              "other"
+            ]
+          },
+          "subtype": {
+            "type": "string",
+            "enum": [
+              "ipva",
+              "licensing",
+              "transfer",
+              "fees",
+              "other",
+              ""
+            ],
+            "description": "Obrigatório para category=documentation; para as outras categorias deve ser vazio."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "category"
+        ]
+      },
+      "MaintenanceItem": {
+        "type": "object",
+        "properties": {
+          "refId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "unit",
+              "liter",
+              "hour"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "part",
+              "labor"
+            ]
+          },
+          "quantity": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+            "example": "125.90",
+            "description": "Decimal em texto; nunca float JSON para valores financeiros."
+          },
+          "unitPrice": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+            "example": "125.90",
+            "description": "Decimal em texto; nunca float JSON para valores financeiros."
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "BRL",
+              "USD",
+              "EUR",
+              "GBP",
+              "ARS",
+              "CAD",
+              "JPY",
+              "CHF"
+            ],
+            "example": "BRL"
+          }
+        },
+        "required": [
+          "kind",
+          "quantity",
+          "unitPrice",
+          "currency",
+          "unit"
+        ]
+      },
+      "MaintenanceDetails": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "direct",
+              "detailed"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaintenanceItem"
+            }
+          },
+          "discount": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+            "example": "125.90",
+            "description": "Decimal em texto; nunca float JSON para valores financeiros."
+          },
+          "adjustment": {
+            "type": "string",
+            "description": "Ajuste decimal em texto; pode ter sinal negativo."
+          }
+        },
+        "description": "No modo detailed o servidor calcula o total a partir de itens, desconto e ajuste; os itens devem usar a moeda do lançamento.",
+        "required": [
+          "mode"
+        ]
+      },
+      "FuelInput": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-17"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+            "example": "125.90",
+            "description": "Decimal em texto; nunca float JSON para valores financeiros."
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "BRL",
+              "USD",
+              "EUR",
+              "GBP",
+              "ARS",
+              "CAD",
+              "JPY",
+              "CHF"
+            ],
+            "example": "BRL"
+          },
+          "km": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,3})?$",
+                "example": "42000.5"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fuel": {
+            "$ref": "#/components/schemas/FuelDetails"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "date",
+          "currency",
+          "fuel",
+          "km"
+        ],
+        "description": "Envie amount e/ou fuel.unitPrice; ao informar ambos, devem ser consistentes com os litros. O servidor normaliza o total e o preço unitário.",
+        "example": {
+          "date": "2026-10-17",
+          "currency": "BRL",
+          "km": "42500",
+          "amount": "250.00",
+          "fuel": {
+            "liters": "40",
+            "fuel": "Gasolina",
+            "full": true,
+            "incomplete": false
+          }
+        }
+      },
+      "MaintenanceInput": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-17"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+            "example": "125.90",
+            "description": "Decimal em texto; nunca float JSON para valores financeiros."
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "BRL",
+              "USD",
+              "EUR",
+              "GBP",
+              "ARS",
+              "CAD",
+              "JPY",
+              "CHF"
+            ],
+            "example": "BRL"
+          },
+          "km": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,3})?$",
+                "example": "42000.5"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "service": {
+            "$ref": "#/components/schemas/MaintenanceDetails"
+          },
+          "reminderId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "date",
+          "currency"
+        ],
+        "description": "service ausente ou mode=direct exige amount. No modo detailed, envie itens e o servidor calcula amount.",
+        "example": {
+          "date": "2026-10-17",
+          "title": "Troca de óleo",
+          "currency": "BRL",
+          "km": "42500",
+          "amount": "350.00",
+          "service": {
+            "mode": "direct"
+          }
+        }
+      },
+      "ExpenseInput": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-17"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+            "example": "125.90",
+            "description": "Decimal em texto; nunca float JSON para valores financeiros."
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "BRL",
+              "USD",
+              "EUR",
+              "GBP",
+              "ARS",
+              "CAD",
+              "JPY",
+              "CHF"
+            ],
+            "example": "BRL"
+          },
+          "expense": {
+            "$ref": "#/components/schemas/ExpenseDetails"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "date",
+          "currency",
+          "expense",
+          "amount"
+        ],
+        "example": {
+          "date": "2026-10-17",
+          "title": "Licenciamento",
+          "currency": "BRL",
+          "amount": "160.00",
+          "expense": {
+            "category": "documentation",
+            "subtype": "licensing"
+          }
+        }
+      },
+      "Entry": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-17"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+            "example": "125.90",
+            "description": "Decimal em texto; nunca float JSON para valores financeiros."
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "BRL",
+              "USD",
+              "EUR",
+              "GBP",
+              "ARS",
+              "CAD",
+              "JPY",
+              "CHF"
+            ],
+            "example": "BRL"
+          },
+          "km": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,3})?$",
+                "example": "42000.5"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "vehicleId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "fuel",
+              "service",
+              "expense"
+            ]
+          },
+          "details": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FuelDetails"
+              },
+              {
+                "$ref": "#/components/schemas/MaintenanceDetails"
+              },
+              {
+                "$ref": "#/components/schemas/ExpenseDetails"
+              }
+            ]
+          },
+          "author": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "vehicleId",
+          "kind",
+          "date",
+          "amount",
+          "currency",
+          "details",
+          "author"
+        ]
+      },
+      "HistoryItem": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Entry"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "vehicleName": {
+                "type": "string"
+              },
+              "costKind": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "History": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoryItem"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "totals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "currency": {
+                  "$ref": "#/components/schemas/User/properties/currency"
+                },
+                "amount": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "byType": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "currency": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "byMonth": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "currency": {
+                  "type": "string"
+                },
+                "month": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "byVehicle": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "currency": {
+                  "type": "string"
+                },
+                "vehicleId": {
+                  "type": "integer"
+                },
+                "vehicle": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "distances": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "vehicleId": {
+                  "type": "integer"
+                },
+                "vehicle": {
+                  "type": "string"
+                },
+                "distance": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "description": "Agregados usam todos os registros filtrados, não só a página. Valores de moedas diferentes não são convertidos nem somados entre si.",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totals",
+          "byType",
+          "byMonth",
+          "byVehicle",
+          "distances"
+        ]
+      },
+      "Consumption": {
+        "type": "object",
+        "properties": {
+          "entryId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-17"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "partial",
+              "reference",
+              "incomplete",
+              "invalid",
+              "valid"
+            ]
+          },
+          "kmPerLiter": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+                "example": "125.90",
+                "description": "Decimal em texto; nunca float JSON para valores financeiros."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "distance": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,3})?$",
+                "example": "42000.5"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "liters": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+                "example": "125.90",
+                "description": "Decimal em texto; nunca float JSON para valores financeiros."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "Note": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "content": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "imageVersion": {
+            "type": "string"
+          }
+        }
+      },
+      "Trade": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-17"
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+            "example": "125.90",
+            "description": "Decimal em texto; nunca float JSON para valores financeiros."
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "BRL",
+              "USD",
+              "EUR",
+              "GBP",
+              "ARS",
+              "CAD",
+              "JPY",
+              "CHF"
+            ],
+            "example": "BRL"
+          },
+          "party": {
+            "type": "string",
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "date",
+          "amount",
+          "currency"
+        ]
+      },
+      "Ownership": {
+        "type": "object",
+        "properties": {
+          "purchase": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Trade"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sale": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Trade"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "description": "Venda não pode preceder a compra e arquiva o veículo."
+      },
+      "ReminderInput": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "intervalKm": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,3})?$",
+                "example": "42000.5"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "intervalMonths": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "baseKm": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,3})?$",
+                "example": "42000.5"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "baseDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date",
+                "example": "2026-10-17"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "advanceKm": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,3})?$",
+            "example": "42000.5"
+          },
+          "advanceDays": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3650
+          }
+        },
+        "additionalProperties": false,
+        "description": "É obrigatório ao menos um intervalo. intervalKm requer baseKm e valor positivo; intervalMonths requer baseDate.",
+        "required": [
+          "title"
+        ],
+        "example": {
+          "title": "Troca de óleo",
+          "intervalKm": "10000",
+          "baseKm": "42500",
+          "advanceKm": "500",
+          "advanceDays": 15
+        }
+      },
+      "Reminder": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ReminderInput"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 1
+              },
+              "vehicleId": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 1
+              },
+              "vehicleName": {
+                "type": "string"
+              },
+              "nextKm": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,3})?$",
+                    "example": "42000.5"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "nextDate": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "example": "2026-10-17"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "remainingKm": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "remainingDays": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "lastEntryId": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "status": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "ItemReference": {
+        "type": "object",
+        "properties": {
+          "refId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "name": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "unitPrice": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          }
+        }
+      },
+      "ItemPrice": {
+        "type": "object",
+        "properties": {
+          "entryId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-17"
+          },
+          "vehicle": {
+            "type": "string"
+          },
+          "vehicleId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "BRL",
+              "USD",
+              "EUR",
+              "GBP",
+              "ARS",
+              "CAD",
+              "JPY",
+              "CHF"
+            ],
+            "example": "BRL"
+          },
+          "quantity": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+            "example": "125.90",
+            "description": "Decimal em texto; nunca float JSON para valores financeiros."
+          },
+          "unitPrice": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+            "example": "125.90",
+            "description": "Decimal em texto; nunca float JSON para valores financeiros."
+          },
+          "unit": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "RecordID": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "OK": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      }
+    },
+    "responses": {
+      "Error400": {
+        "description": "Dados, filtros ou JSON inválidos.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error401": {
+        "description": "Sessão ausente, revogada ou expirada.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error403": {
+        "description": "Origem não permitida ou permissão insuficiente.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error415": {
+        "description": "Tipo de conteúdo não aceito.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error429": {
+        "description": "Limite de tentativas excedido.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error500": {
+        "description": "Erro interno.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error503": {
+        "description": "Dependência indisponível; S3/OIDC também podem não estar configurados.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error404": {
+        "description": "Registro inexistente ou fora da garagem autorizada.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error409": {
+        "description": "Conflito com o estado atual ou sequência do odômetro.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Error413": {
+        "description": "Imagem excede o limite.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "Origin": {
+        "name": "Origin",
+        "in": "header",
+        "required": true,
+        "description": "Origem exata de PUBLIC_URL. O navegador define esse header automaticamente; clientes externos devem enviá-lo.",
+        "schema": {
+          "type": "string",
+          "format": "uri",
+          "example": "http://localhost:8080"
+        }
+      }
+    }
+  }
+}

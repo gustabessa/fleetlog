@@ -40,6 +40,8 @@
     "!/api/**",
     "!/healthz",
     "!/api",
-    "!/readyz"
+    "!/readyz",
+    "!/docs/api",
+    "!/docs/api/**"
   ]
 }

@@ -1,0 +1,32 @@
+body {
+  margin: 0;
+  background: #17181c;
+  color: #f2f2f5;
+  font-family: system-ui, sans-serif;
+}
+nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding: 16px 24px;
+  background: #222329;
+  border-bottom: 1px solid #393b43;
+}
+nav a {
+  color: #ff9b52;
+  text-decoration: none;
+}
+nav a:focus-visible {
+  outline: 2px solid #ff9b52;
+  outline-offset: 4px;
+}
+nav span {
+  flex: 1;
+}
+.notice {
+  padding: 12px 24px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}

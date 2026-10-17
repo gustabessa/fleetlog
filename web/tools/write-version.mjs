@@ -9,3 +9,6 @@ writeFileSync(
   output,
   `// Generated from VERSION by tools/write-version.mjs.\nexport const appVersion = ${JSON.stringify(version)};\n`,
 );
+
+// Documentation is a separate static page, outside the application bundle.
+await import('./write-api-docs.mjs');
