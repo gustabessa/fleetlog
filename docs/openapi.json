@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "FleetLog API",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "description": "API da garagem familiar FleetLog.\n\n**Sessão:** entre no aplicativo nesta mesma origem ou use POST /api/auth/login; a sessão usa cookie HttpOnly fleetlog_session. Não há bearer token nem cadastro público.\n\n**Escritas:** envie Origin igual a PUBLIC_URL e Content-Type application/json (inclusive DELETE com {}). Uploads usam bytes puros com Content-Type da imagem. A API não oferece CORS para clientes de outras origens.\n\n**Valores:** dinheiro e quilômetros são decimais em texto, exceto initialKm no cadastro de veículo (número JSON). Datas civis usam YYYY-MM-DD. Registros de garagens não autorizadas retornam 404.\n\nO console executa requisições reais usando sua sessão: alterações e exclusões afetam a instância atual.",
     "license": {
       "name": "MIT",
