@@ -52,6 +52,17 @@ test('foto usa S3 privado, persiste na garagem e remove', async ({ page }) => {
     .getByLabel('Selecionar foto')
     .setInputFiles({ name: 'vehicle.png', mimeType: 'image/png', buffer: png() });
   await expect(page.getByLabel('Prévia do enquadramento')).toBeVisible();
+  // A mounted canvas can still be transparent: verify pixels before any slider input.
+  await expect
+    .poll(() =>
+      page
+        .getByLabel('Prévia do enquadramento')
+        .evaluate(
+          (canvas: HTMLCanvasElement) =>
+            canvas.getContext('2d')!.getImageData(512, 512, 1, 1).data[3],
+        ),
+    )
+    .toBe(255);
   const zoom = page.getByRole('slider', { name: 'Zoom', exact: true });
   const horizontal = page.getByRole('slider', { name: 'Posição horizontal', exact: true });
   const vertical = page.getByRole('slider', { name: 'Posição vertical', exact: true });
@@ -137,6 +148,17 @@ test('foto usa S3 privado, persiste na garagem e remove', async ({ page }) => {
     .toEqual([1024, 1024]);
   await page.getByRole('button', { name: 'Ajustar enquadramento', exact: true }).click();
   await expect(page.getByLabel('Prévia do enquadramento')).toBeVisible();
+  // A mounted canvas can still be transparent: verify pixels before any slider input.
+  await expect
+    .poll(() =>
+      page
+        .getByLabel('Prévia do enquadramento')
+        .evaluate(
+          (canvas: HTMLCanvasElement) =>
+            canvas.getContext('2d')!.getImageData(512, 512, 1, 1).data[3],
+        ),
+    )
+    .toBe(255);
   await page.getByRole('button', { name: 'Cancelar enquadramento', exact: true }).click();
   await expect(page.getByLabel('Prévia do enquadramento')).not.toBeVisible();
   await expect(savedPhoto).toBeVisible();
