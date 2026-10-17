@@ -1,3 +1,4 @@
+import { appVersion } from './generated/version';
 import { FlSnackbar, Snackbar } from './ui/snackbar';
 import { FlLoading, FlStartup, FlLogo } from './ui';
 import { FlConfirmation } from './ui/confirmation';
@@ -63,6 +64,7 @@ import { SwUpdate } from '@angular/service-worker';
   styleUrls: ['./app.css', './preview.css'],
 })
 export class App {
+  readonly appVersion = appVersion;
   private readonly router = inject(Router);
   readonly routeVehicleId = signal<number | null>(null);
   private routeState() {
