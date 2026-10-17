@@ -87,6 +87,13 @@ func TestGarageUpgradeAndIsolation(t *testing.T) {
 	if err = s.DB.QueryRow(ctx, `SELECT password_hash FROM users WHERE id=$1`, firstUser).Scan(&unchanged); err != nil || unchanged != string(hash) {
 		t.Fatal("upgrade changed existing password")
 	}
+	var palette, theme string
+	if err = s.DB.QueryRow(ctx, `SELECT palette,theme FROM users WHERE id=$1`, firstUser).Scan(&palette, &theme); err != nil || palette != "original" || theme != "light" {
+		t.Fatalf("upgrade must preserve legacy theme: %q %q, %v", palette, theme, err)
+	}
+	if err = s.DB.QueryRow(ctx, `INSERT INTO users(username,password_hash) VALUES('new-theme',$1) RETURNING palette,theme`, string(hash)).Scan(&palette, &theme); err != nil || palette != "orange" || theme != "dark" {
+		t.Fatalf("new account must default to orange/dark: %q %q, %v", palette, theme, err)
+	}
 	service := &Service{Auth: s}
 	mux := http.NewServeMux()
 	s.Routes(mux)

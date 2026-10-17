@@ -14,12 +14,22 @@ try {
     'lime',
     'mono',
     'copper',
+    'navy',
+    'emerald',
+    'lavender',
+    'magenta',
+    'ruby',
+    'sand',
+    'olive',
+    'arctic',
+    'indigo',
+    'mint',
+    'lemon',
+    'coral',
   ];
-  if (valid.includes(palette)) document.documentElement.dataset.palette = palette;
-  const theme = localStorage.getItem('fleetlog.theme');
-  if (theme === 'light' || theme === 'dark') {
-    document.documentElement.dataset.theme = theme;
-    if (valid.includes(palette))
-      document.cookie = `fleetlog_pwa_theme=${palette}-${theme}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
-  }
+  const selectedPalette = valid.includes(palette) ? palette : 'orange';
+  const theme = localStorage.getItem('fleetlog.theme') === 'light' ? 'light' : 'dark';
+  document.documentElement.dataset.palette = selectedPalette;
+  document.documentElement.dataset.theme = theme;
+  document.cookie = `fleetlog_pwa_theme=${selectedPalette}-${theme}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
 } catch {}

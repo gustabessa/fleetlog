@@ -1,5 +1,5 @@
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 .startup-screen {
   position: fixed;
@@ -13,8 +13,8 @@
   justify-content: center;
   gap: 12px;
   padding: 32px 20px;
-  background: var(--bg, #f6f8fa);
-  color: var(--text, #17232c);
+  background: var(--bg, #17181c);
+  color: var(--text, #f2f2f5);
   text-align: center;
   font-family:
     system-ui,
@@ -31,7 +31,7 @@
 .startup-screen p {
   margin: 0;
   font-size: 14px;
-  color: var(--muted, #637580);
+  color: var(--muted, #b3b4bf);
 }
 .startup-road {
   height: 48px;
@@ -45,7 +45,7 @@
   width: 7px;
   height: 26px;
   border-radius: 4px;
-  background: var(--accent, #087e83);
+  background: var(--accent, #ff9b52);
   animation: road 1.4s ease-in-out infinite;
 }
 .startup-road span:nth-child(2) {
@@ -60,7 +60,7 @@
   width: 100px;
   border-radius: 4px;
   overflow: hidden;
-  background: color-mix(in srgb, var(--accent, #087e83) 15%, transparent);
+  background: color-mix(in srgb, var(--accent, #ff9b52) 15%, transparent);
   position: relative;
   margin-top: 8px;
 }
@@ -68,7 +68,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--accent, #087e83);
+  background: var(--accent, #ff9b52);
   transform: translateX(-100%);
   animation: progress 1.5s ease-in-out infinite;
 }
@@ -112,11 +112,11 @@ html[data-theme='dark'] {
   display: block;
   width: 100%;
   height: auto;
-  color: var(--text, #253238);
+  color: var(--text, #f2f2f5);
   overflow: visible;
 }
 .fleetlog-logo .logo-accent {
-  fill: var(--accent, #087e83);
+  fill: var(--accent, #ff9b52);
 }
 fl-logo {
   display: block;
@@ -144,4 +144,8 @@ fl-logo {
   .startup-screen {
     animation: none;
   }
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
 }

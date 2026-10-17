@@ -9,7 +9,9 @@ test('prévia navega pelos veículos, histórico e custos sem alterar a garagem'
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Entre na sua garagem' })).toBeVisible();
-  await expect(page.getByRole('contentinfo')).toHaveText('FleetLog · Acompanhe cada quilômetro.');
+  await expect(page.getByRole('contentinfo')).toContainText(
+    'FleetLog · Acompanhe cada quilômetro.',
+  );
   await page.getByRole('button', { name: 'Explorar prévia da garagem' }).click();
   await expect(page.getByRole('heading', { name: 'Minha garagem' })).toBeVisible();
   await page.getByRole('button', { name: /Volkswagen Polo/ }).click();
@@ -201,18 +203,18 @@ test('calendário fecha ao clicar fora e mantém cliques internos', async ({ pag
   await expect(picker.locator('.calendar')).toHaveCount(0);
 });
 
-test('seletor mostra doze paletas nos dois modos e persiste escolha', async ({ page }) => {
+test('seletor mostra 24 paletas nos dois modos e persiste escolha', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await page.route('**/api/auth/me', (route) => route.fulfill({ status: 401, json: {} }));
   await page.goto('/');
   await page.getByRole('button', { name: 'Escolher tema', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Escolha o tema' });
   await expect(dialog).toBeVisible();
-  await expect(dialog.locator('.palette')).toHaveCount(12);
+  await expect(dialog.locator('.palette')).toHaveCount(24);
   const combinations = new Set<string>();
   for (const dark of [false, true]) {
     await dialog.getByRole('button', { name: dark ? '☾ Escuro' : '☀ Claro', exact: true }).click();
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 24; i++) {
       await dialog.locator('.palette').nth(i).click();
       await expect(dialog.locator('.palette').nth(i)).toHaveAttribute('aria-pressed', 'true');
       const surface = await page.evaluate(() =>
@@ -229,7 +231,7 @@ test('seletor mostra doze paletas nos dois modos e persiste escolha', async ({ p
       );
     }
   }
-  expect(combinations.size).toBe(24);
+  expect(combinations.size).toBe(48);
   await dialog.getByRole('button', { name: 'Grafite e laranja', exact: true }).click();
   await dialog.getByRole('button', { name: 'Confirmar tema', exact: true }).click();
   await expect(dialog).not.toBeVisible();

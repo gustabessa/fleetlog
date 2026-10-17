@@ -10,20 +10,10 @@ await fs.mkdir(new URL('../public/pwa', import.meta.url), { recursive: true });
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ deviceScaleFactor: 1 });
-  for (const palette of [
-    'original',
-    'orange',
-    'blue',
-    'violet',
-    'green',
-    'rose',
-    'amber',
-    'cyan',
-    'red',
-    'lime',
-    'mono',
-    'copper',
-  ])
+  // Discover palette IDs from the same CSS used by the application.
+  for (const palette of new Set(
+    [...themes.matchAll(/\[data-palette='([^']+)'\]/g)].map((m) => m[1]),
+  ))
     for (const mode of ['light', 'dark']) {
       await page.setContent(`<style>${themes}</style>`);
       const colors = await page.evaluate(

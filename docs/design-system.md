@@ -61,11 +61,15 @@ Foco visível é compartilhado por botões, links e inputs. As transições resp
 
 ## Paletas
 
-Dez paletas em `web/src/themes.css`: original, orange, blue, violet, green, rose, amber, cyan, red e lime. Cada uma define tokens `--palette-light-*` e `--palette-dark-*`; o modo os mapeia para `--bg`, `--surface`, `--text`, `--muted`, `--line`, `--accent`, `--on-accent` e `--soft`. Componentes continuam usando tokens semânticos. Gráficos usam `--chart-1/2/3`; tags de veículo mantêm a cor escolhida pelo usuário.
+O FleetLog oferece **24 paletas**, cada uma em modo claro e escuro (48 combinações). O padrão no primeiro acesso e para contas novas é **Grafite e laranja** (`orange`, `dark`). Preferências já salvas de usuários e visitantes são preservadas.
 
-Catálogo de nomes em `ui/themes.ts`. O botão percorre claro/escuro de cada paleta e retorna à original depois de 20 cliques. Preferências em `fleetlog.palette` e `fleetlog.theme`; preserva a preferência anterior de modo. Para adicionar um tema, incluir seus dois conjuntos de tokens e uma entrada no catálogo.
+As paletas são: original, orange, blue, violet, green, rose, amber, cyan, red, lime, mono, copper, navy, emerald, lavender, magenta, ruby, sand, olive, arctic, indigo, mint, lemon e coral. Os nomes exibidos ficam em `web/src/app/ui/themes.ts`; os tokens ficam em `web/src/themes.css`.
 
-O ciclo de cliques foi substituído por `fl-theme-picker`: janela modal nativa com dez amostras, modos claro/escuro e seleção imediata persistida no navegador. Recebe palette/dark e emite select. As amostras usam os mesmos tokens da paleta, sem duplicar hexadecimais.
+Cada paleta define `--palette-light-*` e `--palette-dark-*`; o modo os mapeia para `--bg`, `--surface`, `--text`, `--muted`, `--line`, `--accent`, `--on-accent` e `--soft`. Componentes usam esses tokens semânticos. Gráficos usam `--chart-1/2/3`; tags de veículo mantêm a cor escolhida pelo usuário.
+
+O `fl-theme-picker` apresenta as 24 amostras em uma janela rolável, com modos claro/escuro. Selecionar uma amostra aplica uma prévia; somente **Confirmar tema** persiste. Cancelar restaura o tema anterior. Usuários autenticados salvam no perfil; visitantes usam preferências locais separadas. Os ícones e manifests da PWA acompanham a confirmação.
+
+Para adicionar paletas, atualize o catálogo, os tokens, a lista do script de inicialização, a validação do perfil e a seleção de manifest no backend. Adicione uma migração para ampliar a constraint do banco sem modificar migrações já aplicadas. `web/tools/themed-icons.mjs` descobre as paletas pelo CSS e gera ícones e manifests de ambos os modos. Confira contraste, foco, overflow mobile e preservação de preferências.
 
 - `fl-dialog`: modal nativo reutilizável com title, corpo projetado rolável e slot `[flDialogFooter]`. Cabeçalho/título/X e rodapé permanecem fixos. Métodos show()/close(), evento closed; mantém foco/modalidade nativos, Escape e fechamento por backdrop. FlThemePicker usa este componente.
 

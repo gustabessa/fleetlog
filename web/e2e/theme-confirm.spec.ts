@@ -13,14 +13,14 @@ test('prévia não grava nem troca manifest; cancelar restaura; confirmar persis
   });
   await page.getByRole('button', { name: 'Escolher tema', exact: true }).click();
   const d = page.getByRole('dialog', { name: 'Escolha o tema' });
-  await d.getByRole('button', { name: 'Grafite e laranja', exact: true }).click();
-  await d.getByRole('button', { name: '☾ Escuro', exact: true }).click();
+  await d.getByRole('button', { name: 'Ardósia e azul', exact: true }).click();
+  await d.getByRole('button', { name: '☀ Claro', exact: true }).click();
   expect(await (await page.request.get('/manifest.webmanifest')).json()).toEqual(original);
   expect(await page.evaluate(() => localStorage.getItem('fleetlog.guest.palette'))).not.toBe(
-    'orange',
+    'blue',
   );
   await page.keyboard.press('Escape');
-  await expect(page.locator('html')).toHaveAttribute('data-palette', 'original');
+  await expect(page.locator('html')).toHaveAttribute('data-palette', 'orange');
   await page.getByRole('button', { name: 'Escolher tema', exact: true }).click();
   await d.getByRole('button', { name: 'Grafite e laranja', exact: true }).click();
   await d.getByRole('button', { name: '☾ Escuro', exact: true }).click();
@@ -79,6 +79,7 @@ test('PWA instalado só orienta atualização do ícone depois de confirmar', as
   await page.getByRole('button', { name: 'Escolher tema', exact: true }).click();
   const d = page.getByRole('dialog', { name: 'Escolha o tema' });
   await d.getByRole('button', { name: 'Grafite e laranja', exact: true }).click();
+  await d.getByRole('button', { name: '☀ Claro', exact: true }).click();
   const update = page.getByRole('dialog', { name: 'Atualizar ícone do aplicativo' });
   await expect(update).not.toBeVisible();
   await d.getByRole('button', { name: 'Confirmar tema', exact: true }).click();
