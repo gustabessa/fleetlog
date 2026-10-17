@@ -1,0 +1,20 @@
+# Lightweight release management; the complete build remains in build.yaml.
+when:
+  - event: push
+    branch: main
+
+steps:
+  - name: release-please
+    image: node:22.23.3-alpine
+    environment:
+      RELEASE_PLEASE_TOKEN:
+        from_secret: release_please_token
+    commands:
+      - |
+        if [ -z "$${RELEASE_PLEASE_TOKEN}" ]; then
+          echo 'Configure the Woodpecker repository secret release_please_token (push events only).'
+          exit 1
+        fi
+      # Publish only already-merged release PRs, then refresh the next proposal.
+      - npm exec --yes --package=release-please@17.11.2 -- release-please github-release --repo-url gustabessa/fleetlog --target-branch main --token "$${RELEASE_PLEASE_TOKEN}"
+      - npm exec --yes --package=release-please@17.11.2 -- release-please release-pr --repo-url gustabessa/fleetlog --target-branch main --token "$${RELEASE_PLEASE_TOKEN}"
