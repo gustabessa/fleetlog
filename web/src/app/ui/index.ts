@@ -21,3 +21,5 @@ export { FlLoading } from './loading';
 export { FlStartup } from './startup';
 
 export * from './logo';
+
+export { FlSlider } from './slider';

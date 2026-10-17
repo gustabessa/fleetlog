@@ -52,9 +52,78 @@ test('foto usa S3 privado, persiste na garagem e remove', async ({ page }) => {
     .getByLabel('Selecionar foto')
     .setInputFiles({ name: 'vehicle.png', mimeType: 'image/png', buffer: png() });
   await expect(page.getByLabel('Prévia do enquadramento')).toBeVisible();
-  await page.getByLabel('Zoom', { exact: true }).fill('1.5');
+  const zoom = page.getByRole('slider', { name: 'Zoom', exact: true });
+  const horizontal = page.getByRole('slider', { name: 'Posição horizontal', exact: true });
+  const vertical = page.getByRole('slider', { name: 'Posição vertical', exact: true });
+  await expect(zoom).toHaveValue('1');
+  await expect(horizontal).toHaveValue('50');
+  await expect(vertical).toHaveValue('50');
+  await zoom.focus();
+  await zoom.press('ArrowRight');
+  await expect(zoom).toHaveValue('1.01');
+  await expect(zoom).toHaveAttribute('aria-valuetext', '1.01×');
+  await zoom.press('End');
+  await zoom.press('ArrowRight');
+  await expect(zoom).toHaveValue('3');
+  await zoom.press('Home');
+  await zoom.press('ArrowLeft');
+  await expect(zoom).toHaveValue('1');
+  await horizontal.focus();
+  await horizontal.press('ArrowLeft');
+  await expect(horizontal).toHaveValue('49');
+  await vertical.focus();
+  await vertical.press('End');
+  await expect(vertical).toHaveValue('100');
+  await vertical.press('Home');
+  await expect(vertical).toHaveValue('0');
+  await vertical.fill('50');
+  for (const mode of ['☀ Claro', '☾ Escuro']) {
+    for (const palette of ['Grafite e laranja', 'Ardósia e azul']) {
+      await page.getByRole('button', { name: 'Escolher tema', exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: 'Escolha o tema' });
+      await dialog.getByRole('button', { name: palette, exact: true }).click();
+      await dialog.getByRole('button', { name: mode, exact: true }).click();
+      // Resolve the CSS token as a color and compare it to the native control.
+      expect(
+        await zoom.evaluate((input) => {
+          const probe = document.createElement('span');
+          probe.style.color = 'var(--accent)';
+          input.parentElement!.append(probe);
+          const expected = getComputedStyle(probe).color;
+          probe.remove();
+          return getComputedStyle(input).accentColor === expected;
+        }),
+      ).toBe(true);
+      await dialog.getByRole('button', { name: 'Cancelar', exact: true }).click();
+    }
+  }
+  await page.emulateMedia({ forcedColors: 'active' });
+  await zoom.focus();
+  await zoom.press('ArrowRight');
+  await expect(zoom).toHaveValue('1.01');
+  await page.emulateMedia({ forcedColors: 'none' });
+  for (const slider of [zoom, horizontal, vertical]) {
+    const box = await slider.boundingBox();
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  }
+  await zoom.fill('1.5');
   await page.getByLabel('Posição horizontal', { exact: true }).fill('30');
-  await page.getByRole('button', { name: 'Salvar foto', exact: true }).click();
+  let releaseUpload!: () => void;
+  const uploadGate = new Promise<void>((resolve) => {
+    releaseUpload = resolve;
+  });
+  await page.route('**/image', async (route) => {
+    if (route.request().method() === 'PUT') await uploadGate;
+    await route.continue();
+  });
+  try {
+    await page.getByRole('button', { name: 'Salvar foto', exact: true }).click();
+    for (const slider of [zoom, horizontal, vertical]) await expect(slider).toBeDisabled();
+  } finally {
+    releaseUpload();
+  }
   await expect(page.getByRole('img', { name: 'Foto do veículo', exact: true })).toBeVisible();
   await page.reload();
   if (!new URL(page.url()).pathname.endsWith('/vehicles/' + v.id))
