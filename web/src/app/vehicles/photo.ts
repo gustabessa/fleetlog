@@ -1,5 +1,14 @@
 import { Confirmation } from '../ui/confirmation';
-import { Component, ElementRef, inject, input, output, signal } from '@angular/core';
+import {
+  afterRenderEffect,
+  Component,
+  ElementRef,
+  inject,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FlButton, FlCard, FlSlider } from '../ui';
 @Component({
   selector: 'fl-photo',
@@ -19,7 +28,12 @@ import { FlButton, FlCard, FlSlider } from '../ui';
     @if (preview()) {
       <h4>Enquadramento na garagem</h4>
       <p>Ajuste o zoom e a posição. A prévia mostra o recorte que será salvo.</p>
-      <canvas width="1024" height="1024" aria-label="Prévia do enquadramento"></canvas>
+      <canvas
+        #previewCanvas
+        width="1024"
+        height="1024"
+        aria-label="Prévia do enquadramento"
+      ></canvas>
       <fl-slider
         label="Zoom"
         [min]="1"
@@ -95,12 +109,19 @@ export class Photo {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly preview = signal<HTMLImageElement | null>(null);
-  readonly element = inject(ElementRef<HTMLElement>);
-  zoom = 1;
-  horizontal = 50;
-  vertical = 50;
+  readonly canvas = viewChild<ElementRef<HTMLCanvasElement>>('previewCanvas');
+  readonly zoom = signal(1);
+  readonly horizontal = signal(50);
+  readonly vertical = signal(50);
   private selection = 0;
   readonly encode = encodeURIComponent;
+  constructor() {
+    // The conditional canvas must exist before painting; track slider changes too.
+    afterRenderEffect(() => {
+      const canvas = this.canvas()?.nativeElement;
+      if (canvas && this.preview()) this.draw(canvas);
+    });
+  }
   ngOnChanges() {
     this.version.set(this.initialVersion());
   }
@@ -150,8 +171,9 @@ export class Photo {
         this.error.set('A foto deve ter até 20 megapixels.');
         return;
       }
-      this.zoom = 1;
-      this.horizontal = this.vertical = 50;
+      this.zoom.set(1);
+      this.horizontal.set(50);
+      this.vertical.set(50);
       this.preview.set(img);
       this.error.set('');
     } catch {
@@ -160,24 +182,20 @@ export class Photo {
       URL.revokeObjectURL(url);
     }
   }
-  ngAfterViewChecked() {
-    const canvas = this.element.nativeElement.querySelector('canvas');
-    if (canvas && this.preview()) this.draw(canvas);
-  }
   private draw(canvas: HTMLCanvasElement) {
     const img = this.preview();
     const ctx = canvas.getContext('2d');
     if (!img || !ctx) return;
     const size = canvas.width;
-    const scale = Math.min(size / img.naturalWidth, size / img.naturalHeight) * this.zoom;
+    const scale = Math.min(size / img.naturalWidth, size / img.naturalHeight) * this.zoom();
     const width = img.naturalWidth * scale;
     const height = img.naturalHeight * scale;
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, size, size);
     ctx.drawImage(
       img,
-      ((size - width) * this.horizontal) / 100,
-      ((size - height) * this.vertical) / 100,
+      ((size - width) * this.horizontal()) / 100,
+      ((size - height) * this.vertical()) / 100,
       width,
       height,
     );
