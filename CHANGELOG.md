@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0](https://github.com/gustabessa/fleetlog/compare/v0.1.0...v0.2.0) (2026-10-17)
+
+
+### Features
+
+* show release version in application footer ([97c2d14](https://github.com/gustabessa/fleetlog/commit/97c2d149772746bcba671f4e30838b4f345cf720))
+* show release version in application footer ([4076a8f](https://github.com/gustabessa/fleetlog/commit/4076a8ff131201de098475bf0c580e2d6e8ad3ba))
+
 ## 0.1.0 (2026-10-17)
 
 
