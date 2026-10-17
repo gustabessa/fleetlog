@@ -16,6 +16,25 @@ func SPA(files fs.FS) http.Handler {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
+		// Keep the standalone API reference outside Angular navigation and the PWA.
+		if r.URL.Path == "/docs/api" {
+			http.Redirect(w, r, "/docs/api/", http.StatusTemporaryRedirect)
+			return
+		}
+		if r.URL.Path == "/docs/api/" {
+			content, err := fs.ReadFile(files, "docs/api/index.html")
+			if err != nil {
+				http.NotFound(w, r)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Header().Set("Cache-Control", "no-cache")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			if r.Method == http.MethodGet {
+				_, _ = w.Write(content)
+			}
+			return
+		}
 		name := strings.TrimPrefix(path.Clean(r.URL.Path), "/")
 		if name == "" || name == "." {
 			name = "index.html"

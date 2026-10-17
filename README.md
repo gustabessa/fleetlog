@@ -61,6 +61,7 @@ As operações da garagem precisam de conexão com o servidor. A PWA guarda a in
 ## Documentação
 
 - [Self-hosting: Docker Compose, HTTPS e Dokploy](docs/self-hosting.md)
+- [API: OpenAPI e interface Scalar](docs/api.md)
 - [Referência técnica, configuração e desenvolvimento](docs/technical-reference.md)
 - [Releases, atualização e recuperação](docs/releases.md)
 - [Checklist de implantação](docs/deployment-checklist.md)

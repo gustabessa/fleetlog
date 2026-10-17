@@ -8,3 +8,5 @@ web/test-results/
 web/playwright-report/
 web/.e2e-dist/
 web/src/app/generated/
+web/public/docs/api/openapi.json
+web/public/docs/api/scalar.js

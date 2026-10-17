@@ -7,6 +7,7 @@
 | Hospedar a minha garagem            | [Self-hosting](self-hosting.md)                           |
 | Configurar variáveis, S3 e OIDC     | [Referência técnica](technical-reference.md)              |
 | Desenvolver e executar testes       | [Desenvolvimento](technical-reference.md#desenvolvimento) |
+| Integrar ou consultar endpoints     | [OpenAPI e Scalar](api.md)                                |
 | Entender releases e atualizar       | [Releases](releases.md)                                   |
 | Conferir a implantação              | [Checklist](deployment-checklist.md)                      |
 | Entender os próximos passos         | [Plano do produto](FleetLog-plan.md)                      |
