@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.0](https://github.com/gustabessa/fleetlog/compare/v0.2.0...v0.3.0) (2026-10-17)
+
+
+### Features
+
+* add 24 themes and self-hosting project documentation ([5e4bef3](https://github.com/gustabessa/fleetlog/commit/5e4bef3e1f4b222c881bd5dbe3f60fa605b8c3cb))
+* add 24 themes and self-hosting project documentation ([253f561](https://github.com/gustabessa/fleetlog/commit/253f561fc27e1e8eaab8afeff819ddd4f152cb0d))
+* document FleetLog API with self-hosted Scalar ([55b8652](https://github.com/gustabessa/fleetlog/commit/55b8652da76344b5a061dae1ec099b36262e87b0))
+* document FleetLog API with self-hosted Scalar ([601d23f](https://github.com/gustabessa/fleetlog/commit/601d23f7179a1e40589ef488a867e75121df7591))
+
+
+### Bug Fixes
+
+* paint photo framing preview after canvas render ([a19e19c](https://github.com/gustabessa/fleetlog/commit/a19e19c0fd94ae696ae24b889b789eb1324dfa66))
+* paint photo framing preview after canvas render ([9e47c2b](https://github.com/gustabessa/fleetlog/commit/9e47c2bcc9ecaff0b6e316594129e019afb633f3))
+
 ## [0.2.0](https://github.com/gustabessa/fleetlog/compare/v0.1.0...v0.2.0) (2026-10-17)
 
 
