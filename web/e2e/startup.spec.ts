@@ -30,14 +30,23 @@ test('manifest usa identidade estável, fundo padrão e ícones novos disponíve
 }) => {
   const manifest = await (await request.get('/manifest.webmanifest')).json();
   expect(manifest.id).toBe('/');
-  expect(manifest.background_color).toBe('#17232c');
+  expect(manifest.background_color).toBe('#17181c');
   const worker = await (await request.get('/ngsw.json')).json();
   for (const size of ['192x192', '512x512']) {
     const icon = manifest.icons.find((i: any) => i.sizes === size);
-    expect(icon.src).toContain('fleetlog-v2-');
-    const response = await request.get('/' + icon.src);
+    expect(icon.src).toContain('pwa-orange-dark-');
+    const response = await request.get(icon.src);
     expect(response.ok()).toBe(true);
     expect(response.headers()['content-type']).toBe('image/png');
-    expect(worker.assetGroups.find((g: any) => g.name === 'app').urls).toContain('/' + icon.src);
+    expect(worker.assetGroups.find((g: any) => g.name === 'app').urls).toContain(icon.src);
   }
+});
+
+test('primeiro acesso usa grafite e laranja escuro mesmo com sistema claro', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.route('**/api/auth/me', (route) => route.fulfill({ status: 401, json: {} }));
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Entre na sua garagem' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-palette', 'orange');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 });

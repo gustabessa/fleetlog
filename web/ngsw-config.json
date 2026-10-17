@@ -15,7 +15,8 @@
           "/startup.css",
           "/startup-theme.js",
           "/logo.svg",
-          "/icons/fleetlog-v2-*.png"
+          "/icons/fleetlog-v2-*.png",
+          "/icons/pwa-orange-dark-*.png"
         ]
       }
     },

@@ -602,17 +602,13 @@ export class App {
   readonly palette = signal(
     palettes.some((p) => p.id === localStorage.getItem('fleetlog.palette'))
       ? localStorage.getItem('fleetlog.palette')!
-      : 'original',
+      : 'orange',
   );
   readonly themeName = computed(
     () =>
       `${palettes.find((p) => p.id === this.palette())?.name} · ${this.dark() ? 'Escuro' : 'Claro'}`,
   );
-  readonly dark = signal(
-    localStorage.getItem('fleetlog.theme') === 'dark' ||
-      (!localStorage.getItem('fleetlog.theme') &&
-        matchMedia('(prefers-color-scheme: dark)').matches),
-  );
+  readonly dark = signal(localStorage.getItem('fleetlog.theme') !== 'light');
   constructor() {
     inject(Snackbar).install();
     this.applyTheme();
@@ -680,9 +676,9 @@ export class App {
     this.applyTheme();
   }
   private restoreGuestTheme() {
-    const palette = localStorage.getItem('fleetlog.guest.palette') ?? 'original';
-    this.palette.set(palettes.some((p) => p.id === palette) ? palette : 'original');
-    this.dark.set(localStorage.getItem('fleetlog.guest.theme') === 'dark');
+    const palette = localStorage.getItem('fleetlog.guest.palette') ?? 'orange';
+    this.palette.set(palettes.some((p) => p.id === palette) ? palette : 'orange');
+    this.dark.set(localStorage.getItem('fleetlog.guest.theme') !== 'light');
     this.applyTheme();
   }
   private cacheTheme() {

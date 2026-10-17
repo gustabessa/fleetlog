@@ -69,7 +69,7 @@ func validPWATheme(value string) bool {
 	if len(parts) != 2 || (parts[1] != "light" && parts[1] != "dark") {
 		return false
 	}
-	for _, palette := range []string{"original", "orange", "blue", "violet", "green", "rose", "amber", "cyan", "red", "lime", "mono", "copper"} {
+	for _, palette := range []string{"original", "orange", "blue", "violet", "green", "rose", "amber", "cyan", "red", "lime", "mono", "copper", "navy", "emerald", "lavender", "magenta", "ruby", "sand", "olive", "arctic", "indigo", "mint", "lemon", "coral"} {
 		if parts[0] == palette {
 			return true
 		}

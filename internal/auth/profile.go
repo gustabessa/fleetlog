@@ -26,7 +26,7 @@ func (s *Service) updateProfile(w http.ResponseWriter, r *http.Request) {
 		reply(w, 400, map[string]string{"error": "unsupported currency"})
 		return
 	}
-	if input.Palette != nil && !slices.Contains([]string{"original", "orange", "blue", "violet", "green", "rose", "amber", "cyan", "red", "lime", "mono", "copper"}, *input.Palette) {
+	if input.Palette != nil && !slices.Contains([]string{"original", "orange", "blue", "violet", "green", "rose", "amber", "cyan", "red", "lime", "mono", "copper", "navy", "emerald", "lavender", "magenta", "ruby", "sand", "olive", "arctic", "indigo", "mint", "lemon", "coral"}, *input.Palette) {
 		reply(w, 400, map[string]string{"error": "invalid palette"})
 		return
 	}
