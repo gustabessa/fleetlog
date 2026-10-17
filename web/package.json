@@ -6,7 +6,11 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test:e2e": "npm run build && playwright test"
+    "test:e2e": "npm run build && playwright test",
+    "preng": "node tools/write-version.mjs",
+    "prestart": "node tools/write-version.mjs",
+    "prebuild": "node tools/write-version.mjs",
+    "prewatch": "node tools/write-version.mjs"
   },
   "private": true,
   "packageManager": "npm@10.9.9",

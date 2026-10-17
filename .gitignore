@@ -7,3 +7,4 @@ web/.angular/
 web/test-results/
 web/playwright-report/
 web/.e2e-dist/
+web/src/app/generated/

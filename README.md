@@ -127,6 +127,8 @@ A migração 003 adiciona veículos sem alterar dados das migrações anteriores
 
 ## PWA e atualização
 
+O rodapé mostra a versão do aplicativo carregado, gerada a partir de `VERSION` durante `npm run build` (também em `npm start` e `npm run watch`). A versão faz parte do bundle e continua disponível offline; quando há atualização pendente da PWA, muda depois de carregar a nova versão.
+
 O service worker guarda apenas arquivos do aplicativo e ícones. APIs e imagens privadas não entram no cache; operações de domínio são online. O servidor revalida arquivos e não usa fallback HTML para assets ausentes ou para `/api/`. Cada imagem Docker contém um build completo, evitando publicação parcial do bundle.
 
 Quando uma nova versão está pronta, a interface oferece **Atualizar agora**; a página só recarrega após o clique. Um estado irrecuperável do service worker oferece **Recarregar**. Rotas que ainda não existem voltam para a garagem.

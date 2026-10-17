@@ -3,6 +3,7 @@ WORKDIR /build/web
 COPY web/package*.json ./
 RUN npm ci
 COPY web/ ./
+COPY VERSION /build/VERSION
 RUN npm run build
 
 FROM golang:1.27.1-alpine AS backend
