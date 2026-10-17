@@ -1,9 +1,9 @@
 import { Confirmation } from '../ui/confirmation';
 import { Component, ElementRef, inject, input, output, signal } from '@angular/core';
-import { FlButton, FlCard } from '../ui';
+import { FlButton, FlCard, FlSlider } from '../ui';
 @Component({
   selector: 'fl-photo',
-  imports: [FlButton, FlCard],
+  imports: [FlButton, FlCard, FlSlider],
   template: `<section flCard>
     <h3>Foto do veículo</h3>
     @if (version()) {
@@ -20,34 +20,33 @@ import { FlButton, FlCard } from '../ui';
       <h4>Enquadramento na garagem</h4>
       <p>Ajuste o zoom e a posição. A prévia mostra o recorte que será salvo.</p>
       <canvas width="1024" height="1024" aria-label="Prévia do enquadramento"></canvas>
-      <label
-        >Zoom<input
-          type="range"
-          min="1"
-          max="3"
-          step="0.01"
-          [value]="zoom"
-          [disabled]="busy()"
-          (input)="adjust('zoom', $event)"
-      /></label>
-      <label
-        >Posição horizontal<input
-          type="range"
-          min="0"
-          max="100"
-          [value]="horizontal"
-          [disabled]="busy()"
-          (input)="adjust('horizontal', $event)"
-      /></label>
-      <label
-        >Posição vertical<input
-          type="range"
-          min="0"
-          max="100"
-          [value]="vertical"
-          [disabled]="busy()"
-          (input)="adjust('vertical', $event)"
-      /></label>
+      <fl-slider
+        label="Zoom"
+        [min]="1"
+        [max]="3"
+        [step]="0.01"
+        [(value)]="zoom"
+        suffix="×"
+        [disabled]="busy()"
+      />
+      <fl-slider
+        label="Posição horizontal"
+        [min]="0"
+        [max]="100"
+        [step]="1"
+        [(value)]="horizontal"
+        suffix="%"
+        [disabled]="busy()"
+      />
+      <fl-slider
+        label="Posição vertical"
+        [min]="0"
+        [max]="100"
+        [step]="1"
+        [(value)]="vertical"
+        suffix="%"
+        [disabled]="busy()"
+      />
       <button flButton [disabled]="busy()" (click)="cancel()">Cancelar enquadramento</button>
     }
     @if (version() && !preview()) {
@@ -164,9 +163,6 @@ export class Photo {
   ngAfterViewChecked() {
     const canvas = this.element.nativeElement.querySelector('canvas');
     if (canvas && this.preview()) this.draw(canvas);
-  }
-  adjust(control: 'zoom' | 'horizontal' | 'vertical', event: Event) {
-    this[control] = Number((event.target as HTMLInputElement).value);
   }
   private draw(canvas: HTMLCanvasElement) {
     const img = this.preview();
